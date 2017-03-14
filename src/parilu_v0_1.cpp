@@ -107,7 +107,9 @@ data_PariLU_v0_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U )
     printf("%% iteration = %d step = %e\n", i, residuals[i]); 
   }
   
-  printf("%% ParLU v0.1 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
+  printf("%% PariLU v0.1 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
+    num_threads, iter, wend-wstart, ompwtime );
+  printf("PariLUv0_1_OpenMP = %d \nPariLUv0_1_iter = %d \nPariLUv0_1_wall = %e \nPariLUv0_1_avgWall = %e \n", 
     num_threads, iter, wend-wstart, ompwtime );
   data_zmfree( &Atmp );
   

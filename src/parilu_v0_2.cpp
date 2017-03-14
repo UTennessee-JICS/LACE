@@ -41,7 +41,7 @@ data_PariLU_v0_2( data_d_matrix* A,
   int il, iu, jl, ju;
   
   int iter = 0;
-  dataType tol = 1.0e-15;
+  dataType tol = 1.0e-1;
   int num_threads = 0;
   
   dataType s = 0.0;
@@ -113,7 +113,9 @@ data_PariLU_v0_2( data_d_matrix* A,
     num_threads = omp_get_num_threads();
   }
   
-  printf("%% ParLU v0.2 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
+  printf("%% PariLU v0.2 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
+    num_threads, iter, wend-wstart, ompwtime );
+  printf("PariLUv0_2_OpenMP = %d \nPariLUv0_2_iter = %d \nPariLUv0_2_wall = %e \nPariLUv0_2_avgWall = %e \n", 
     num_threads, iter, wend-wstart, ompwtime );
   data_zmfree( &Atmp );
   data_zmfree( &LU );
