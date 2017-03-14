@@ -1,0 +1,673 @@
+#ifndef SPARSE_Z_H
+#define SPARSE_Z_H
+
+#include "sparse_types.h"
+#include <vector>
+#include <math.h>
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+#define PRECISION_z
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif  
+
+//======================================
+// I/O
+//======================================
+
+int 
+read_z_csr_from_mtx( 
+    data_storage_t *type, 
+    int* n_row, 
+    int* n_col, 
+    int* nnz, 
+    dataType **val, 
+    int **row, 
+    int **col, 
+    const char *filename );
+
+int 
+read_z_coo_from_mtx(
+    data_storage_t *type,
+    int* n_row,
+    int* n_col,
+    int* nnz,
+    dataType **coo_val,
+    int **coo_row,
+    int **coo_col,
+    const char *filename );
+
+int 
+read_z_dense_from_mtx(
+    data_storage_t *type,
+    int* n_row,
+    int* n_col,
+    int* nnz,
+    data_order_t major,
+    dataType **val,
+    const char *filename );
+
+int
+data_z_csr_mtx(
+    data_d_matrix *A,
+    const char *filename );
+
+int
+data_z_coo_mtx(
+    data_d_matrix *A,
+    const char *filename );
+
+int
+data_z_dense_mtx(
+    data_d_matrix *A,
+    data_order_t major,
+    const char *filename );
+
+int
+data_zprint_coo_mtx(
+    int n_row,
+    int n_col,
+    int nnz,
+    dataType **val,
+    int **row,
+    int **col );
+
+int
+data_zprint_coo(
+    data_d_matrix A );
+
+int
+data_zprint_csr_mtx(
+    int n_row,
+    int n_col,
+    int nnz,
+    dataType **val,
+    int **row,
+    int **col,
+    data_order_t MajorType );
+
+int
+data_zprint_csr(
+    data_d_matrix A );
+
+int
+data_zwrite_csr(
+    data_d_matrix* A );
+
+int
+data_zprint_dense_mtx(
+    int n_row,
+    int n_col,
+    int nnz,
+    data_order_t major,
+    dataType **val );
+
+int
+data_zprint_dense(
+    data_d_matrix A );
+
+int
+data_zdisplay_dense(
+    data_d_matrix* A );
+
+int
+data_zwrite_csr_mtx(
+    data_d_matrix A,
+    data_order_t MajorType,
+    const char *filename );
+
+int
+data_zwrite_dense_mtx(
+    int n_row,
+    int n_col,
+    int nnz,
+    data_order_t major,
+    dataType **val,
+    const char* filename );
+
+int
+data_zwrite_dense(
+    data_d_matrix A,
+    const char* filename );
+
+//======================================
+// control
+//======================================
+
+int
+data_z_csr_compressor(
+    dataType ** val,
+    int ** row,
+    int ** col,
+    dataType ** valn,
+    int ** rown,
+    int ** coln,
+    int *n );
+
+int
+data_zmconvert(
+    data_d_matrix A,
+    data_d_matrix *B,
+    data_storage_t old_format,
+    data_storage_t new_format );
+
+int
+data_zmtranspose(
+    data_d_matrix A, data_d_matrix *B );
+
+int
+data_zmfree(
+    data_d_matrix *A );
+
+int
+data_z_pad_dense(
+    data_d_matrix *A,
+    int tile_size );
+
+int
+data_z_pad_csr(
+    data_d_matrix *A,
+    int tile_size );
+
+void
+data_sparse_subvector( 
+  int sub_mbegin, 
+  int sub_nbegin, 
+  data_d_matrix* A, 
+  dataType* subvector );
+
+void
+data_sparse_subvector_lowerupper( 
+  int sub_mbegin, 
+  int sub_nbegin, 
+  data_d_matrix* A, 
+  dataType* subvector );
+
+void
+data_sparse_subdense( 
+  int sub_m, 
+  int sub_n, 
+  int sub_mbegin, 
+  int sub_nbegin, 
+  data_d_matrix* A, 
+  dataType* subdense );
+
+void
+data_sparse_subdense_lowerupper( 
+  int sub_m, 
+  int sub_n, 
+  int sub_mbegin, 
+  int sub_nbegin, 
+  data_d_matrix* A, 
+  dataType* subdense );
+
+void
+data_sparse_subsparse( 
+  int sub_m, 
+  int sub_n, 
+  int sub_mbegin, 
+  int sub_nbegin, 
+  data_d_matrix* A, 
+  int* rowtmp, 
+  int* rowindxtmp, 
+  int* colindxtmp, 
+  int* coltmp, 
+  int* nnztmp );
+
+void
+data_sparse_subsparse_lowerupper( 
+  int sub_m, 
+  int sub_n, 
+  int sub_mbegin, 
+  int sub_nbegin, 
+  data_d_matrix* A, 
+  int* rowtmp, 
+  int* rowindxtmp, 
+  int* colindxtmp, 
+  int* coltmp, 
+  int* nnztmp );
+
+void
+data_sparse_subsparse_cs( 
+  int sub_m, 
+  int sub_n, 
+  int sub_mbegin, 
+  int sub_nbegin, 
+  data_d_matrix* A, 
+  data_d_matrix* Asub );
+
+int
+data_sparse_subsparse_cs_lowerupper( 
+  int sub_m, 
+  int sub_n, 
+  int sub_mbegin, 
+  int sub_nbegin, 
+  data_d_matrix* A, 
+  data_d_matrix* Asub );
+
+int
+data_sparse_subsparse_cs_lowerupper_handle( 
+  int sub_m, 
+  int sub_n, 
+  int sub_mbegin, 
+  int sub_nbegin, 
+  int uplo,
+  data_d_matrix* A, 
+  data_d_matrix* Asub, 
+  sparse_matrix_t* Asub_handle );
+
+void
+data_sparse_tilepattern( 
+  int sub_m, 
+  int sub_n, 
+  std::vector<Int3>* tiles, 
+  data_d_matrix* A );
+
+void
+data_sparse_tilepattern_handles( int sub_m, int sub_n, 
+  std::vector<Int3>* tiles, 
+  std::vector<data_d_matrix>* L_subs,
+  std::vector<data_d_matrix>* U_subs,
+  std::vector<sparse_matrix_t>* L_handles,
+  std::vector<sparse_matrix_t>* U_handles,
+  data_d_matrix* A );
+
+void
+data_sparse_tilepatterns( int sub_m, 
+  int sub_n, 
+  std::vector<Int3>* Ltiles, 
+  std::vector<Int3>* Utiles, 
+  data_d_matrix* A );
+
+void
+data_sparse_tilepatterns_handles( int sub_m, int sub_n, 
+  std::vector<Int3>* Atiles, 
+  std::vector<Int3>* Ltiles, 
+  std::vector<Int3>* Utiles, 
+  std::vector<data_d_matrix>* L_subs,
+  std::vector<data_d_matrix>* U_subs,
+  std::vector<sparse_matrix_t>* L_handles,
+  std::vector<sparse_matrix_t>* U_handles,
+  std::vector< std::vector<int> >* Lbatches,
+  std::vector< std::vector<int> >* Ubatches,
+  data_d_matrix* A );
+
+void
+data_sparse_tilepattern_lowerupper( 
+  int sub_m, 
+  int sub_n, std::vector<Int3>* tiles, 
+  data_d_matrix* A );
+
+int
+data_zrowentries(
+    data_d_matrix *A );
+
+int
+data_zdiameter(
+    data_d_matrix *A );
+
+int
+data_zcheckupperlower(
+  data_d_matrix * A );
+
+int
+data_zmscale(
+    data_d_matrix *A,
+    data_scale_t scaling );
+
+int
+data_zmdiagadd(
+    data_d_matrix *A,
+    dataType add );
+
+//======================================
+// norms
+//======================================
+
+int
+data_zfrobenius_csr(
+    data_d_matrix A,
+    dataType *res );
+
+int
+data_zfrobenius_dense(
+    data_d_matrix A,
+    dataType *res );
+
+int
+data_zfrobenius(
+    data_d_matrix A,
+    dataType *res );
+
+int
+data_zfrobenius_diff_csr(
+    data_d_matrix A,
+    data_d_matrix B,
+    dataType *res );
+
+int
+data_zfrobenius_diff_dense(
+    data_d_matrix A,
+    data_d_matrix B,
+    dataType *res );
+
+int
+data_zfrobenius_diff(
+    data_d_matrix A,
+    data_d_matrix B,
+    dataType *res );
+
+int
+data_zfrobenius_LUresidual( 
+  data_d_matrix A,
+  data_d_matrix L,
+  data_d_matrix U,
+  dataType *res);
+
+int
+data_zfrobenius_inplaceLUresidual( 
+  data_d_matrix A,
+  data_d_matrix LU,
+  dataType *res);
+
+int
+data_zilures(
+    data_d_matrix A,
+    data_d_matrix L,
+    data_d_matrix U,
+    data_d_matrix *LU,
+    dataType *res,
+    dataType *nonlinres );
+
+int
+data_maxfabs_csr(
+    data_d_matrix A,
+    int *imax,
+    int *jmax,
+    dataType *max );
+
+//======================================
+// dense operations
+//======================================
+
+dataType
+data_zdot(
+    int n,
+    dataType* dx, int incx,
+    dataType* dy, int incy );
+
+dataType
+data_zdot_mkl(
+    int n,
+    dataType* dx, int incx,
+    dataType* dy, int incy );
+
+void
+data_dgemv_mkl(
+    data_order_t layoutA, data_trans_t transA, int m, int n, 
+    dataDouble alpha,
+    dataDouble_const_ptr A, int ldda,
+    dataDouble_const_ptr x, int incx, dataDouble beta,
+    dataDouble_ptr y, int incy );
+
+void
+data_dgemm_mkl(
+    data_order_t layoutA, data_trans_t transA, data_trans_t transB, 
+    int m, int n, int k,
+    dataDouble alpha, dataDouble_const_ptr A, int lda,
+    dataDouble_const_ptr B, int ldb, 
+    dataDouble beta, dataDouble_ptr C, int ldc );
+
+
+//======================================
+// sparse operations
+//======================================
+
+int
+data_z_spmm(
+    dataType alpha,
+    data_d_matrix A,
+    data_d_matrix B,
+    data_d_matrix *C);
+int
+data_z_spmm_handle(
+    dataType alpha,
+    sparse_matrix_t* A,
+    sparse_matrix_t* B,
+    data_d_matrix *C);
+
+int
+data_sparse_subsparse_spmm( 
+  int tile, 
+  int span, 
+  int ti, 
+  int tj, 
+  Int3* tiles,
+  data_d_matrix* Lsub, 
+  data_d_matrix* Usub, 
+  data_d_matrix* C );
+
+int
+data_sparse_subsparse_spmm_handle( 
+  int tile, 
+  int span, 
+  int ti, 
+  int tj, 
+  Int3* tiles,
+  sparse_matrix_t* L, 
+  sparse_matrix_t* U, 
+  data_d_matrix* C );
+
+int
+data_sparse_subsparse_spmm_batches(
+  int to_update,
+  int tile,
+  dataType alpha,
+  std::vector<sparse_matrix_t>* L_handles,
+  std::vector<sparse_matrix_t>* U_handles, 
+  std::vector<int>* lbatch,
+  std::vector<int>* ubatch,
+  data_d_matrix* C ); 
+
+int
+data_z_spmm_batch(
+    dataType alpha,
+    sparse_matrix_t* csrA,
+    sparse_matrix_t* csrB,
+    sparse_matrix_t* csrC );
+
+int
+data_zdiff_csr(
+    data_d_matrix *A,
+    data_d_matrix *B,
+    data_d_matrix *C, 
+    dataType *res,
+    dataType *nonlinres );
+
+int
+data_zdiff_magnitude_csr(
+    data_d_matrix *A,
+    data_d_matrix *B,  
+    dataType *res);
+
+int
+data_zsubtract_csr(
+    data_d_matrix *A,
+    data_d_matrix *B );
+
+int
+data_zsubtract_guided_csr(
+  data_d_matrix *A,
+  data_d_matrix *B,
+  data_d_matrix *C,
+  dataType *step );
+
+int
+data_zdiagdivide_csr(
+    data_d_matrix *A,
+    data_d_matrix *B );
+
+int
+data_zset_csr(
+    data_d_matrix *A,
+    data_d_matrix *B );
+
+//======================================
+// dense factorizations
+//======================================
+
+void
+data_LUnp_mkl( data_d_matrix* A );
+
+void
+data_ParLU_v0_0( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U );
+
+void
+data_ParLU_v0_1( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U );
+
+void
+data_ParLU_v1_0( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U );
+
+void
+data_ParLU_v1_1( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U );
+
+void
+data_ParLU_v1_2( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+void
+data_ParLU_v1_3( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+void
+data_ParLU_v2_0( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+void
+data_ParLU_v3_0( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+//======================================
+// sparse factorizations
+//======================================
+
+void
+data_dcsrilu0_mkl( data_d_matrix* A );
+
+void
+data_PariLU_v0_0( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U );
+
+void
+data_PariLU_v0_1( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U );
+
+void
+data_PariLU_v0_2( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  dataType reduction );
+
+void
+data_PariLU_v3_0( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+void
+data_PariLU_v3_1( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+void
+data_PariLU_v3_2( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+void
+data_PariLU_v3_5( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+void
+data_PariLU_v3_6( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+void
+data_PariLU_v3_7( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+void
+data_PariLU_v3_8( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+
+void
+data_PariLU_v3_9( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+int
+data_PariLU_v4_0( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U ); 
+
+#ifdef __cplusplus
+}
+#endif
+
+#undef PRECISION_z
+#endif /* SPARSE_Z_H */

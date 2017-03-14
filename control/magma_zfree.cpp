@@ -1,0 +1,202 @@
+/*
+    -- DEV (version 2.0) --
+       Univ. of Tennessee, Knoxville
+       Univ. of California, Berkeley
+       Univ. of Colorado, Denver
+       @date
+
+       @precisions normal z -> s d c
+       @author Hartwig Anzt
+       @author Stephen Wood
+*/
+#include "../include/sparse.h"
+
+#include <stdio.h>
+
+/**
+    Purpose
+    -------
+
+    Free the memory of a data_z_matrix.
+
+
+    Arguments
+    ---------
+
+    @param[in,out]
+    A           data_z_matrix*
+                matrix to free
+    @param[in]
+    queue       data_queue_t
+                Queue to execute in.
+
+    @ingroup datasparse_zaux
+    ********************************************************************/
+
+extern "C" 
+int
+data_zmfree(
+    data_d_matrix *A )
+{
+    if ( A->storage_type == Magma_ELL || A->storage_type == Magma_ELLPACKT ){
+        free( A->val );
+        A->val = NULL;
+        free( A->col );
+        A->col = NULL;
+        A->num_rows = 0;
+        A->num_cols = 0;
+        A->nnz = 0; 
+        A->true_nnz = 0;
+    }
+    else if (A->storage_type == Magma_ELLD ) {
+        free( A->val );
+        A->val = NULL;
+        free( A->col );
+        A->col = NULL;
+        A->num_rows = 0;
+        A->num_cols = 0;
+        A->nnz = 0; 
+        A->true_nnz = 0;
+    }
+    else if ( A->storage_type == Magma_ELLRT ) {
+        free( A->val );
+        A->val = NULL;
+        free( A->col );
+        A->col = NULL;
+        free( A->row );
+        A->row = NULL;
+        A->num_rows = 0;
+        A->num_cols = 0;
+        A->nnz = 0;
+        A->true_nnz = 0;
+    }
+    else if ( A->storage_type == Magma_SELLP ) {
+        free( A->val );
+        A->val = NULL;
+        free( A->col );
+        A->col = NULL;
+        free( A->row );
+        A->row = NULL;
+        A->num_rows = 0;
+        A->num_cols = 0;
+        A->nnz = 0; 
+        A->true_nnz = 0;
+    }
+    else if ( A->storage_type == Magma_CSRLIST ) {
+        free( A->val );
+        A->val = NULL;
+        free( A->col );
+        A->col = NULL;
+        free( A->row );
+        A->row = NULL;
+        free( A->list );
+        A->list = NULL;
+        A->num_rows = 0;
+        A->num_cols = 0;
+        A->nnz = 0; 
+        A->true_nnz = 0;
+    }
+    else if ( A->storage_type == Magma_CSR || A->storage_type == Magma_CSRD
+                                    || A->storage_type == Magma_CSRL
+                                    || A->storage_type == Magma_CSRU
+                                    || A->storage_type == Magma_CSC
+                                    || A->storage_type == Magma_CSCD
+                                    || A->storage_type == Magma_CSCL
+                                    || A->storage_type == Magma_CSCU ) {
+        if ( A->val != NULL ) {
+          //printf("\nfreeing A->val\n");
+          //fflush(stdout); 
+          free( A->val );
+        }
+        if ( A->row != NULL ) {
+          //printf("\nfreeing A->row\n");
+          //fflush(stdout); 
+          free( A->row );
+        }
+        if ( A->col != NULL ) {
+          //printf("\nfreeing A->col\n");
+          //fflush(stdout); 
+          free( A->col );
+        }
+        //free( A->val );
+        //A->val = NULL;
+        //free( A->col );
+        //A->col = NULL;
+        //free( A->row );
+        //A->row = NULL;
+        //if ( A->rowidx != NULL ) {
+        //  free( A->rowidx );
+        //}
+        A->num_rows = 0;
+        A->num_cols = 0;
+        A->pad_rows = 0;
+        A->pad_cols = 0;
+        A->nnz = 0; 
+        A->true_nnz = 0;
+        A->major = (data_order_t) 0;
+        A->diameter = 0;
+    }
+    else if (  A->storage_type == Magma_CSRCOO || A->storage_type == Magma_CSCCOO ) {
+        free( A->val );
+        A->val = NULL;
+        free( A->col );
+        A->col = NULL;
+        free( A->row );
+        A->row = NULL;
+        free( A->rowidx );
+        A->rowidx = NULL;
+        A->num_rows = 0;
+        A->num_cols = 0;
+        A->pad_rows = 0;
+        A->pad_cols = 0;
+        A->nnz = 0; 
+        A->true_nnz = 0;
+        A->major = (data_order_t) 0;
+        A->diameter = 0;
+    }
+    else if ( A->storage_type == Magma_BCSR ) {
+        free( A->val );
+        A->val = NULL;
+        free( A->col );
+        A->col = NULL;
+        free( A->row );
+        A->row = NULL;
+        free( A->blockinfo );
+        A->blockinfo = NULL;
+        A->num_rows = 0;
+        A->num_cols = 0;
+        A->pad_rows = 0;
+        A->pad_cols = 0;
+        A->nnz = 0; 
+        A->true_nnz = 0;
+        A->blockinfo = 0;
+        A->major = (data_order_t) 0;
+        A->diameter = 0;
+    }
+    else if ( A->storage_type == Magma_DENSE  || A->storage_type == Magma_DENSEL 
+                                         || A->storage_type == Magma_DENSEU 
+                                         || A->storage_type == Magma_DENSED ) {
+        if ( A->val != NULL ) {
+          free( A->val );
+          A->val = NULL;
+        }
+        A->num_rows = 0;
+        A->num_cols = 0;
+        A->pad_rows = 0;
+        A->pad_cols = 0;
+        A->nnz = 0; 
+        A->true_nnz = 0;
+        A->major = (data_order_t) 0;
+    }
+    else {
+      printf("UNSUPPORTED\n"); 
+    }
+    //A->col = NULL;
+    //A->row = NULL;
+    //A->rowidx = NULL;
+    //A->blockinfo = NULL;
+    //A->diag = NULL;
+    //A->list = NULL;
+    
+    return DEV_SUCCESS;
+}
