@@ -652,26 +652,26 @@ data_zmconvert(
             data_zmconvert(A, B, Magma_CSR, Magma_CSR );
         }
                 
-//        // CSRD to CSR (diagonal elements first)
-//        else if ( old_format == Magma_CSRD ) {
-//            //CHECK( data_zmconvert( A, B, Magma_CSR, Magma_CSR, queue ));
-//            data_zmconvert( A, B, Magma_CSR, Magma_CSR, queue );
-//            for( int i=0; i < A.num_rows; i++) {
-//                data_zindexsortval(
-//                B->col,
-//                B->val,
-//                B->row[i],
-//                B->row[i+1]-1,
-//                queue );
-//            }
-//        }
-//        
-//        // CSRCOO to CSR
-//        else if ( old_format == Magma_CSRCOO ) {
-//            //CHECK( data_zmconvert( A, B, Magma_CSR, Magma_CSR, queue ));
-//            data_zmconvert( A, B, Magma_CSR, Magma_CSR, queue );
-//        }
-//        
+        //// CSRD to CSR (diagonal elements first)
+        //else if ( old_format == Magma_CSRD ) {
+        //    //CHECK( data_zmconvert( A, B, Magma_CSR, Magma_CSR, queue ));
+        //    data_zmconvert( A, B, Magma_CSR, Magma_CSR, queue );
+        //    for( int i=0; i < A.num_rows; i++) {
+        //        data_zindexsortval(
+        //        B->col,
+        //        B->val,
+        //        B->row[i],
+        //        B->row[i+1]-1,
+        //        queue );
+        //    }
+        //}
+        
+        // CSRCOO to CSR
+        else if ( old_format == Magma_CSRCOO ) {
+            //CHECK( data_zmconvert( A, B, Magma_CSR, Magma_CSR, queue ));
+            data_zmconvert( A, B, Magma_CSR, Magma_CSR );
+        }
+        
 
         
         // DENSE to CSR

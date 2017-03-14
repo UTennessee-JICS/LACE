@@ -58,9 +58,19 @@ int main(int argc, char* argv[])
   //char sparse_filename[] = "testing/matrices/paper1_matrices/ani5_crop.mtx";
   data_d_matrix Asparse = {Magma_CSR};
   data_z_csr_mtx( &Asparse, sparse_filename );
+  
+  // Scale matrix to have a unit diagonal
+  if ( argc >= 5 ) {
+    if ( strcmp( argv[4], "UNITDIAG" ) == 0 ) {
+      printf("rescaling UNITDIAG\n");
+      data_zmscale( &Asparse, Magma_UNITDIAG );
+      //data_zwrite_csr( &Asparse );
+    }
+  }
+  
   data_d_matrix A = {Magma_CSR};
   data_zmconvert( Asparse, &A, Magma_CSR, Magma_CSR ); 
-  data_d_matrix B = {Magma_DENSE};
+  data_d_matrix B = {Magma_CSR};
   data_zmconvert( Asparse, &B, Magma_CSR, Magma_CSR ); 
   //data_zdisplay_dense( &A );
   //data_zmfree( &Asparse );
@@ -73,7 +83,6 @@ int main(int argc, char* argv[])
   data_zmconvert(Asparse, &Amkl, Magma_CSR, Magma_CSR);
   
   dataType wstart = omp_get_wtime();
-  //data_LUnp_mkl( &Amkl );
   data_dcsrilu0_mkl( &Amkl );
   dataType wend = omp_get_wtime();
   printf("%% MKL csrilu0 required %f wall clock seconds as measured by omp_get_wtime()\n", wend-wstart );
@@ -96,7 +105,6 @@ int main(int argc, char* argv[])
   
   dataType Amklres = 0.0;
   dataType Amklnonlinres = 0.0;
-  //data_zfrobenius_inplaceLUresidual(A, Amkl, &Amkldiff);
   data_zilures( A, Lmkl, Umkl, &LUmkl, &Amklres, &Amklnonlinres);
   
   printf("MKL_csrilu0_res = %e\n", Amklres);
@@ -120,11 +128,7 @@ int main(int argc, char* argv[])
   // Separate the strictly lower and upper elements 
   // into L, and U respectively.
   data_d_matrix L5 = {Magma_CSRL};
-  //L.diagorder_type = Magma_UNITY;
-  //data_zmconvert(A, &L, Magma_CSR, Magma_CSRL);
   data_d_matrix U5 = {Magma_CSCU};
-  //U.diagorder_type = Magma_VALUE;
-  //data_zmconvert(A, &U, Magma_CSR, Magma_CSRU);
   data_PariLU_v0_0( &A, &L5, &U5);
   
   printf("test if L is lower: ");
@@ -339,7 +343,7 @@ int main(int argc, char* argv[])
   
   //===============================
   printf("\n===============================\n");
-  
+  printf("Compare block factorization\n");
   data_d_matrix LU_coffe = {Magma_CSR};
   char const * coffe_filename = "30p30n-iLU0.mtx";
   int read = data_z_csr_mtx( &LU_coffe, coffe_filename );

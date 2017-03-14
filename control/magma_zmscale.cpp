@@ -55,7 +55,7 @@ data_zmscale(
     if ( A->storage_type == Magma_CSRCOO ) {
         if ( scaling == Magma_NOSCALE ) {
             // no scale
-            ;
+            
         }
         else if( A->num_rows == A->num_cols ){
             if ( scaling == Magma_UNITROW ) {
