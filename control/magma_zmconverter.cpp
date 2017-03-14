@@ -183,7 +183,7 @@ data_zmconvert(
 {
 	
     int info = 0;
-    data_zmfree( B );
+    //data_zmfree( B );
     //int *length=NULL;
     
     //data_d_matrix hA={Magma_CSR}, hB={Magma_CSR};
@@ -256,7 +256,7 @@ data_zmconvert(
         // CSR to CSRL
         else if ( new_format == Magma_CSRL ) {
             // fill in information for B
-            B->storage_type = Magma_CSRL;
+            B->storage_type = Magma_CSR;
             B->major = MagmaRowMajor;
             B->fill_mode = MagmaLower;
             B->num_rows = A.num_rows; 
@@ -330,7 +330,7 @@ data_zmconvert(
         // CSR to CSRU
         else if (  new_format == Magma_CSRU ) {
             // fill in information for B
-            B->storage_type = Magma_CSRU;
+            B->storage_type = Magma_CSR;
             B->major = MagmaRowMajor;
             B->fill_mode = MagmaUpper;
             B->num_rows = A.num_rows; 
@@ -831,7 +831,11 @@ data_zmconvert(
         }
     }
     // CSC to anything
-    else if ( old_format == Magma_CSC ) {
+    else if ( old_format == Magma_CSC 
+        || old_format == Magma_CSCD
+        || old_format == Magma_CSCU 
+        || old_format == Magma_CSCL
+        || old_format == Magma_CSCCOO ) {
       if (new_format == Magma_CSCL ) {
           data_zmconvert(A, B, Magma_CSR, Magma_CSRL );
           B->storage_type = Magma_CSCL;
@@ -847,7 +851,7 @@ data_zmconvert(
           B->storage_type = Magma_CSRU;
           B->major = MagmaRowMajor;
       }
-      else if (new_format == Magma_CSCCOO ) {
+      else if (new_format == Magma_CSRCOO ) {
           data_zmconvert(A, B, Magma_CSR, Magma_CSRCOO );
           B->storage_type = Magma_CSCCOO;
           B->major = MagmaColMajor;

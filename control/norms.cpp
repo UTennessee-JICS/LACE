@@ -286,7 +286,7 @@ data_zilures(
     dataType one = 1.0;
 
     data_d_matrix LL={Magma_CSR}, L_d={Magma_CSR}, U_d={Magma_CSR}, LU_d={Magma_CSR};
-
+    
     if( L.row[1]==1 ){        // lower triangular with unit diagonal
     	//printf("L lower triangular.\n");
         LL.diagorder_type = Magma_UNITY;
@@ -368,10 +368,6 @@ data_zilures(
     if( info !=0 ){
         data_zmfree( LU );
     }
-    data_zmfree( &LL );
-    data_zmfree( &L_d );
-    data_zmfree( &U_d );
-    data_zmfree( &LU_d );
     return info;
 }
 
