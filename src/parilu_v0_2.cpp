@@ -42,6 +42,10 @@ data_PariLU_v0_2( data_d_matrix* A,
   
   int iter = 0;
   dataType tol = 1.0e-1;
+  if (reduction < tol) {
+    tol = reduction*Ares;
+  }
+  printf("tol = %e\n", tol);
   int num_threads = 0;
   
   dataType s = 0.0;
@@ -52,7 +56,7 @@ data_PariLU_v0_2( data_d_matrix* A,
   dataType recipAnorm = 0.0;
   
   data_zfrobenius(*A, &Anorm);
-  printf("%% Anorm = %e\n", Anorm);
+  printf("Anorm = %e\n", Anorm);
   recipAnorm = 1.0/Anorm;
   
   dataType wstart = omp_get_wtime();
