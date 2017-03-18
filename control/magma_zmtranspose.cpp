@@ -77,9 +77,6 @@
     new_colind  data_index_t**
                 column indices of transposed matrix
 
-    @param[in]
-    queue       data_queue_t
-                Queue to execute in.
 
     @ingroup datasparse_zaux
 *******************************************************************************/

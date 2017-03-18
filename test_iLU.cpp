@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
   //char sparse_filename[] = "testing/matrices/30p30n.mtx";
   //char sparse_filename[] = "testing/matrices/paper1_matrices/ani5_crop.mtx";
   data_d_matrix Asparse = {Magma_CSR};
-  data_z_csr_mtx( &Asparse, sparse_filename );
+  CHECK( data_z_csr_mtx( &Asparse, sparse_filename ) );
   
   // Scale matrix to have a unit diagonal
   if ( argc >= 5 ) {
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
   data_zmconvert(Asparse, &Amkl, Magma_CSR, Magma_CSR);
   
   dataType wstart = omp_get_wtime();
-  data_dcsrilu0_mkl( &Amkl );
+  CHECK( data_dcsrilu0_mkl( &Amkl ) );
   dataType wend = omp_get_wtime();
   printf("%% MKL csrilu0 required %f wall clock seconds as measured by omp_get_wtime()\n", wend-wstart );
   
@@ -448,6 +448,7 @@ int main(int argc, char* argv[])
   //===============================
   printf("\n===============================\n");
   
+  DEV_CHECKPT;
   // =========================================================================
 /*  
   // =========================================================================
