@@ -4,6 +4,8 @@
 #define DEV_TYPES_H
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 
 #define DEV_D_ZERO              ( 0.0)
@@ -25,8 +27,12 @@
 #define DEV_D_EQUAL(a,b)        ((a) == (b))
 #define DEV_D_NEGATE(a)         (-a)
 
+#define DEV_CHECKPT {printf("Checkpoint: %s, line %d\n", __FILE__, __LINE__);\
+  fflush(stdout);}
+  
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
+#define SIGN(a,b) ((b) < 0 ? -fabs(a) : fabs(a))
 
 // ========================================
 // To use int64_t, link with mkl_intel_ilp64 or similar (instead of mkl_intel_lp64).
@@ -47,21 +53,21 @@ typedef int data_int_t;
 #define DATA_TYPE_H
 typedef double             dataType;
 #endif
-typedef dataType             *dataType_ptr;
-typedef dataType             const *dataType_const_ptr;
+typedef dataType           *dataType_ptr;
+typedef dataType           const *dataType_const_ptr;
 
 typedef double real_Double_t;
 typedef double dataDouble;
 
 typedef void               *data_ptr;
-typedef data_int_t        *dataInt_ptr;
-typedef data_index_t      *dataIndex_ptr;
+typedef data_int_t         *dataInt_ptr;
+typedef data_index_t       *dataIndex_ptr;
 typedef float              *dataFloat_ptr;
 typedef double             *dataDouble_ptr;
 
 typedef void               const *data_const_ptr;
-typedef data_int_t        const *dataInt_const_ptr;
-typedef data_index_t      const *dataIndex_const_ptr;
+typedef data_int_t         const *dataInt_const_ptr;
+typedef data_index_t       const *dataIndex_const_ptr;
 typedef float              const *dataFloat_const_ptr;
 typedef double             const *dataDouble_const_ptr;
 
@@ -346,4 +352,52 @@ CBLAS_UPLO      cblas_uplo_const   ( data_uplo_t  uplo  );
 CBLAS_DIAG      cblas_diag_const   ( data_diag_t  diag  );
 CBLAS_SIDE      cblas_side_const   ( data_side_t  side  );
 
+// --------------------
+// 
+#define CHECK( err )                          \
+    do {                                      \
+        data_int_t e_ = (err);                \
+        if ( e_ != 0 ) {                      \
+          fprintf(stderr,                     \
+            "CHECK ERROR : (%s, line %d)\n",  \
+            __FILE__, __LINE__);              \
+          exit(-1);                           \
+        }                                     \
+    } while(0)   
+
+/**
+  Macro checks the return code of a function;
+  if non-zero, sets info to err, then does goto cleanup.
+  err is evaluated only once.
+  Assumes variable info and label cleanup exist.
+  Usually, all paths (successful and error) exit through the cleanup code.
+  Example:
+  
+      magma_int_t function()
+      {
+        data_int_t info = 0;
+        double *A=NULL, *B=NULL;
+        CHECK( data_malloc( &A, sizeA ));
+        CHECK( data_malloc( &B, sizeB ));
+        ...
+      cleanup:
+        data_free( A );
+        data_free( B );
+        return info;
+      }
+  @ingroup data_error_internal
+  ********************************************************************/
+/*
+#define CHECK( err )                          \
+    do {                                      \
+        data_int_t e_ = (err);                \
+        if ( e_ != 0 ) {                      \
+          info = e_;                          \
+          fprintf(stderr,                     \
+            "CHECK ERROR : (%s, line %d)\n",  \
+            file, line);                      \
+          goto cleanup;                       \
+        }                                     \
+    } while(0)                    
+*/
 #endif        //  #ifndef DEV_TYPES_H

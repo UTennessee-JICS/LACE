@@ -1151,6 +1151,7 @@ data_zcheckupperlower(
       for( int j=A->row[i]; j < A->row[i+1]; j++) {
         if ( A->col[j] > i ) {
           printf("%d, %d : %e \n", i, A->col[j], A->val[j]);
+          info = -1;
         }
       }
     }
@@ -1160,6 +1161,7 @@ data_zcheckupperlower(
       for( int j=A->row[i]; j < A->row[i+1]; j++) {
         if ( A->col[j] < i ) {
           printf("%d, %d : %e \n", i, A->col[j], A->val[j]);
+          info = -1;
         }
       }
     }

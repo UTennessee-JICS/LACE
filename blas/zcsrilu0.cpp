@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 extern "C" 
-void
+int
 data_dcsrilu0_mkl( data_d_matrix* dA ) 
 {
   int info = 0; 
@@ -71,5 +71,5 @@ data_dcsrilu0_mkl( data_d_matrix* dA )
   for (int i=0; i<dA->num_rows+1; i++) {
   	dA->row[i] -= 1;
   }
-		
+	return info;	
 }

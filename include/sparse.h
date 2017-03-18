@@ -325,6 +325,12 @@ data_zmdiagadd(
     data_d_matrix *A,
     dataType add );
 
+int
+data_zmlumerge(
+    data_d_matrix L,
+    data_d_matrix U,
+    data_d_matrix *A );
+
 //======================================
 // norms
 //======================================
@@ -580,7 +586,7 @@ data_ParLU_v3_0(
 // sparse factorizations
 //======================================
 
-void
+int
 data_dcsrilu0_mkl( data_d_matrix* A );
 
 void
