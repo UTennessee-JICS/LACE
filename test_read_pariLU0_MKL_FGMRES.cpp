@@ -169,6 +169,7 @@ int main(int argc, char* argv[])
 	double tol_gmres_res = 1.0e-10;
   dataType Ares = 0.0;
   dataType Anonlinres = 0.0;
+  double dvar_bad = 0.0;
 	
 /*---------------------------------------------------------------------------
    Some additional variables to use with the RCI (P)FGMRES solver
@@ -203,9 +204,22 @@ int main(int argc, char* argv[])
 	for(i=0;i<N;i++)
 	{
 		computed_solution[i]=0.0;
+		residual[i] = 0.0;
 	}
 	//computed_solution[0]=100.0;
-
+	
+	/* debugging daxpy when compiled with -lmkl_intel_thread
+ 	i = 1;
+	dvar = 1.0;
+	daxpy(&ivar, &dvar, computed_solution, &i, residual, &i);
+	
+	for(i=0;i<N;i++)
+	{
+		computed_solution[i]=0.0;
+		residual[i] = 0.0;
+	}
+	*/
+	
 	/*---------------------------------------------------------------------------
 	   Initialize the solver
 	  ---------------------------------------------------------------------------*/
@@ -290,7 +304,7 @@ int main(int argc, char* argv[])
   #pragma omp for nowait
   for (int i=0; i<LU.nnz; i++) {
   	bilu0[i] = LU.val[i];
-  	//bilu0[i] = bilu0MKL[i];
+  	//bilu0[i] = bilu0MKL[i]; // Use MKL's csrilu0 factorization
   }
   nrm2=dnrm2(&matsize, bilu0, &incx );
   //nrm2=dnrm2(&matsize, Asparse.val, &incx );
@@ -343,8 +357,17 @@ int main(int argc, char* argv[])
 	//ipar[14]=2;
 	//ipar[11]=1;
 	//ipar[8]=1;
-	ipar[7]=0;
+	//ipar[7]=0;
+	//ipar[10]=1;
+	
+	
+	ipar[4]=800;
+	ipar[7]=1;
+	ipar[8]=1;
+	ipar[9]=1;
 	ipar[10]=1;
+	//ipar[11]=1;
+	ipar[14]=800;
 	dpar[0]=1.0E-10;
 	
 	
@@ -354,6 +377,31 @@ int main(int argc, char* argv[])
 	  ---------------------------------------------------------------------------*/
 	dfgmres_check(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 	printf("after dfgmres_check on line %d RCI_request = %d\n", __LINE__, RCI_request);
+	
+	
+	//for (int ii = 0; ii<100; ii++) 
+	//  printf("%e\t%e\t%e\n", computed_solution[ii], rhs[ii], residual[ii]);
+	
+	mkl_dcsrgemv(&cvar, &ivar, A, ia, ja, computed_solution, residual);
+	//for (int ii = 0; ii<100; ii++) 
+	//  printf("%e\t%e\t%e\n", computed_solution[ii], rhs[ii], residual[ii]);
+	i=1;
+	dvar=dnrm2(&ivar,residual,&i);
+	printf("\n ==== Initial norm of residual = %e ==== \n", dvar );
+	dvar=-1.0;
+	daxpy(&ivar, &dvar, rhs, &i, residual, &i);
+	//for (int ii = 0; ii<100; ii++) 
+	//  printf("%e\t%e\t%e\n", computed_solution[ii], rhs[ii], residual[ii]);
+	dvar=dnrm2(&ivar,residual,&i);
+	printf("\n ==== Initial residual = %e ==== \n", dvar );
+	//for (int ii = 0; ii<100; ii++) 
+	//  printf("%e\t%e\n", rhs[ii], residual[ii]);
+	dvar=dnrm2(&ivar,rhs,&i);
+	printf("\n ==== Initial norm of rhs = %e ==== \n", dvar );
+	printf("\n ==== rhs/dvar = %e ==== \n", dvar/dvar_bad );
+	dvar=dnrm2(&ivar,b,&i);
+	printf("\n ==== Initial norm of b = %e ==== \n", dvar );
+	
 	if (RCI_request!=0) goto FAILED;
 	/*---------------------------------------------------------------------------
 	   Print the info about the RCI FGMRES method
@@ -434,7 +482,7 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 	  ---------------------------------------------------------------------------*/
 	if (RCI_request==1)
 	{
-	  printf("RCI_request = %d\n", RCI_request);
+	  printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
 		mkl_dcsrgemv(&cvar, &ivar, A, ia, ja, &tmp[ipar[21]-1], &tmp[ipar[22]-1]);
 		goto ONE;
 	}
@@ -453,7 +501,7 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 	  ---------------------------------------------------------------------------*/
 	if (RCI_request==2)
 	{
-	  printf("RCI_request = %d\n", RCI_request);
+	  printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
 		/* Request to the dfgmres_get routine to put the solution into b[N] via ipar[12]
 		  ---------------------------------------------------------------------------
 		   WARNING: beware that the call to dfgmres_get routine with ipar[12]=0 at this stage may
@@ -461,13 +509,19 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 		   exploit this option with care */
 		ipar[12]=1;
 		/* Get the current FGMRES solution in the vector b[N] */
+	  printf("before get ipar[12] = %d\n", ipar[12] );
+	  printf("before get ipar[13] = %d\n", ipar[13] );
 		dfgmres_get(&ivar, computed_solution, b, &RCI_request, ipar, dpar, tmp, &itercount);
+	  printf("after get RCI_request = %d line = %d\n", RCI_request, __LINE__);
 		/* Compute the current true residual via MKL (Sparse) BLAS routines */
 		mkl_dcsrgemv(&cvar, &ivar, A, ia, ja, b, residual);
 		dvar=-1.0E0;
 		i=1;
 		daxpy(&ivar, &dvar, rhs, &i, residual, &i);
 		dvar=dnrm2(&ivar,residual,&i);
+	  printf("dvar = %e\n", dvar );
+	  printf("dpar[4] = %e\n", dpar[4] );
+	  printf("dpar[5] = %e\n", dpar[5] );
 		//if (dvar<1.0E-3) goto COMPLETE;
 		if (dvar<tol_gmres_res) goto COMPLETE;
 		else goto ONE;
@@ -484,7 +538,7 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
       ---------------------------------------------------------------------------*/
 	if (RCI_request==3)
 	{
-	  printf("RCI_request = %d\n", RCI_request);
+	  printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
 		cvar1='L';
 		cvar='N';
 		cvar2='U';
@@ -502,7 +556,10 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 	  ---------------------------------------------------------------------------*/
 	if (RCI_request==4)
 	{
-	  printf("RCI_request = %d\n", RCI_request);
+	  printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
+	  printf("dpar[2] = %e\n", dpar[2] );
+	  printf("dpar[4] = %e\n", dpar[4] );
+	  printf("dpar[4]/dpar[2] = %e\n", dpar[4]/dpar[2] );
 	  printf("dpar[6] = %e\n", dpar[6] );
 	  printf("itercount = %d\n", itercount );
 		if (dpar[6]<1.0E-14) goto COMPLETE;

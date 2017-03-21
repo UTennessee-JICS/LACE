@@ -4,7 +4,7 @@ CC=g++-6
 #
 #
 VPATH=blas control include src testing
-CFLAGS=-std=c++11 -g -Wall -O3 -fopenmp 
+CFLAGS=-std=c++11 -g -Wall -O0 -fopenmp 
 LDFLAGS=-isystem ${GTEST_DIR}/include -pthread libgtest.a
 LDFLAGS2=-isystem ${GTEST_DIR}/include -isystem ${GMOCK_DIR}/include -pthread libgmock.a
 SOURCES=example_01.cpp
@@ -152,13 +152,13 @@ post_iLU: post_iLU.cpp libgmock.a
 test_MKL_iLU0_FGMRES: test_MKL_iLU0_FGMRES.cpp
 	$(CC) $(CFLAGS) \
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
-	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lpthread -lstdc++ -lm \
+	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
 	test_MKL_iLU0_FGMRES.cpp -o $@		
 	
 test_pariLU0_MKL_FGMRES: test_pariLU0_MKL_FGMRES.cpp
 	$(CC) $(CFLAGS) \
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
-	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lpthread -lstdc++ -lm \
+	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
 	control/constants.cpp control/magma_zmio.cpp \
 	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
 	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
@@ -171,7 +171,7 @@ test_pariLU0_MKL_FGMRES: test_pariLU0_MKL_FGMRES.cpp
 test_read_pariLU0_MKL_FGMRES: test_read_pariLU0_MKL_FGMRES.cpp
 	$(CC) $(CFLAGS) \
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
-	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lpthread -lstdc++ -lm \
+	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
 	control/constants.cpp control/magma_zmio.cpp \
 	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
 	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
