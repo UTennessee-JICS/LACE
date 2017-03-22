@@ -17,7 +17,7 @@ all: gtest-all.o gmock-all.o exampleGoogleTest_01 exampleGoogleTest_02 \
 	test_LU_ops test_LU test_MKL_LU \
 	test_iLU_ops test_iLU test_MKL_iLU post_iLU \
 	test_MKL_iLU0_FGMRES test_pariLU0_MKL_FGMRES \
-	test_read_pariLU0_MKL_FGMRES
+	test_read_pariLU0_MKL_FGMRES test_read_rhs_pariLU0_MKL_FGMRES
 
 exampleGoogleTest_01: example_01.cpp libgtest.a
 	$(CC) $(LDFLAGS) $(CFLAGS) example_01.cpp -o $@
@@ -181,6 +181,19 @@ test_read_pariLU0_MKL_FGMRES: test_read_pariLU0_MKL_FGMRES.cpp
 	src/parilu_v0_2.cpp \
 	test_read_pariLU0_MKL_FGMRES.cpp -o $@	
 	
+test_read_rhs_pariLU0_MKL_FGMRES: test_read_rhs_pariLU0_MKL_FGMRES.cpp
+	$(CC) $(CFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
+	control/constants.cpp control/magma_zmio.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	src/parilu_v0_2.cpp \
+	test_read_rhs_pariLU0_MKL_FGMRES.cpp -o $@		
+	
 libgtest.a: gtest-all.o
 	ar -rv libgtest.a gtest-all.o
 	
@@ -201,14 +214,14 @@ clean:
 	rm exampleGoogleTest_01 exampleGoogleTest_02 test_matrix_io test_vector_io \
 				test_matrix_ops test_spmatrix_ops test_LU_ops test_LU test_MKL_LU \
 				test_iLU_ops test_iLU test_MKL_iLU post_iLU test_MKL_iLU0_FGMRES \
-				test_read_pariLU0_MKL_FGMRES \
-				test_pariLU0_MKL_FGMRES
+				test_pariLU0_MKL_FGMRES test_read_pariLU0_MKL_FGMRES \
+				test_read_rhs_pariLU0_MKL_FGMRES \
 	
 cleanall:
 	rm *.o exampleGoogleTest_01 exampleGoogleTest_02 test_matrix_io \ 
 				test_vector_io test_matrix_ops test_spmatrix_ops test_LU_ops \
 				test_LU test_MKL_LU test_iLU_ops test_iLU test_MKL_iLU post_iLU \
 				test_MKL_iLU0_FGMRES test_pariLU0_MKL_FGMRES \
-				test_read_pariLU0_MKL_FGMRES \
+				test_read_pariLU0_MKL_FGMRES test_read_rhs_pariLU0_MKL_FGMRES \
 				libgtest.a libgmock.a
 				
