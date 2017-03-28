@@ -136,6 +136,10 @@ int main(int argc, char* argv[])
     user_maxiter = atoi( argv[6] );
   }
   
+  printf("diagonal scaling = %s\n", argv[4] );
+  printf("user_restart = %d\n", user_restart);
+  printf("user_maxiter = %d\n", user_maxiter);
+
   // for MKL's GMRES
   int N = Asparse.num_rows;
   printf("N = %d\n", N);
@@ -249,24 +253,28 @@ int main(int argc, char* argv[])
 /*---------------------------------------------------------------------------
    Initialize the initial guess
   ---------------------------------------------------------------------------*/
+	//debugging daxpy when compiled with -lmkl_intel_thread
 	for(i=0;i<N;i++)
 	{
-		computed_solution[i]=0.0;
-		residual[i] = 0.0;
+		computed_solution[i]=1.0;
+		residual[i] = 1.0;
 	}
-	//computed_solution[0]=100.0;
-	
-	/* debugging daxpy when compiled with -lmkl_intel_thread
  	i = 1;
 	dvar = 1.0;
 	daxpy(&ivar, &dvar, computed_solution, &i, residual, &i);
-	
+	for(i=0;i<100;i++)
+	{
+		if ( residual[i] - 2.0 > 1e-16 )
+ 			printf("%d %e\n", i, residual[i]);
+	}
+        getchar();
+	//normal use case
 	for(i=0;i<N;i++)
 	{
 		computed_solution[i]=0.0;
 		residual[i] = 0.0;
 	}
-	*/
+	
 	
 	/*---------------------------------------------------------------------------
 	   Initialize the solver
