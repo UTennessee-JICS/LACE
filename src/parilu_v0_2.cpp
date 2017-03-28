@@ -7,6 +7,7 @@
 */
 #include "../include/sparse.h"
 #include <mkl.h>
+#include <float.h> 
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -18,6 +19,7 @@ data_PariLU_v0_2( data_d_matrix* A,
   dataType reduction ) 
 {
   data_d_matrix Atmp = {Magma_CSRCOO};
+  // TODO: avoid the duplication of the entire csr format.  All that is needed is a rowidx array.
   data_zmconvert(*A, &Atmp, Magma_CSR, Magma_CSRCOO);
   
   // Separate the lower and upper elements into L and U respectively.
@@ -51,7 +53,8 @@ data_PariLU_v0_2( data_d_matrix* A,
   dataType s = 0.0;
   dataType sp = 0.0;
   dataType tmp = 0.0;
-  dataType step = 1.0;
+  dataType step = FLT_MAX; //1.0;
+  //printf("step = %e\n", step);
   dataType Anorm = 0.0;
   dataType recipAnorm = 0.0;
   
