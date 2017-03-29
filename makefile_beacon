@@ -5,6 +5,7 @@ CC=icpc
 #
 VPATH=blas control include src testing
 CFLAGS=-std=c++11 -Wall -g -O3 -qopenmp -xAVX
+CFLAGSKNL=-std=c++11 -Wall -g -O3 -qopenmp
 LDFLAGS=-isystem ${GTEST_DIR}/include -pthread libgtest.a
 LDFLAGS2=-isystem ${GTEST_DIR}/include -isystem ${GMOCK_DIR}/include -pthread libgmock.a
 SOURCES=example_01.cpp
@@ -210,6 +211,20 @@ test_solve_pariLU0_MKL_FGMRES: test_solve_pariLU0_MKL_FGMRES.cpp
 	test_solve_pariLU0_MKL_FGMRES.cpp \
 	-o $@			
 	
+test_solve_pariLU0_MKL_FGMRES_knl: test_solve_pariLU0_MKL_FGMRES.cpp
+	$(CC) $(CFLAGSKNL) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include -mmic \
+	control/constants.cpp control/magma_zmio.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	src/parilu_v0_2.cpp \
+	test_solve_pariLU0_MKL_FGMRES.cpp \
+	 -Wl,--start-group ${MKLROOT}/lib/mic/libmkl_intel_lp64.a ${MKLROOT}/lib/mic/libmkl_intel_thread.a ${MKLROOT}/lib/mic/libmkl_core.a -Wl,--end-group -liomp5 -lpthread -lm -ldl \
+	-o $@
+
 libgtest.a: gtest-all.o
 	ar -rv libgtest.a gtest-all.o
 	
