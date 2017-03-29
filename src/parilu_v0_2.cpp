@@ -44,17 +44,14 @@ data_PariLU_v0_2( data_d_matrix* A,
   
   int iter = 0;
   dataType tol = 1.0e-1;
-  if (reduction < tol) {
-    tol = reduction*Ares;
-  }
+  tol = reduction*Ares;
   printf("tol = %e\n", tol);
   int num_threads = 0;
   
   dataType s = 0.0;
   dataType sp = 0.0;
   dataType tmp = 0.0;
-  dataType step = FLT_MAX; //1.0;
-  //printf("step = %e\n", step);
+  dataType step = FLT_MAX;
   dataType Anorm = 0.0;
   dataType recipAnorm = 0.0;
   
@@ -64,7 +61,6 @@ data_PariLU_v0_2( data_d_matrix* A,
   
   dataType wstart = omp_get_wtime();
   while ( step > tol ) {
-  //while ( iter < 1 ) {
     step = 0.0;
     
     sp = 0.0;

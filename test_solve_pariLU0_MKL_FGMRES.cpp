@@ -304,10 +304,14 @@ int main(int argc, char* argv[])
   //getchar();
   */
 	//normal use case
-	for(i=0;i<N;i++)
-	{
-		computed_solution[i]=0.0;
-		residual[i] = 0.0;
+	#pragma omp parallel 
+  {
+    #pragma omp for nowait
+	  for(i=0;i<N;i++)
+	  {
+	  	computed_solution[i]=0.0;
+	  	residual[i] = 0.0;
+	  }
 	}
 	
 	
