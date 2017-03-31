@@ -25,7 +25,6 @@ GMRESRELTOL=(1.0e-3)
 GMRESRESTART=(2000)
 #GMRESMAXITER=(100 1000 2000)
 GMRESMAXITER=(2000)
-PRECONDCHOICE=(0)
 REDUCTION=(1.0e-1 1.0e-3 1.0e-10 1.0e-15)
 
 RHSFILE=${MATDIR}${RHS}${MATEXT}
@@ -34,6 +33,8 @@ mkdir -p ${LOGDIR}
 #mkdir -p ${OUTDIR}
 for matrix in ${MATRIXLIST[@]}; do
 MATRIXFILE=${MATDIR}${matrix}${MATEXT}
+
+PRECONDCHOICE=(0)
 
 for thread in ${threads[@]}; do
   export OMP_NUM_THREADS=${thread}
