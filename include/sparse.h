@@ -150,6 +150,11 @@ data_z_csr_compressor(
     int *n );
 
 int
+data_rowindex(
+    data_d_matrix *A,
+    int *rowidx );
+
+int
 data_zmconvert(
     data_d_matrix A,
     data_d_matrix *B,
@@ -318,6 +323,13 @@ data_zcheckupperlower(
 int
 data_zmscale(
     data_d_matrix *A,
+    data_scale_t scaling );
+
+int
+data_zmscale_matrix_rhs(
+    data_d_matrix *A,
+    data_d_matrix *b,
+    data_d_matrix *sale_factors,
     data_scale_t scaling );
 
 int
