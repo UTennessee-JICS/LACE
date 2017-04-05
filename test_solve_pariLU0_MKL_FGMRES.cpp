@@ -87,7 +87,9 @@ int main(int argc, char* argv[])
   dataType ompwfgmrestime = 0.0;
   
   if (argc < 4) {
-    printf("Usage %s <matrix> <rhs vector> <output directory> [UNITDIAG] [relative_tolerance] [restart] [maxiter] [precond_choice] [reduction]\n", argv[0] );
+    printf("Usage %s <matrix> <rhs vector> <output directory> ", argv[0] );
+    printf("[diagonal scaling] [relative_tolerance] [restart] ");
+    printf("[maxiter] [precond_choice] [reduction]\n");
     return 1;
   }
   else {
@@ -110,6 +112,8 @@ int main(int argc, char* argv[])
   CHECK( data_z_csr_mtx( &Asparse, sparse_filename ) );
 	data_d_matrix rhs_vector = {Magma_DENSE};
 	rhs_vector.major = MagmaRowMajor;
+	data_d_matrix scaling_factors = {Magma_DENSE};
+	scaling_factors.major = MagmaRowMajor;
 	
 	// Setup rhs
 	if ( strcmp( rhs_filename, "ONES" ) == 0 ) {
@@ -136,7 +140,18 @@ int main(int argc, char* argv[])
   if ( argc >= 5 ) {
     if ( strcmp( argv[4], "UNITDIAG" ) == 0 ) {
       printf("rescaling UNITDIAG\n");
-      data_zmscale( &Asparse, Magma_UNITDIAG );
+      //data_zmscale( &Asparse, Magma_UNITDIAG );
+      data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITDIAG );
+      //data_zwrite_csr( &Asparse );
+    }
+    else if ( strcmp( argv[4], "UNITROWCOL" ) == 0 ) {
+      printf("rescaling UNITDIAG\n");
+      //data_zmscale( &Asparse, Magma_UNITDIAG );
+      scaling_factors.num_rows = Asparse.num_rows;
+      scaling_factors.num_cols = 1;
+      scaling_factors.ld = 1;
+      scaling_factors.nnz = Asparse.num_rows;
+      data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITROWCOL );
       //data_zwrite_csr( &Asparse );
     }
   }

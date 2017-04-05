@@ -26,7 +26,7 @@
     ILU0 Preconditioner
   *******************************************************************************
 
-/*---------------------------------------------------------------------------
+ ---------------------------------------------------------------------------
     Example program for solving non-degenerate system of equations.
     Full functionality of RCI FGMRES solver is exploited. Example shows how
     ILU0 preconditioner accelerates the solver by reducing the number of
