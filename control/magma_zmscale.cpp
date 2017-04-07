@@ -151,8 +151,6 @@ data_zmscale_matrix_rhs(
     
     dataType *tmp=NULL;
     
-    data_d_matrix CSRA={Magma_CSR};
-    
     if( A->num_rows != A->num_cols && scaling != Magma_NOSCALE ){
         printf("%% warning: non-square matrix.\n");
         printf("%% Fallback: no scaling.\n");
@@ -163,7 +161,7 @@ data_zmscale_matrix_rhs(
       
     }
     else {
-      data_rowindex( A, A->rowidx ); 
+      data_rowindex( A, &A->rowidx ); 
     }
     
     if ( scaling == Magma_NOSCALE ) {
@@ -172,7 +170,47 @@ data_zmscale_matrix_rhs(
     }
     else if( A->num_rows == A->num_cols ){
         if ( scaling == Magma_UNITROW ) {
-            // scale to unit rownorm
+            // scale to unit rownorm by rows
+            tmp = (dataType*) calloc( A->num_rows, sizeof(dataType) );
+            for( int z=0; z<A->num_rows; z++ ) {
+                dataType s = 0.0;
+                for( int f=A->row[z]; f<A->row[z+1]; f++ )
+                    s+= A->val[f]*A->val[f];
+                tmp[z] = 1.0/sqrt( s );
+            }        
+            for( int z=0; z<A->nnz; z++ ) {
+                A->val[z] = A->val[z] * tmp[A->rowidx[z]];
+            }
+            for ( int i=0; i<A->num_rows; i++ ) {
+              b->val[i] = b->val[i] * tmp[i];
+            }
+            
+        }
+        else if ( scaling == Magma_UNITDIAG ) {
+            // scale to unit diagonal by rows 
+            tmp = (dataType*) calloc( A->num_rows, sizeof(dataType) );
+            for( int z=0; z<A->num_rows; z++ ) {
+                dataType s = 0.0;
+                for( int f=A->row[z]; f<A->row[z+1]; f++ ) {
+                    if ( A->col[f]== z ) {
+                        s = A->val[f];
+                    }
+                }
+                if ( s == 0.0 ){
+                    printf("%%error: zero diagonal element.\n");
+                    info = DEV_ERR;
+                }
+                tmp[z] = 1.0/s;
+            }
+            for( int z=0; z<A->nnz; z++ ) {
+                A->val[z] = A->val[z] * tmp[A->rowidx[z]];
+            }
+            for ( int i=0; i<A->num_rows; i++ ) {
+              b->val[i] = b->val[i] * tmp[i];
+            }
+        }
+        else if ( scaling == Magma_UNITROWCOL ) {
+            // scale to unit rownorm by rows and columns
             tmp = (dataType*) calloc( A->num_rows, sizeof(dataType) );
             for( int z=0; z<A->num_rows; z++ ) {
                 dataType s = 0.0;
@@ -184,47 +222,19 @@ data_zmscale_matrix_rhs(
                 A->val[z] = A->val[z] * tmp[A->col[z]] * tmp[A->rowidx[z]];
             }
             scaling_factors->val = (dataType*) calloc( A->num_rows, sizeof(dataType) );
-            for ( int z=0; z<A->num_rows; z++ ) {
-              scaling_factors->val[z] = tmp[z];
-              b->val[z] = b->val[z] * tmp[z];
+            for ( int i=0; i<A->num_rows; i++ ) {
+              scaling_factors->val[i] = tmp[i];
+              b->val[i] = b->val[i] * tmp[i];
             }
             
         }
-        else if (scaling == Magma_UNITDIAG ) {
-            // scale to unit diagonal by row and column scaling
+        else if ( scaling == Magma_UNITDIAGCOL ) {
+            // scale to unit diagonal by rows and columns 
             tmp = (dataType*) calloc( A->num_rows, sizeof(dataType) );
             for( int z=0; z<A->num_rows; z++ ) {
                 dataType s = 0.0;
                 for( int f=A->row[z]; f<A->row[z+1]; f++ ) {
                     if ( A->col[f]== z ) {
-                        // add some identity matrix
-                        //A->val[f] = A->val[f] +  MAGMA_Z_MAKE( 100000.0, 0.0 );
-                        s = A->val[f];
-                    }
-                }
-                if ( s == 0.0 ){
-                    printf("%%error: zero diagonal element.\n");
-                    info = DEV_ERR;
-                }
-                //tmp[z] = 1.0/sqrt( s );
-                tmp[z] = 1.0/s;
-            }
-            for( int z=0; z<A->nnz; z++ ) {
-                A->val[z] = A->val[z] * tmp[A->rowidx[z]];
-            }
-            for ( int z=0; z<A->num_rows; z++ ) {
-              b->val[z] = b->val[z] * tmp[z];
-            }
-        }
-        else if (scaling == Magma_UNITROWCOL ) {
-            // scale to unit diagonal by row and column scaling
-            tmp = (dataType*) calloc( A->num_rows, sizeof(dataType) );
-            for( int z=0; z<A->num_rows; z++ ) {
-                dataType s = 0.0;
-                for( int f=A->row[z]; f<A->row[z+1]; f++ ) {
-                    if ( A->col[f]== z ) {
-                        // add some identity matrix
-                        //A->val[f] = A-s>val[f] +  MAGMA_Z_MAKE( 100000.0, 0.0 );
                         s = A->val[f];
                     }
                 }
@@ -238,9 +248,9 @@ data_zmscale_matrix_rhs(
                 A->val[z] = A->val[z] * tmp[A->col[z]] * tmp[A->rowidx[z]];
             }
             scaling_factors->val = (dataType*) calloc( A->num_rows, sizeof(dataType) );
-            for ( int z=0; z<A->num_rows; z++ ) {
-              scaling_factors->val[z] = tmp[z];
-              b->val[z] = b->val[z] * tmp[z];
+            for ( int i=0; i<A->num_rows; i++ ) {
+              scaling_factors->val[i] = tmp[i];
+              b->val[i] = b->val[i] * tmp[i];
             }
         }
         else {
@@ -252,20 +262,8 @@ data_zmscale_matrix_rhs(
         printf( "%%error: scaling not supported.\n" );
         info = DEV_ERR_NOT_SUPPORTED;
     }
-    //}
-    //else {
-    //    data_storage_t A_storage = A->storage_type;
-    //    data_zmconvert( *A, &CSRA, A->storage_type, Magma_CSRCOO );
-    //
-    //    data_zmscale( &CSRA, scaling );
-    //
-    //    data_zmfree( A );
-    //    data_zmconvert( CSRA, A, Magma_CSRCOO, A_storage );
-    //}
     
-//cleanup:
     free( tmp );
-    data_zmfree( &CSRA );
     return info;
 }
 

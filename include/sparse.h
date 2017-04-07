@@ -152,7 +152,7 @@ data_z_csr_compressor(
 int
 data_rowindex(
     data_d_matrix *A,
-    int *rowidx );
+    int **rowidx );
 
 int
 data_zmconvert(

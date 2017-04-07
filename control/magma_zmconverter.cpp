@@ -140,17 +140,17 @@ extern "C"
 int
 data_rowindex(
     data_d_matrix *A,
-    int *rowidx ) 
+    int **rowidx ) 
 {
   int info = 0;
-  rowidx = (int*) calloc( A->nnz, sizeof(int) );
+  (*rowidx) = (int*) calloc( A->nnz, sizeof(int) );
   int rowlimit = A->num_rows;
   if (A->pad_rows > 0 && A->pad_cols > 0) {
      rowlimit = A->pad_rows;
   }
   for(int i=0; i < rowlimit; i++) {
       for(int j=A->row[i]; j < A->row[i+1]; j++) {
-          rowidx[j] = i;
+          (*rowidx)[j] = i;
       }
   }
   return info;

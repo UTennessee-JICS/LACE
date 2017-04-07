@@ -136,23 +136,39 @@ int main(int argc, char* argv[])
 	  CHECK( data_z_dense_mtx( &rhs_vector, rhs_vector.major, rhs_filename ) );
   }
   
-  // Scale matrix to have a unit diagonal
+  // Optionally Scale matrix 
   if ( argc >= 5 ) {
-    if ( strcmp( argv[4], "UNITDIAG" ) == 0 ) {
-      printf("rescaling UNITDIAG\n");
-      //data_zmscale( &Asparse, Magma_UNITDIAG );
+    if ( strcmp( argv[4], "UNITROW" ) == 0 ) {
+      printf("rescaling UNITROW ");
+      data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITROW );
+      data_zwrite_csr( &Asparse );
+      printf("done.\n");
+    }
+    else if ( strcmp( argv[4], "UNITDIAG" ) == 0 ) {
+      printf("rescaling UNITDIAG ");
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITDIAG );
-      //data_zwrite_csr( &Asparse );
+      data_zwrite_csr( &Asparse );
+      printf("done.\n");
     }
     else if ( strcmp( argv[4], "UNITROWCOL" ) == 0 ) {
-      printf("rescaling UNITDIAG\n");
-      //data_zmscale( &Asparse, Magma_UNITDIAG );
+      printf("rescaling UNITROWCOL\n");
       scaling_factors.num_rows = Asparse.num_rows;
       scaling_factors.num_cols = 1;
       scaling_factors.ld = 1;
       scaling_factors.nnz = Asparse.num_rows;
+      scaling_factors.val = NULL;
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITROWCOL );
-      //data_zwrite_csr( &Asparse );
+      data_zwrite_csr( &Asparse );
+    }
+    else if ( strcmp( argv[4], "UNITDIAGCOL" ) == 0 ) {
+      printf("rescaling UNITDIAG\n");
+      scaling_factors.num_rows = Asparse.num_rows;
+      scaling_factors.num_cols = 1;
+      scaling_factors.ld = 1;
+      scaling_factors.nnz = Asparse.num_rows;
+      scaling_factors.val = NULL;
+      data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITDIAGCOL );
+      data_zwrite_csr( &Asparse );
     }
   }
   
@@ -421,7 +437,6 @@ int main(int argc, char* argv[])
       #pragma omp for nowait
       for (int i=0; i<LU.nnz; i++) {
       	bilu0[i] = LU.val[i];     // Use PariLU factorization
-      	//bilu0[i] = bilu0MKL[i]; // Use MKL's csrilu0 factorization
       }
     }
   }
@@ -430,8 +445,16 @@ int main(int argc, char* argv[])
     {
       #pragma omp for nowait
       for (int i=0; i<Asparse.nnz; i++) {
-      	//bilu0[i] = LU.val[i]; // Use PariLU factorization
       	bilu0[i] = bilu0MKL[i]; // Use MKL's csrilu0 factorization
+      }
+    }
+  }
+  else if ( user_precond_choice == 2 ) {
+    #pragma omp parallel 
+    {
+      #pragma omp for nowait
+      for (int i=0; i<Asparse.nnz; i++) {
+      	bilu0[i] = Asparse.val[i]; // Use tril(A) + triu(A) factorization
       }
     }
   }
@@ -714,6 +737,23 @@ COMPLETE:   ipar[12]=0;
 
 	//printf("\nThe following solution has been obtained: \n");
 	
+	// Scale the computed solution if necessary
+  if ( argc >= 5 ) {
+    if ( ( strcmp( argv[4], "UNITROWCOL" ) == 0 ) 
+          || ( strcmp( argv[4], "UNITDIAGCOL" ) == 0 ) ){
+      printf("rescaling computed solution %s\n", argv[4]);
+      for ( int i=0; i<N; i++ ) {
+        computed_solution[i] = computed_solution[i] * scaling_factors.val[i];
+      }
+    }
+  }
+  
+  for(i=0;i<N;i++) {
+		printf("computed_solution_%s(%d) = %e;\n", argv[4], i+1, computed_solution[i]);
+	}
+  
+	
+	
 	final_residual_nrm2 = dnrm2(&ivar, residual, &incx );
 	//solution_error_nrm2 = 0.0;
 	//for (i=0;i<N;i++)
@@ -849,5 +889,6 @@ FAILED1:
 	data_zmfree( &L );
 	data_zmfree( &U );
 	data_zmfree( &LU );
+	data_zmfree( &scaling_factors );
 	return 0;
 }
