@@ -630,11 +630,11 @@ data_zmconvert(
           // void mkl_dcsrbsr (const MKL_INT *job , const MKL_INT *m , const MKL_INT *mblk ,
           // const MKL_INT *ldabsr , double *acsr , MKL_INT *ja , MKL_INT *ia , double *absr ,
           // MKL_INT *jab , MKL_INT *iab , MKL_INT *info );
-          int info;
+          int infobsr;
           mkl_dcsrbsr( job, &A.num_rows,
                        &B->blocksize , &B->ldblock,
                        A.val, A.col, A.row,
-                       B->val, B->col, B->row, &info );
+                       B->val, B->col, B->row, &infobsr );
           assert(B->row[B->num_rows] == B->numblocks);
           
           
@@ -1129,10 +1129,7 @@ data_zmconvert(
           //printf("\n%%dense to denseD ");
           B->storage_type = Magma_DENSED;
           B->diagorder_type = Magma_VALUE;
-          if (A.pad_rows > 0 && A.pad_cols > 0)
-            B->nnz = MIN(A.pad_rows, A.pad_cols);
-          else
-            B->nnz = MIN(A.num_rows, A.num_cols);
+          B->nnz = MIN(rowlimit, collimit);
           B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
           
           for(int i=0; i < B->nnz; i++ ) {

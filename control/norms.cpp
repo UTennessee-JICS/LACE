@@ -179,13 +179,19 @@ data_zfrobenius_LUresidual(
   dataType *res)
 {
   
+  int rowlimit = A.num_rows;
+  int collimit = A.num_cols;
+  if (A.pad_rows > 0 && A.pad_cols > 0) {
+     rowlimit = A.pad_rows;
+     collimit = A.pad_cols;
+  }
+  
   // fill diagonal of L
   if (L.diagorder_type == Magma_NODIAG) {
     #pragma omp parallel  
     #pragma omp for nowait
-    for (int i=0; i<A.num_rows; i++) {
+    for (int i=0; i<rowlimit; i++) {
       L.val[ i*A.ld + i ] = 1.0;
-      //U.val[ i*A.ld + i ] = D.val[ i ];
     }
   }
   
@@ -195,12 +201,14 @@ data_zfrobenius_LUresidual(
   data_d_matrix B = {Magma_DENSE};
   B.num_rows = A.num_rows;
   B.num_cols = A.num_cols;
+  B.pad_rows = A.pad_rows;
+  B.pad_cols = A.pad_cols;
   B.ld = A.ld;
   B.nnz = A.nnz;
-  B.val = (dataType*) calloc( B.num_rows*B.num_cols, sizeof(dataType) );
+  B.val = (dataType*) calloc( rowlimit*collimit, sizeof(dataType) );
   if (U.major == MagmaRowMajor) {
     data_dgemm_mkl( L.major, MagmaNoTrans, MagmaNoTrans, 
-      A.num_rows, A.num_rows, A.num_cols, 
+      rowlimit, rowlimit, collimit, 
       alpha, L.val, L.ld, U.val, U.ld, 
       beta, B.val, B.ld );
   }
@@ -216,7 +224,7 @@ data_zfrobenius_LUresidual(
     //printf("after data_zmconvert(U, &C, Magma_DENSEU, Magma_DENSEU);\n");
     //data_zdisplay_dense( &C );
     data_dgemm_mkl( L.major, MagmaNoTrans, MagmaNoTrans, 
-      A.num_rows, A.num_rows, A.num_cols, 
+      rowlimit, rowlimit, collimit, 
       alpha, L.val, L.ld, C.val, C.ld, 
       beta, B.val, B.ld );
       data_zmfree( &C );
@@ -235,6 +243,13 @@ data_zfrobenius_inplaceLUresidual(
   dataType *res)
 {
   
+  int rowlimit = A.num_rows;
+  int collimit = A.num_cols;
+  if (A.pad_rows > 0 && A.pad_cols > 0) {
+     rowlimit = A.pad_rows;
+     collimit = A.pad_cols;
+  }
+  
   // Separate L and U
   data_d_matrix L = {Magma_DENSEL};
   L.diagorder_type = Magma_UNITY;
@@ -251,11 +266,13 @@ data_zfrobenius_inplaceLUresidual(
   data_d_matrix B = {Magma_DENSE};
   B.num_rows = A.num_rows;
   B.num_cols = A.num_cols;
+  B.pad_rows = A.pad_rows;
+  B.pad_cols = A.pad_cols;
   B.ld = A.ld;
   B.nnz = A.nnz;
   B.val = (dataType*) calloc( B.num_rows*B.num_cols, sizeof(dataType) );
   data_dgemm_mkl( L.major, MagmaNoTrans, MagmaNoTrans, 
-    A.num_rows, A.num_rows, A.num_cols, 
+    rowlimit, rowlimit, collimit, 
     alpha, L.val, L.ld, U.val, U.ld, 
     beta, B.val, B.ld );
   data_zfrobenius_diff(A, B, res);
