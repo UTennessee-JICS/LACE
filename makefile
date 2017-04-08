@@ -14,7 +14,7 @@ EXECUTABLE=exampleGoogleTest_01
 all: gtest-all.o gmock-all.o exampleGoogleTest_01 exampleGoogleTest_02 \
   test_matrix_io test_vector_io \
 	test_matrix_ops test_spmatrix_ops \
-	test_LU_ops test_LU test_MKL_LU \
+	test_LU_ops test_LU test_LU_larnv test_MKL_LU \
 	test_iLU_ops test_iLU test_MKL_iLU post_iLU \
 	test_MKL_iLU0_FGMRES test_pariLU0_MKL_FGMRES \
 	test_read_pariLU0_MKL_FGMRES test_read_rhs_pariLU0_MKL_FGMRES \
@@ -89,6 +89,21 @@ test_LU: test_LU.cpp libgmock.a
 	src/parlu_v2_0.cpp src/parlu_v3_0.cpp \
 	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
 	-o $@		
+	
+test_LU_larnv: test_LU_larnv.cpp libgmock.a
+	$(CC) $(LDFLAGS2) $(CFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	test_LU_larnv.cpp control/constants.cpp control/magma_zmio.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/sparse_sub.cpp control/sparse_tilepattern.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	src/parlu_v0_0.cpp src/parlu_v0_1.cpp \
+	src/parlu_v1_0.cpp src/parlu_v1_1.cpp src/parlu_v1_2.cpp src/parlu_v1_3.cpp \
+	src/parlu_v2_0.cpp src/parlu_v3_0.cpp \
+	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
+	-o $@			
 	
 test_MKL_LU: test_MKL_LU.cpp libgmock.a
 	$(CC) $(LDFLAGS2) $(CFLAGS) \
@@ -217,7 +232,21 @@ test_solve_pariLU0_MKL_FGMRES: test_solve_pariLU0_MKL_FGMRES.cpp
 	
 test_solve_pariLU0_MKL_FGMRES_knl: test_solve_pariLU0_MKL_FGMRES.cpp
 	$(CC) $(CFLAGSKNL) \
-	-L${MKLROOT}/lib -I${MKLROOT}/include -mmic \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	control/constants.cpp control/magma_zmio.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	src/parilu_v0_2.cpp \
+	test_solve_pariLU0_MKL_FGMRES.cpp \
+	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+	-o $@
+
+test_solve_pariLU0_MKL_FGMRES_knl_link: test_solve_pariLU0_MKL_FGMRES.cpp
+	$(CC) $(CFLAGSKNL) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
 	control/constants.cpp control/magma_zmio.cpp \
 	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
 	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
@@ -247,7 +276,7 @@ gmock-all.o: ${GMOCK_DIR}/src/gmock-all.cc
 	
 clean:
 	rm exampleGoogleTest_01 exampleGoogleTest_02 test_matrix_io test_vector_io \
-				test_matrix_ops test_spmatrix_ops test_LU_ops test_LU test_MKL_LU \
+				test_matrix_ops test_spmatrix_ops test_LU_ops test_LU test_LU_larnv test_MKL_LU \
 				test_iLU_ops test_iLU test_MKL_iLU post_iLU test_MKL_iLU0_FGMRES \
 				test_pariLU0_MKL_FGMRES test_read_pariLU0_MKL_FGMRES \
 				test_read_rhs_pariLU0_MKL_FGMRES test_solve_pariLU0_MKL_FGMRES \
@@ -255,7 +284,7 @@ clean:
 cleanall:
 	rm *.o exampleGoogleTest_01 exampleGoogleTest_02 test_matrix_io \ 
 				test_vector_io test_matrix_ops test_spmatrix_ops test_LU_ops \
-				test_LU test_MKL_LU test_iLU_ops test_iLU test_MKL_iLU post_iLU \
+				test_LU test_MKL_LU test_iLU_ops test_iLU test_LU_larnv test_MKL_iLU post_iLU \
 				test_MKL_iLU0_FGMRES test_pariLU0_MKL_FGMRES \
 				test_read_pariLU0_MKL_FGMRES test_read_rhs_pariLU0_MKL_FGMRES \
 				test_solve_pariLU0_MKL_FGMRES \
