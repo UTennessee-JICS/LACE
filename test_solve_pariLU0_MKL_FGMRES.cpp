@@ -152,21 +152,11 @@ int main(int argc, char* argv[])
     }
     else if ( strcmp( argv[4], "UNITROWCOL" ) == 0 ) {
       printf("rescaling UNITROWCOL\n");
-      scaling_factors.num_rows = Asparse.num_rows;
-      scaling_factors.num_cols = 1;
-      scaling_factors.ld = 1;
-      scaling_factors.nnz = Asparse.num_rows;
-      scaling_factors.val = NULL;
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITROWCOL );
       data_zwrite_csr( &Asparse );
     }
     else if ( strcmp( argv[4], "UNITDIAGCOL" ) == 0 ) {
       printf("rescaling UNITDIAG\n");
-      scaling_factors.num_rows = Asparse.num_rows;
-      scaling_factors.num_cols = 1;
-      scaling_factors.ld = 1;
-      scaling_factors.nnz = Asparse.num_rows;
-      scaling_factors.val = NULL;
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITDIAGCOL );
       data_zwrite_csr( &Asparse );
     }

@@ -123,7 +123,7 @@ data_zmscale(
     Purpose
     -------
 
-    Scales a matrix and a right hand side vector.
+    Scales a matrix and a right hand side vector of a Ax = b system.
 
     Arguments
     ---------
@@ -131,6 +131,15 @@ data_zmscale(
     @param[in,out]
     A           data_d_matrix*
                 input/output matrix
+                
+    @param[in,out]
+    b           data_d_matrix*
+                input/output right hand side vector    
+                
+    @param[out]
+    scaling_factors
+                data_d_matrix*
+                output scaling factors vector             
 
     @param[in]
     scaling     data_scale_t
@@ -221,6 +230,11 @@ data_zmscale_matrix_rhs(
             for( int z=0; z<A->nnz; z++ ) {
                 A->val[z] = A->val[z] * tmp[A->col[z]] * tmp[A->rowidx[z]];
             }
+            scaling_factors->num_rows = A->num_rows;
+            scaling_factors->num_cols = 1;
+            scaling_factors->ld = 1;
+            scaling_factors->nnz = A->num_rows;
+            scaling_factors->val = NULL;
             scaling_factors->val = (dataType*) calloc( A->num_rows, sizeof(dataType) );
             for ( int i=0; i<A->num_rows; i++ ) {
               scaling_factors->val[i] = tmp[i];
@@ -247,6 +261,11 @@ data_zmscale_matrix_rhs(
             for( int z=0; z<A->nnz; z++ ) {
                 A->val[z] = A->val[z] * tmp[A->col[z]] * tmp[A->rowidx[z]];
             }
+            scaling_factors->num_rows = A->num_rows;
+            scaling_factors->num_cols = 1;
+            scaling_factors->ld = 1;
+            scaling_factors->nnz = A->num_rows;
+            scaling_factors->val = NULL;
             scaling_factors->val = (dataType*) calloc( A->num_rows, sizeof(dataType) );
             for ( int i=0; i<A->num_rows; i++ ) {
               scaling_factors->val[i] = tmp[i];
