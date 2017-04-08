@@ -130,11 +130,15 @@ data_ParLU_v1_2( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
   
   // Fill diagonal elements
   #pragma omp parallel  
-  #pragma omp for nowait
-  for (int i=0; i<row_limit; i++) {
-    //L->val[ i*L->ld + i ] = 1.0;
-    U->val[ i*L->ld + i ] = 1.0/D.val[ i ];
+  {
+    #pragma omp for nowait
+    for (int i=0; i<row_limit; i++) {
+      L->val[ i*L->ld + i ] = 1.0;
+      U->val[ i*U->ld + i ] = 1.0/D.val[ i ];
+    }
   }
+  L->diagorder_type = Magma_UNITY;
+  U->diagorder_type = Magma_VALUE;
   
   printf("%% ParLU v1.2 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
     num_threads, iter, wend-wstart, ompwtime );
