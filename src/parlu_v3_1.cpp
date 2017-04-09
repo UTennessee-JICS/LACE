@@ -10,6 +10,26 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
+#define MY_CALLOC(ptr, nmemb) my_calloc2((void **) &(ptr), nmemb, sizeof(*(ptr)), #ptr, __FILE__, __LINE__)
+
+static inline void my_calloc2(void **ptr, const size_t nmemb, const size_t size,
+                       const char *name, const char *file, const int line)
+{
+  if ((*ptr = calloc(nmemb, size)) == NULL)
+  {
+    fprintf(stderr, 
+            "ERROR (memory): Unable to allocate memory for %s (%s, line %d)\n", 
+            name, file, line);
+#ifdef USING_MPI
+    MPI_Abort(MPI_COMM_WORLD, -1);
+#else
+    exit(-1);
+#endif
+  }
+}
+
+
 extern "C" 
 void
 data_ParLU_v3_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile ) 
@@ -68,7 +88,8 @@ data_ParLU_v3_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
     num_threads = omp_get_num_threads();
   }
   dataType *mworkspace;
-  mworkspace = (dataType*) calloc( (tmpsize*num_threads), sizeof(dataType) );
+  //mworkspace = (dataType*) calloc( (tmpsize*num_threads), sizeof(dataType) );
+  MY_CALLOC( mworkspace, (tmpsize*num_threads) ); 
   
   data_zfrobenius(*A, &Anorm);
   printf("%% Anorm = %e\n", Anorm);

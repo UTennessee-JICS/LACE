@@ -76,8 +76,8 @@ test_LU_ops: test_LU_operations.cpp libgmock.a
 	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
 	-o $@	
 	
-test_LU: test_LU.cpp libgmock.a
-	$(CC) $(LDFLAGS2) $(CFLAGS) \
+test_LU: test_LU.cpp
+	$(CC) $(CFLAGS) \
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
 	test_LU.cpp control/constants.cpp control/magma_zmio.cpp \
 	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
@@ -121,8 +121,8 @@ test_LU_larnv_knl: test_LU_larnv.cpp
 	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@			
 	
-test_MKL_LU: test_MKL_LU.cpp libgmock.a
-	$(CC) $(LDFLAGS2) $(CFLAGS) \
+test_MKL_LU: test_MKL_LU.cpp
+	$(CC) $(CFLAGS) \
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
 	test_MKL_LU.cpp control/constants.cpp control/magma_zmio.cpp \
 	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
@@ -132,6 +132,30 @@ test_MKL_LU: test_MKL_LU.cpp libgmock.a
 	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
 	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
 	-o $@		
+
+test_MKL_LU_larnv: test_MKL_LU_larnv.cpp
+	$(CC) $(CFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	test_MKL_LU_larnv.cpp control/constants.cpp control/magma_zmio.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/sparse_sub.cpp control/sparse_tilepattern.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
+	-o $@			
+
+test_MKL_LU_larnv_knl: test_MKL_LU_larnv.cpp
+	$(CC) $(CFLAGSKNL) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	test_MKL_LU_larnv.cpp control/constants.cpp control/magma_zmio.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/sparse_sub.cpp control/sparse_tilepattern.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
+	-o $@			
 	
 test_iLU_ops: test_iLU_operations.cpp libgmock.a
 	$(CC) $(LDFLAGS2) $(CFLAGS) \

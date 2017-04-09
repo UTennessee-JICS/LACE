@@ -20,8 +20,8 @@ int main(int argc, char* argv[])
   // begin with a square dense matrix A
   //char* sparse_filename;
   //char* sparse_basename;
-  char sparse_name[256];
-  char* output_dir;
+  //char sparse_name[256];
+  char output_dir[256];
   char output_basename[256];
   char output_L[256];
   char output_U[256];
@@ -35,12 +35,16 @@ int main(int argc, char* argv[])
   else {
     dim = atoi( argv[1] );
     tile = atoi( argv[2] );
-    output_dir = argv[3];
+    //output_dir = argv[3];
+    strcpy( output_dir, argv[3] );
     printf("Matrix dim is %d \n", dim ); 
     printf("tile size is %d \n", tile ); 
     printf("Output directory is %s\n", output_dir );
     strcpy( output_basename, output_dir );
-    strcat( output_basename, sparse_name );
+    strcat( output_basename, "LU_larnv_" );
+    strcat( output_basename, argv[1] );
+    strcat( output_basename, "_" );
+    strcat( output_basename, argv[2] );
     printf("Output file base name is %s\n", output_basename );
   }
   //char sparse_filename[] = "testing/matrices/Trefethen_20.mtx";
@@ -105,7 +109,7 @@ int main(int argc, char* argv[])
   data_d_matrix L = {Magma_DENSEL};
   data_d_matrix U = {Magma_DENSEU};
   dataType Adiff = 0.0;
-
+/*
   // =========================================================================
   // ParLU v0.0
   // =========================================================================
@@ -396,7 +400,7 @@ int main(int argc, char* argv[])
   // =========================================================================
   data_zmfree( &A );
   data_zmconvert( B, &A, Magma_DENSE, Magma_DENSE );  // reset A 
-  
+*/  
   // =========================================================================
   // ParLU v3.1
   // =========================================================================
