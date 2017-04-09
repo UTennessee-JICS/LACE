@@ -20,12 +20,16 @@ data_ParLU_v3_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
   // Separate the strictly lower, strictly upper, and diagonal elements 
   // into L, U, and D respectively.
   L->diagorder_type = Magma_NODIAG;
+  L->major = MagmaRowMajor;
   data_zmconvert(*A, L, Magma_DENSE, Magma_DENSEL);
+  //data_zdisplay_dense( L );
   
   U->diagorder_type = Magma_NODIAG;
   // store U in column major
   //U->major = MagmaColMajor;
+  U->major = MagmaRowMajor;
   data_zmconvert(*A, U, Magma_DENSE, Magma_DENSEU);
+  //data_zdisplay_dense( U );
   
   data_d_matrix D = {Magma_DENSED};
   data_zmconvert(*A, &D, Magma_DENSE, Magma_DENSED);
@@ -34,7 +38,9 @@ data_ParLU_v3_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
   #pragma omp parallel  
   #pragma omp for nowait
   for (int i=0; i<D.nnz; i++) {
-    D.val[ i ] /= 1.0;
+    D.val[ i ] = 1.0/D.val[ i ];
+    if( isfinite( D.val[ i ] ) == 0 )
+      printf("[%d] D=%e\n", i, D.val[ i ] );
   }
   
   int row_limit = A->num_rows;
@@ -43,6 +49,8 @@ data_ParLU_v3_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
     row_limit = A->pad_rows;
     col_limit = A->pad_cols;
   }
+  
+  const int tmpsize = tile*tile;
   
   // ParLU element wise
   int iter = 0;
@@ -60,8 +68,8 @@ data_ParLU_v3_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
   printf("%% Anorm = %e\n", Anorm);
   
   dataType wstart = omp_get_wtime();
-  while ( step > tol && iter < 100 ) {
-  //while ( iter < 10 ) {  
+  while ( step > tol ) {
+  //while ( iter < 1 ) {  
     step = 0.0;
     #pragma omp parallel private(tmp)
     {
@@ -70,11 +78,13 @@ data_ParLU_v3_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
       for (int ti=0; ti<row_limit; ti += tile) {
          for (int tj=0; tj<col_limit; tj += tile) {
            
+           int span = MIN( (ti+tile), (tj+tile) );
+           dataType C[tmpsize];
+           data_dgemm_mkl( L->major, MagmaNoTrans, MagmaNoTrans, tile, tile, span, 
+             alpha, &L->val[ti*L->ld], L->ld, 
+             &U->val[tj], U->ld, beta, C, tile );
+           
            if (ti>tj) { // strictly L tile
-             dataType C[tile*tile];
-             data_dgemm_mkl( L->major, MagmaNoTrans, MagmaNoTrans, tile, tile, tj+tile, 
-               alpha, &L->val[ti*L->ld], L->ld, 
-               &U->val[tj], U->ld, beta, C, tile);
              for (int i=ti; i<ti+tile; i++) {
                for (int j=tj; j<tj+tile; j++) {
                  tmp = (A->val[ i*A->ld + j ] - C[ (i-ti)*tile + (j-tj) ])*D.val[ j ];
@@ -82,12 +92,9 @@ data_ParLU_v3_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
                  L->val[ i*A->ld + j ] = tmp;
                }
              }
+             
            }
            else if (ti==tj) { // diagonal tile with L and U elements
-             dataType C[tile*tile];
-             data_dgemm_mkl( L->major, MagmaNoTrans, MagmaNoTrans, tile, tile, tj+tile, 
-               alpha, &L->val[ti*L->ld], L->ld, 
-               &U->val[tj], U->ld, beta, C, tile);
              for (int i=ti; i<ti+tile; i++) {
                for (int j=tj; j<tj+tile; j++) {
                  if (i>j) {
@@ -110,10 +117,6 @@ data_ParLU_v3_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
              
            }
            else { // strictly U tile
-             dataType C[tile*tile];
-             data_dgemm_mkl( L->major, MagmaNoTrans, MagmaNoTrans, tile, tile, tj+tile, 
-               alpha, &L->val[ti*L->ld], L->ld, 
-               &U->val[tj], U->ld, beta, C, tile);
              for (int i=ti; i<ti+tile; i++) {
                for (int j=tj; j<tj+tile; j++) {
                  tmp = (A->val[ i*A->ld + j ] - C[ (i-ti)*tile + (j-tj) ]);
@@ -121,6 +124,7 @@ data_ParLU_v3_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
                  U->val[ i*A->ld + j ] = tmp;
                }
              }
+             
            }
 
          }

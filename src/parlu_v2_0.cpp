@@ -25,6 +25,7 @@ data_ParLU_v2_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
   U->diagorder_type = Magma_NODIAG;
   // store U in column major
   //U->major = MagmaColMajor;
+  U->major = MagmaRowMajor;
   data_zmconvert(*A, U, Magma_DENSE, Magma_DENSEU);
   
   data_d_matrix D = {Magma_DENSED};
@@ -34,7 +35,7 @@ data_ParLU_v2_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
   #pragma omp parallel  
   #pragma omp for nowait
   for (int i=0; i<D.nnz; i++) {
-    D.val[ i ] /= 1.0;
+    D.val[ i ] = 1.0/D.val[ i ];
   }
   
   int row_limit = A->num_rows;
