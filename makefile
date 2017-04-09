@@ -101,7 +101,7 @@ test_LU_larnv: test_LU_larnv.cpp libgmock.a
 	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
 	src/parlu_v0_0.cpp src/parlu_v0_1.cpp \
 	src/parlu_v1_0.cpp src/parlu_v1_1.cpp src/parlu_v1_2.cpp src/parlu_v1_3.cpp \
-	src/parlu_v2_0.cpp src/parlu_v3_0.cpp \
+	src/parlu_v2_0.cpp src/parlu_v2_1.cpp src/parlu_v3_0.cpp \
 	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
 	-o $@			
 	
