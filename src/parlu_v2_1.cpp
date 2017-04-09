@@ -81,7 +81,7 @@ data_ParLU_v2_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
            
            int thread_num = omp_get_thread_num(); 
            //printf("ti=%d tj=%d thread_num=%d\n", ti, tj, thread_num);
-           dataType *vtmp = &vworkspace[tile*thread_num];
+           dataType *vtmp = &(vworkspace[tile*thread_num]);
            
            if (ti>tj) { // strictly L tile
              //dataType vtmp[tile];

@@ -85,11 +85,11 @@ data_ParLU_v3_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
       for (int ti=0; ti<row_limit; ti += tile) {
          for (int tj=0; tj<col_limit; tj += tile) {
            
+           int span = MIN( (ti+tile), (tj+tile) );
+           
            int thread_num = omp_get_thread_num(); 
            //printf("ti=%d tj=%d thread_num=%d\n", ti, tj, thread_num);
-           dataType *C = &mworkspace[tmpsize*thread_num];
-           
-           int span = MIN( (ti+tile), (tj+tile) );
+           dataType *C = &(mworkspace[tmpsize*thread_num]);
            //dataType C[tmpsize];
            data_dgemm_mkl( L->major, MagmaNoTrans, MagmaNoTrans, tile, tile, span, 
              alpha, &L->val[ti*L->ld], L->ld, 
