@@ -91,8 +91,8 @@ test_LU: test_LU.cpp libgmock.a
 	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
 	-o $@		
 	
-test_LU_larnv: test_LU_larnv.cpp libgmock.a
-	$(CC) $(LDFLAGS2) $(CFLAGS) \
+test_LU_larnv: test_LU_larnv.cpp
+	$(CC) $(CFLAGS) \
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
 	test_LU_larnv.cpp control/constants.cpp control/magma_zmio.cpp \
 	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
