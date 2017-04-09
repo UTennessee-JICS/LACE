@@ -1302,17 +1302,19 @@ data_z_pad_dense(
   int old_nnz = A->num_rows*A->num_cols;
   dataType * valtmp;
   valtmp = (dataType*) malloc( old_nnz*sizeof(dataType) );
-  for( int i = 0; i < old_nnz; ++i ) {
-    valtmp[ i ] = A->val[ i ];
-  }
-  //if ( A->val != NULL ) {
-    free( A->val );
-    //A->val = NULL;
+  //#pragma omp parallel  
+  //{
+  //  #pragma omp for nowait
+    for( int i = 0; i < old_nnz; ++i ) {
+      valtmp[ i ] = A->val[ i ];
+    }
   //}
   
+  free( A->val );
+  
   // round up num_rows and num_cols to smallest size evenly divisible by tile_size
-  A->pad_rows = ceil( float(A->num_rows)/tile_size)*tile_size;
-  A->pad_cols = ceil( float(A->num_cols)/tile_size)*tile_size;
+  A->pad_rows = ceil( float(A->num_rows)/tile_size )*tile_size;
+  A->pad_cols = ceil( float(A->num_cols)/tile_size )*tile_size;
   A->nnz = A->pad_rows*A->pad_cols;
   
   printf("tile_size = %d num_rows = %d pad_rows = %d \n", tile_size, A->num_rows, A->pad_rows);

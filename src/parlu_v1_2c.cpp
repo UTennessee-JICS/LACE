@@ -12,7 +12,7 @@
 
 extern "C" 
 void
-data_ParLU_v1_2( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile ) 
+data_ParLU_v1_2c( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile ) 
 {
   
   data_z_pad_dense(A, tile);
@@ -67,6 +67,10 @@ data_ParLU_v1_2( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
   dataType Anorm = 0.0;
  
   int num_threads = 0;
+  //int ti = 0;
+  //int tj = 0;
+  //int i = 0;
+  //int j = 0;
   
   data_zfrobenius(*A, &Anorm);
   printf("%% Anorm = %e\n", Anorm);
@@ -75,11 +79,13 @@ data_ParLU_v1_2( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
   while ( step > tol ) {
   //while ( iter < 10 ) {  
     step = 0.0;
+    //#pragma omp parallel private(sumL, sumU, tmp, ti, tj, i, j)
     #pragma omp parallel private(sumL, sumU, tmp)
     {
       num_threads = omp_get_num_threads();
-      //#pragma omp for collapse(2) reduction(+:step) nowait
-      #pragma omp for schedule(static,1) reduction(+:step) nowait
+      #pragma omp for reduction(+:step) collapse(2) nowait
+      //#pragma omp for private(ti, tj, i, j) reduction(+:step) collapse(2) nowait
+      //#pragma omp for schedule(static,1) reduction(+:step) nowait
       for (int ti=0; ti<row_limit; ti += tile) {
          for (int tj=0; tj<col_limit; tj += tile) {
            for (int i=ti; i<ti+tile; i++) {
@@ -141,7 +147,7 @@ data_ParLU_v1_2( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
   L->diagorder_type = Magma_UNITY;
   U->diagorder_type = Magma_VALUE;
   
-  printf("%% ParLU v1.2 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
+  printf("%% ParLU v1.2c used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
     num_threads, iter, wend-wstart, ompwtime );
   
   data_zmfree( &D );

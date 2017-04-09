@@ -574,6 +574,13 @@ data_ParLU_v1_2(
   int tile );
 
 void
+data_ParLU_v1_2c( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
+void
 data_ParLU_v1_3( 
   data_d_matrix* A, 
   data_d_matrix* L, 

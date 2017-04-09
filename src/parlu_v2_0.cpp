@@ -67,7 +67,7 @@ data_ParLU_v2_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
     #pragma omp parallel private(tmp)
     {
       num_threads = omp_get_num_threads();
-      //#pragma omp for schedule(static,1) collapse(2) reduction(+:step) nowait
+      //#pragma omp for collapse(2) reduction(+:step) nowait
       #pragma omp for schedule(static,1) reduction(+:step) nowait
       for (int ti=0; ti<row_limit; ti += tile) {
          for (int tj=0; tj<col_limit; tj += tile) {
@@ -76,8 +76,8 @@ data_ParLU_v2_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
              dataType vtmp[tile];
              for (int j=tj; j<tj+tile; j++) {
                data_dgemv_mkl( L->major, MagmaNoTrans, tile, tj+tile, 
-                 alpha, &L->val[ti*L->ld], L->ld, 
-                 &U->val[j], U->ld, beta, vtmp, 1 );
+                 alpha, &(L->val[ti*L->ld]), L->ld, 
+                 &(U->val[j]), U->ld, beta, vtmp, 1 );
                for (int i=ti; i<ti+tile; i++) {
                  tmp = (A->val[ i*A->ld + j ] - vtmp[i-ti])*D.val[ j ];
                  step += pow( L->val[ i*A->ld + j ] - tmp, 2 );
@@ -91,8 +91,8 @@ data_ParLU_v2_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
              for (int j=tj; j<tj+tile; j++) {
                  //for (int j=tj; j<tj+tile; j++) {
                data_dgemv_mkl( L->major, MagmaNoTrans, tile, tj+tile, 
-                 alpha, &L->val[ti*L->ld], L->ld, 
-                 &U->val[j], U->ld, beta, vtmp, 1 );
+                 alpha, &(L->val[ti*L->ld]), L->ld, 
+                 &(U->val[j]), U->ld, beta, vtmp, 1 );
                for (int i=ti; i<ti+tile; i++) {
                  if (i>j) {
                    tmp = (A->val[ i*A->ld + j ] - vtmp[i-ti])*D.val[ j ];

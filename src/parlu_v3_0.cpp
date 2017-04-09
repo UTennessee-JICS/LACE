@@ -39,8 +39,6 @@ data_ParLU_v3_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
   #pragma omp for nowait
   for (int i=0; i<D.nnz; i++) {
     D.val[ i ] = 1.0/D.val[ i ];
-    if( isfinite( D.val[ i ] ) == 0 )
-      printf("[%d] D=%e\n", i, D.val[ i ] );
   }
   
   int row_limit = A->num_rows;
@@ -74,7 +72,7 @@ data_ParLU_v3_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
     #pragma omp parallel private(tmp)
     {
       num_threads = omp_get_num_threads();
-      //#pragma omp for schedule(static,1) collapse(2) reduction(+:step) nowait
+      //#pragma omp for collapse(2) reduction(+:step) nowait
       #pragma omp for schedule(static,1) reduction(+:step) nowait
       for (int ti=0; ti<row_limit; ti += tile) {
          for (int tj=0; tj<col_limit; tj += tile) {
@@ -82,8 +80,8 @@ data_ParLU_v3_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
            int span = MIN( (ti+tile), (tj+tile) );
            dataType C[tmpsize];
            data_dgemm_mkl( L->major, MagmaNoTrans, MagmaNoTrans, tile, tile, span, 
-             alpha, &L->val[ti*L->ld], L->ld, 
-             &U->val[tj], U->ld, beta, C, tile );
+             alpha, &(L->val[ti*L->ld]), L->ld, 
+             &(U->val[tj]), U->ld, beta, C, tile );
            
            if (ti>tj) { // strictly L tile
              for (int i=ti; i<ti+tile; i++) {
