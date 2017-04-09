@@ -325,9 +325,9 @@ int main(int argc, char* argv[])
   printf("ParLUv2_1_res = %e\n", Adiff);
   fflush(stdout); 
   strcpy( output_L, output_basename );
-  strcat( output_L, "_LparLUv2_0.mtx" );
+  strcat( output_L, "_LparLUv2_1.mtx" );
   strcpy( output_U, output_basename );
-  strcat( output_U, "_UparLUv2_0.mtx" );
+  strcat( output_U, "_UparLUv2_1.mtx" );
   data_zwrite_dense( L, output_L );
   data_zwrite_dense( U, output_U );
   data_zmfree( &L );
@@ -384,9 +384,9 @@ int main(int argc, char* argv[])
   printf("ParLUv3_0_res = %e\n", Adiff);
   fflush(stdout); 
   strcpy( output_L, output_basename );
-  strcat( output_L, "_LparLUv3_0.mtx" );
+  strcat( output_L, "_LparLUv3_1.mtx" );
   strcpy( output_U, output_basename );
-  strcat( output_U, "_UparLUv3_0.mtx" );
+  strcat( output_U, "_UparLUv3_1.mtx" );
   data_zwrite_dense( L, output_L );
   data_zwrite_dense( U, output_U );
   data_zmfree( &L );
