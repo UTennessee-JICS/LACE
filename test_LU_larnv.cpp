@@ -99,6 +99,13 @@ int main(int argc, char* argv[])
   //data_zwrite_dense( Umkl, output_U );
   data_zmfree( &Amkl );
   fflush(stdout); 
+
+  
+  
+  data_d_matrix L = {Magma_DENSEL};
+  data_d_matrix U = {Magma_DENSEU};
+  dataType Adiff = 0.0;
+/*
   // =========================================================================
   // ParLU v0.0
   // =========================================================================
@@ -205,7 +212,7 @@ int main(int argc, char* argv[])
   data_zmfree( &U );
   fflush(stdout);
   // =========================================================================
-
+*/
   data_zmfree( &A );
   data_zmconvert( B, &A, Magma_DENSE, Magma_DENSE );  // reset A 
   // =========================================================================
@@ -235,7 +242,7 @@ int main(int argc, char* argv[])
   data_zmfree( &U );
   fflush(stdout); 
   // =========================================================================
-
+/*
   data_zmfree( &A );
   data_zmconvert( B, &A, Magma_DENSE, Magma_DENSE );  // reset A 
   // =========================================================================
@@ -265,6 +272,8 @@ int main(int argc, char* argv[])
   data_zmfree( &U );
   fflush(stdout); 
   // =========================================================================
+*/  
+
   data_zmfree( &A );
   data_zmconvert( B, &A, Magma_DENSE, Magma_DENSE );  // reset A 
 
@@ -279,7 +288,7 @@ int main(int argc, char* argv[])
   L = {Magma_DENSEL};
   U = {Magma_DENSEU};
   //tile = 8;
-  // ParLU with dot products replacing summations
+  // ParLU with matrix-vector products replacing summations
   data_ParLU_v2_0( &A, &L, &U, tile);
   // Check ||A-LU||_Frobenius
   data_zfrobenius_LUresidual(A, L, U, &Adiff);
@@ -304,13 +313,28 @@ int main(int argc, char* argv[])
   //
   // Separate the strictly lower, strictly upper, and diagonal elements 
   // into L, U, and D respectively.
-  // Convert U to column major storage.
-  
-  // ParLU with matrix-vector products and a tiled access pattern
-  
-  // Check A-LU
+  // Use a calloc'd workspace for all threads
+  printf("%% ParLU v2.1\n");
+  L = {Magma_DENSEL};
+  U = {Magma_DENSEU};
+  //tile = 8;
+  // ParLU with matrix-vector products replacing summations
+  data_ParLU_v2_1( &A, &L, &U, tile);
   // Check ||A-LU||_Frobenius
+  data_zfrobenius_LUresidual(A, L, U, &Adiff);
+  printf("ParLUv2_1_res = %e\n", Adiff);
+  fflush(stdout); 
+  strcpy( output_L, output_basename );
+  strcat( output_L, "_LparLUv2_0.mtx" );
+  strcpy( output_U, output_basename );
+  strcat( output_U, "_UparLUv2_0.mtx" );
+  data_zwrite_dense( L, output_L );
+  data_zwrite_dense( U, output_U );
+  data_zmfree( &L );
+  data_zmfree( &U );
+  fflush(stdout); 
   // =========================================================================
+  
   data_zmfree( &A );
   data_zmconvert( B, &A, Magma_DENSE, Magma_DENSE );  // reset A 
   // =========================================================================
@@ -324,7 +348,7 @@ int main(int argc, char* argv[])
   L = {Magma_DENSEL};
   U = {Magma_DENSEU};
   //tile = 8;
-  // ParLU with dot products replacing summations
+  // ParLU with matrix-matrix products replacing summations
   data_ParLU_v3_0( &A, &L, &U, tile);
   // Check ||A-LU||_Frobenius
   data_zfrobenius_LUresidual(A, L, U, &Adiff);
@@ -341,6 +365,37 @@ int main(int argc, char* argv[])
   fflush(stdout);
   // =========================================================================
   data_zmfree( &A );
+  data_zmconvert( B, &A, Magma_DENSE, Magma_DENSE );  // reset A 
+  
+  // =========================================================================
+  // ParLU v3.1
+  // =========================================================================
+  //
+  // Separate the strictly lower, strictly upper, and diagonal elements 
+  // into L, U, and D respectively.
+  // ParLU with matrix-matrix products and a tiled access pattern
+  printf("%% ParLU v3.1\n");
+  L = {Magma_DENSEL};
+  U = {Magma_DENSEU};
+  // ParLU with matrix-matrix products replacing summations
+  data_ParLU_v3_1( &A, &L, &U, tile);
+  // Check ||A-LU||_Frobenius
+  data_zfrobenius_LUresidual(A, L, U, &Adiff);
+  printf("ParLUv3_0_res = %e\n", Adiff);
+  fflush(stdout); 
+  strcpy( output_L, output_basename );
+  strcat( output_L, "_LparLUv3_0.mtx" );
+  strcpy( output_U, output_basename );
+  strcat( output_U, "_UparLUv3_0.mtx" );
+  data_zwrite_dense( L, output_L );
+  data_zwrite_dense( U, output_U );
+  data_zmfree( &L );
+  data_zmfree( &U );
+  fflush(stdout);
+  // =========================================================================
+  data_zmfree( &A );
+  data_zmconvert( B, &A, Magma_DENSE, Magma_DENSE );  // reset A 
+  
   // =========================================================================
   // ParLU v3.1
   // =========================================================================

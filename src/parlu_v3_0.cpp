@@ -74,7 +74,8 @@ data_ParLU_v3_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
     #pragma omp parallel private(tmp)
     {
       num_threads = omp_get_num_threads();
-      #pragma omp for schedule(static,1) collapse(2) reduction(+:step) nowait
+      //#pragma omp for schedule(static,1) collapse(2) reduction(+:step) nowait
+      #pragma omp for schedule(static,1) reduction(+:step) nowait
       for (int ti=0; ti<row_limit; ti += tile) {
          for (int tj=0; tj<col_limit; tj += tile) {
            

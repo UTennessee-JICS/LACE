@@ -601,6 +601,13 @@ data_ParLU_v3_0(
   data_d_matrix* U,
   int tile );
 
+void
+data_ParLU_v3_1( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  int tile );
+
 //======================================
 // sparse factorizations
 //======================================
