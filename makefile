@@ -13,7 +13,7 @@ EXECUTABLE=exampleGoogleTest_01
 
 all: gtest-all.o gmock-all.o exampleGoogleTest_01 exampleGoogleTest_02 \
   test_matrix_io test_vector_io \
-	test_matrix_ops test_spmatrix_ops \
+	test_matrix_ops test_spmatrix_ops test_blockspmatrix_ops \
 	test_LU_ops test_LU test_LU_larnv test_MKL_LU \
 	test_iLU_ops test_iLU test_MKL_iLU post_iLU \
 	test_MKL_iLU0_FGMRES test_pariLU0_MKL_FGMRES \
@@ -57,6 +57,16 @@ test_spmatrix_ops: test_spmatrix_operations.cpp libgmock.a
 	$(CC) $(LDFLAGS2) $(CFLAGS) \
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
 	test_spmatrix_operations.cpp control/constants.cpp control/magma_zmio.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/sparse_sub.cpp control/sparse_tilepattern.cpp \
+	blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp blas/zspmm.cpp \
+	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
+	-o $@	
+	
+test_blockspmatrix_ops: test_blockspmatrix_operations.cpp libgmock.a
+	$(CC) $(LDFLAGS2) $(CFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	test_blockspmatrix_operations.cpp control/constants.cpp control/magma_zmio.cpp \
 	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
 	control/magma_zfree.cpp control/sparse_sub.cpp control/sparse_tilepattern.cpp \
 	blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp blas/zspmm.cpp \
@@ -152,6 +162,7 @@ test_iLU: test_iLU.cpp libgmock.a
 	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
 	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
 	src/parilu_v0_0.cpp src/parilu_v0_1.cpp src/parilu_v0_2.cpp \
+	 src/parilu_v0_3.cpp  src/parilu_v0_4.cpp \
 	src/parilu_v3_0.cpp src/parilu_v3_1.cpp \
 	src/parilu_v3_2.cpp src/parilu_v3_5.cpp src/parilu_v3_6.cpp \
 	src/parilu_v3_7.cpp src/parilu_v3_8.cpp src/parilu_v3_9.cpp  \
@@ -288,14 +299,16 @@ gmock-all.o: ${GMOCK_DIR}/src/gmock-all.cc
 	
 clean:
 	rm exampleGoogleTest_01 exampleGoogleTest_02 test_matrix_io test_vector_io \
-				test_matrix_ops test_spmatrix_ops test_LU_ops test_LU test_LU_larnv test_MKL_LU \
+				test_matrix_ops test_spmatrix_ops test_blockspmatrix_ops \
+				test_LU_ops test_LU test_LU_larnv test_MKL_LU \
 				test_iLU_ops test_iLU test_MKL_iLU post_iLU test_MKL_iLU0_FGMRES \
 				test_pariLU0_MKL_FGMRES test_read_pariLU0_MKL_FGMRES \
 				test_read_rhs_pariLU0_MKL_FGMRES test_solve_pariLU0_MKL_FGMRES \
 	
 cleanall:
 	rm *.o exampleGoogleTest_01 exampleGoogleTest_02 test_matrix_io \ 
-				test_vector_io test_matrix_ops test_spmatrix_ops test_LU_ops \
+				test_vector_io test_matrix_ops test_spmatrix_ops test_blockspmatrix_ops \
+				test_LU_ops \
 				test_LU test_MKL_LU test_iLU_ops test_iLU test_LU_larnv test_MKL_iLU post_iLU \
 				test_MKL_iLU0_FGMRES test_pariLU0_MKL_FGMRES \
 				test_read_pariLU0_MKL_FGMRES test_read_rhs_pariLU0_MKL_FGMRES \

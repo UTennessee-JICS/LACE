@@ -99,8 +99,8 @@ int main(int argc, char* argv[])
   strcat( output_L, "_LUmkl.mtx" );
   //strcpy( output_U, output_basename );
   //strcat( output_U, "_Umkl.mtx" );
-  data_zwrite_dense( Amkl, output_L );
-  //data_zwrite_dense( Umkl, output_U );
+  //data_zwrite_dense( Amkl, output_L );
+  ////data_zwrite_dense( Umkl, output_U );
   data_zmfree( &Amkl );
   fflush(stdout); 
 
@@ -127,8 +127,8 @@ int main(int argc, char* argv[])
   strcat( output_L, "_LparLUv0_0.mtx" );
   strcpy( output_U, output_basename );
   strcat( output_U, "_UparLUv0_0.mtx" );
-  data_zwrite_dense( L, output_L );
-  data_zwrite_dense( U, output_U );
+  //data_zwrite_dense( L, output_L );
+  //data_zwrite_dense( U, output_U );
   data_zmfree( &L );
   data_zmfree( &U );
   fflush(stdout); 
@@ -154,8 +154,8 @@ int main(int argc, char* argv[])
   strcat( output_L, "_LparLUv0_1.mtx" );
   strcpy( output_U, output_basename );
   strcat( output_U, "_UparLUv0_1.mtx" );
-  data_zwrite_dense( L, output_L );
-  data_zwrite_dense( U, output_U );
+  //data_zwrite_dense( L, output_L );
+  //data_zwrite_dense( U, output_U );
   data_zmfree( &L );
   data_zmfree( &U );
   fflush(stdout); 
@@ -181,8 +181,8 @@ int main(int argc, char* argv[])
   strcat( output_L, "_LparLUv1_0.mtx" );
   strcpy( output_U, output_basename );
   strcat( output_U, "_UparLUv1_0.mtx" );
-  data_zwrite_dense( L, output_L );
-  data_zwrite_dense( U, output_U );
+  //data_zwrite_dense( L, output_L );
+  //data_zwrite_dense( U, output_U );
   data_zmfree( &L );
   data_zmfree( &U );
   fflush(stdout); 
@@ -209,8 +209,8 @@ int main(int argc, char* argv[])
   strcat( output_L, "_LparLUv1_1.mtx" );
   strcpy( output_U, output_basename );
   strcat( output_U, "_UparLUv1_1.mtx" );
-  data_zwrite_dense( L, output_L );
-  data_zwrite_dense( U, output_U );
+  //data_zwrite_dense( L, output_L );
+  //data_zwrite_dense( U, output_U );
   data_zmfree( &L );
   data_zmfree( &U );
   fflush(stdout);
@@ -239,8 +239,8 @@ int main(int argc, char* argv[])
   strcat( output_L, "_LparLUv1_2.mtx" );
   strcpy( output_U, output_basename );
   strcat( output_U, "_UparLUv1_2.mtx" );
-  data_zwrite_dense( L, output_L );
-  data_zwrite_dense( U, output_U );
+  //data_zwrite_dense( L, output_L );
+  //data_zwrite_dense( U, output_U );
   data_zmfree( &L );
   data_zmfree( &U );
   fflush(stdout); 
@@ -269,8 +269,8 @@ int main(int argc, char* argv[])
   strcat( output_L, "_LparLUv1_2c.mtx" );
   strcpy( output_U, output_basename );
   strcat( output_U, "_UparLUv1_2c.mtx" );
-  data_zwrite_dense( L, output_L );
-  data_zwrite_dense( U, output_U );
+  //data_zwrite_dense( L, output_L );
+  //data_zwrite_dense( U, output_U );
   data_zmfree( &L );
   data_zmfree( &U );
   fflush(stdout); 
@@ -300,8 +300,8 @@ int main(int argc, char* argv[])
   strcat( output_L, "_LparLUv1_3.mtx" );
   strcpy( output_U, output_basename );
   strcat( output_U, "_UparLUv1_3.mtx" );
-  data_zwrite_dense( L, output_L );
-  data_zwrite_dense( U, output_U );
+  //data_zwrite_dense( L, output_L );
+  //data_zwrite_dense( U, output_U );
   data_zmfree( &L );
   data_zmfree( &U );
   fflush(stdout); 
@@ -332,8 +332,8 @@ int main(int argc, char* argv[])
   strcat( output_L, "_LparLUv2_0.mtx" );
   strcpy( output_U, output_basename );
   strcat( output_U, "_UparLUv2_0.mtx" );
-  data_zwrite_dense( L, output_L );
-  data_zwrite_dense( U, output_U );
+  //data_zwrite_dense( L, output_L );
+  //data_zwrite_dense( U, output_U );
   data_zmfree( &L );
   data_zmfree( &U );
   fflush(stdout); 
@@ -362,8 +362,8 @@ int main(int argc, char* argv[])
   strcat( output_L, "_LparLUv2_1.mtx" );
   strcpy( output_U, output_basename );
   strcat( output_U, "_UparLUv2_1.mtx" );
-  data_zwrite_dense( L, output_L );
-  data_zwrite_dense( U, output_U );
+  //data_zwrite_dense( L, output_L );
+  //data_zwrite_dense( U, output_U );
   data_zmfree( &L );
   data_zmfree( &U );
   fflush(stdout); 
@@ -392,8 +392,8 @@ int main(int argc, char* argv[])
   strcat( output_L, "_LparLUv3_0.mtx" );
   strcpy( output_U, output_basename );
   strcat( output_U, "_UparLUv3_0.mtx" );
-  data_zwrite_dense( L, output_L );
-  data_zwrite_dense( U, output_U );
+  //data_zwrite_dense( L, output_L );
+  //data_zwrite_dense( U, output_U );
   data_zmfree( &L );
   data_zmfree( &U );
   fflush(stdout);
@@ -421,8 +421,8 @@ int main(int argc, char* argv[])
   strcat( output_L, "_LparLUv3_1.mtx" );
   strcpy( output_U, output_basename );
   strcat( output_U, "_UparLUv3_1.mtx" );
-  data_zwrite_dense( L, output_L );
-  data_zwrite_dense( U, output_U );
+  //data_zwrite_dense( L, output_L );
+  //data_zwrite_dense( U, output_U );
   data_zmfree( &L );
   data_zmfree( &U );
   fflush(stdout);

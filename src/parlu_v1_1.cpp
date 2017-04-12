@@ -49,26 +49,15 @@ data_ParLU_v1_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U )
     step = 0.0;
     #pragma omp parallel private(sumL, sumU, tmp)
     {
-      num_threads = omp_get_num_threads();
       #pragma omp for schedule(static,1) reduction(+:step) nowait
       for (int i=0; i<row_limit; i++) {
         for (int j=0; j<i; j++) { // L
-          //sumL = 0.0;
-          //for (int k=0; k<j; k++) {
-          //  sumL += L->val[ i*A->ld + k ]*U->val[ k*A->ld + j ];
-          //}
-          //sumL = data_zdot( j, &L->val[ i*L->ld ], 1, &U->val[ j ], U->ld );
           sumL = data_zdot_mkl( j, &L->val[ i*L->ld ], 1, &U->val[ j*U->ld ], 1 );
           tmp = (A->val[ i*A->ld + j ] - sumL)/U->val[ j + j*A->ld ];
           step += pow( L->val[ i*A->ld + j ] - tmp, 2 );
           L->val[ i*A->ld + j ] = tmp;
         }
         for (int j=i; j<col_limit; j++) { // U
-          //sumU = 0.0;
-          //for (int k=0; k<i; k++) {
-          //  sumU += L->val[ i*A->ld + k ]*U->val[ k*A->ld + j ];
-          //}
-          //sumU = data_zdot( i, &L->val[ i*L->ld ], 1, &U->val[ j ], U->ld );
           sumU = data_zdot_mkl( i, &L->val[ i*L->ld ], 1, &U->val[ j*U->ld ], 1 );
           tmp = (A->val[ i*A->ld + j ] - sumU);
           step += pow(U->val[ i + j*A->ld ] - tmp, 2);
@@ -81,7 +70,12 @@ data_ParLU_v1_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U )
     printf("%% iteration = %d step = %e\n", iter, step);
   }
   dataType wend = omp_get_wtime();
+  
   dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
+  #pragma omp parallel
+  {
+    num_threads = omp_get_num_threads();
+  }
   printf("%% ParLU v1.1 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
     num_threads, iter, wend-wstart, ompwtime );
 }

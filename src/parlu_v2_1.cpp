@@ -70,21 +70,17 @@ data_ParLU_v2_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
   
   dataType wstart = omp_get_wtime();
   while ( step > tol && iter < 100 ) {
-  //while ( iter < 10 ) {  
     step = 0.0;
     #pragma omp parallel private(tmp)
     {
-      //#pragma omp for collapse(2) reduction(+:step) nowait
-      #pragma omp for schedule(static,1) reduction(+:step) nowait
+      #pragma omp for collapse(2) reduction(+:step) nowait
       for (int ti=0; ti<row_limit; ti += tile) {
          for (int tj=0; tj<col_limit; tj += tile) {
            
            int thread_num = omp_get_thread_num(); 
-           //printf("ti=%d tj=%d thread_num=%d\n", ti, tj, thread_num);
            dataType *vtmp = &(vworkspace[tile*thread_num]);
            
            if (ti>tj) { // strictly L tile
-             //dataType vtmp[tile];
              for (int j=tj; j<tj+tile; j++) {
                data_dgemv_mkl( L->major, MagmaNoTrans, tile, tj+tile, 
                  alpha, &(L->val[ti*L->ld]), L->ld, 
@@ -97,10 +93,7 @@ data_ParLU_v2_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
              }
            }
            else if (ti==tj) { // diagonal tile with L and U elements
-             //dataType vtmp[tile];
-             //for (int i=ti; i<ti+tile; i++) {
              for (int j=tj; j<tj+tile; j++) {
-                 //for (int j=tj; j<tj+tile; j++) {
                data_dgemv_mkl( L->major, MagmaNoTrans, tile, tj+tile, 
                  alpha, &(L->val[ti*L->ld]), L->ld, 
                  &(U->val[j]), U->ld, beta, vtmp, 1 );
@@ -125,7 +118,6 @@ data_ParLU_v2_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
              
            }
            else { // strictly U tile
-             //dataType vtmp[tile];
              for (int i=ti; i<ti+tile; i++) {
                data_dgemv_mkl( U->major, MagmaTrans, ti+tile, tile,  
                  alpha, &U->val[tj], U->ld, 
@@ -145,8 +137,6 @@ data_ParLU_v2_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
     iter++;
     printf("%% iteration = %d step = %e\n", iter, step);
   }
-  dataType wend = omp_get_wtime();
-  dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
   
   // Fill diagonal elements
   #pragma omp parallel  
@@ -155,7 +145,13 @@ data_ParLU_v2_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile 
     L->val[ i*L->ld + i ] = 1.0;
     U->val[ i*U->ld + i ] = 1.0/D.val[ i ];
   }
+  dataType wend = omp_get_wtime();
   
+  dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
+  #pragma omp parallel
+  {
+    num_threads = omp_get_num_threads();
+  }
   printf("%% ParLU v2.1 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
     num_threads, iter, wend-wstart, ompwtime );
   fflush(stdout); 

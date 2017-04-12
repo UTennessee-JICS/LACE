@@ -642,6 +642,20 @@ data_PariLU_v0_2(
   dataType reduction );
 
 void
+data_PariLU_v0_3( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  dataType reduction );
+
+void
+data_PariLU_v0_4( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U,
+  dataType reduction );
+
+void
 data_PariLU_v3_0( 
   data_d_matrix* A, 
   data_d_matrix* L, 

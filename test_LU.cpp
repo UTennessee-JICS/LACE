@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <libgen.h>
 #include <string>
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
+//#include <gtest/gtest.h>
+//#include <gmock/gmock.h>
 #include <vector>
 #include <omp.h>
 
@@ -216,7 +216,7 @@ int main(int argc, char* argv[])
   data_zmfree( &U );
   fflush(stdout); 
   // =========================================================================
-/*
+
   data_zmfree( &A );
   data_zmconvert( B, &A, Magma_DENSE, Magma_DENSE );  // reset A 
   // =========================================================================
@@ -248,6 +248,7 @@ int main(int argc, char* argv[])
   // =========================================================================
   data_zmfree( &A );
   data_zmconvert( B, &A, Magma_DENSE, Magma_DENSE );  // reset A 
+
   // =========================================================================
   // ParLU v2.0
   // =========================================================================
@@ -277,6 +278,7 @@ int main(int argc, char* argv[])
   // =========================================================================
   data_zmfree( &A );
   data_zmconvert( B, &A, Magma_DENSE, Magma_DENSE );  // reset A 
+ 
   // =========================================================================
   // ParLU v2.1
   // =========================================================================
@@ -333,7 +335,8 @@ int main(int argc, char* argv[])
   // Check A-LU
   // Check ||A-LU||_Frobenius
   // =========================================================================
-*/
+
+  data_zmfree( &B );
   //testing::InitGoogleTest(&argc, argv);
   //return RUN_ALL_TESTS();
   return 0;

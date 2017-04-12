@@ -49,10 +49,6 @@ data_ParLU_v0_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U )
     step = 0.0;
     #pragma omp parallel private(sumL, sumU, tmp)
     {
-      num_threads = omp_get_num_threads();
-      
-      // TODO: change U to col major access!!!
-      
       #pragma omp for schedule(static,1) reduction(+:step) nowait
       for (int i=0; i<row_limit; i++) {
         for (int j=0; j<i; j++) { // L
@@ -80,7 +76,12 @@ data_ParLU_v0_1( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U )
     printf("%% iteration = %d step = %e\n", iter, step);
   }
   dataType wend = omp_get_wtime();
+  
   dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
+  #pragma omp parallel
+  {
+    num_threads = omp_get_num_threads();
+  }
   printf("%% ParLU v0.1 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
     num_threads, iter, wend-wstart, ompwtime );
 }

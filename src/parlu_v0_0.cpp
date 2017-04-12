@@ -75,7 +75,12 @@ data_ParLU_v0_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U )
     printf("%% iteration = %d step = %e\n", iter, step);
   }
   dataType wend = omp_get_wtime();
+  
   dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
+  #pragma omp parallel
+  {
+    num_threads = omp_get_num_threads();
+  }
   printf("%% ParLU v0.0 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
     num_threads, iter, wend-wstart, ompwtime );
 }

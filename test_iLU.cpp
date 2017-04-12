@@ -341,6 +341,70 @@ int main(int argc, char* argv[])
   //data_zmfree( &U );
   data_zmfree( &LU );
   
+  
+    // =========================================================================
+  // PariLU v0.3
+  // =========================================================================
+  printf("%% PariLU v0.3\n");
+  // Separate the strictly lower and upper elements 
+  // into L, and U respectively.
+  //data_d_matrix L = {Magma_CSRL};
+  L = {Magma_CSRL};
+  //L.diagorder_type = Magma_UNITY;
+  //data_zmconvert(A, &L, Magma_CSR, Magma_CSRL);
+  //data_d_matrix U = {Magma_CSCU};
+  U = {Magma_CSCU};
+  //U.diagorder_type = Magma_VALUE;
+  //data_zmconvert(A, &U, Magma_CSR, Magma_CSRU);
+  reduction = 1.0e-10;
+  data_PariLU_v0_3( &A, &L, &U, reduction);
+  // Check ||A-LU||_Frobenius
+  Ares = 0.0;
+  Anonlinres = 0.0;
+  LU = {Magma_CSR};
+  data_zmconvert(A, &LU, Magma_CSR, Magma_CSR);
+  data_zilures(A, L, U, &LU, &Ares, &Anonlinres);
+  printf("PariLUv0_3_csrilu0_res = %e\n", Ares);
+  printf("PariLUv0_3_csrilu0_nonlinres = %e\n", Anonlinres);
+  //data_zmfree( &L );
+  //data_zmfree( &U );
+  //data_zmfree( &LU );
+  fflush(stdout); 
+  
+    data_zmfree( &LU );
+  
+  
+    // =========================================================================
+  // PariLU v0.4
+  // =========================================================================
+  printf("%% PariLU v0.4\n");
+  // Separate the strictly lower and upper elements 
+  // into L, and U respectively.
+  //data_d_matrix L = {Magma_CSRL};
+  L = {Magma_CSRL};
+  //L.diagorder_type = Magma_UNITY;
+  //data_zmconvert(A, &L, Magma_CSR, Magma_CSRL);
+  //data_d_matrix U = {Magma_CSCU};
+  U = {Magma_CSCU};
+  //U.diagorder_type = Magma_VALUE;
+  //data_zmconvert(A, &U, Magma_CSR, Magma_CSRU);
+  reduction = 1.0e-10;
+  data_PariLU_v0_4( &A, &L, &U, reduction);
+  // Check ||A-LU||_Frobenius
+  Ares = 0.0;
+  Anonlinres = 0.0;
+  LU = {Magma_CSR};
+  data_zmconvert(A, &LU, Magma_CSR, Magma_CSR);
+  data_zilures(A, L, U, &LU, &Ares, &Anonlinres);
+  printf("PariLUv0_4_csrilu0_res = %e\n", Ares);
+  printf("PariLUv0_4_csrilu0_nonlinres = %e\n", Anonlinres);
+  //data_zmfree( &L );
+  //data_zmfree( &U );
+  //data_zmfree( &LU );
+  fflush(stdout); 
+  
+ 
+ 
   //===============================
   printf("\n===============================\n");
   printf("Compare block factorization\n");
@@ -444,7 +508,7 @@ int main(int argc, char* argv[])
   data_zmfree( &LU_coffe );
   
   }
-  
+ 
   //===============================
   printf("\n===============================\n");
   
