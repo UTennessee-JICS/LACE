@@ -367,6 +367,26 @@ CBLAS_SIDE      cblas_side_const   ( data_side_t  side  );
         }                                     \
     } while(0)   
 
+      
+#define LACE_CALLOC(ptr, nmemb) lace_calloc((void **) &(ptr), nmemb, sizeof(*(ptr)), #ptr, __FILE__, __LINE__)
+
+static inline void lace_calloc(void **ptr, const size_t nmemb, const size_t size,
+                       const char *name, const char *file, const int line)
+{
+  if ((*ptr = calloc(nmemb, size)) == NULL)
+  {
+    fprintf(stderr, 
+            "ERROR (memory): Unable to allocate memory for %s (%s, line %d)\n", 
+            name, file, line);
+#ifdef USING_MPI
+    MPI_Abort(MPI_COMM_WORLD, -1);
+#else
+    exit(-1);
+#endif
+  }
+}
+
+      
 /**
   Macro checks the return code of a function;
   if non-zero, sets info to err, then does goto cleanup.
