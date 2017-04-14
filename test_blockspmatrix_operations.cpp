@@ -81,7 +81,7 @@ TEST(Conversion, csr_to_bsr) {
   int info;
   
   mkl_dcsrbsr(job, &m, &mblk, &ldblock, acsr, ja, ia, NULL, NULL, &nnzblocks, &info);
-  EXPECT_EQ(nnzblocks_check, nnzblocks);
+  EXPECT_EQ(nnzblocks, nnzblocks_check);
   
   int bsr_num_rows = (m + mblk - 1)/mblk;
   double*  absr;
@@ -101,21 +101,83 @@ TEST(Conversion, csr_to_bsr) {
   
 }
 
+TEST(Conversion, csr_to_bsr_lace) {
+  
+  int info;
+  dataType absr_check[8] = { 1.000000e+00, 2.000000e+00, 3.000000e+00, 
+  4.000000e+00, 5.000000e+00, 6.000000e+00, 7.000000e+00, 8.000000e+00 };
+  int bsrcol_check[2] = { 0, 1 };
+  int bsrrow_check[3] = { 0, 1, 2 };
+  int nnzblocks_check = 2;
+  
+  data_d_matrix A = {Magma_CSR};
+  data_d_matrix B = {Magma_BCSR};
+  
+  A.num_rows = 4;
+  A.num_cols = 4;
+  A.nnz = 8;
+  LACE_CALLOC(A.val, A.nnz);
+  A.val[0] = 1.;
+  A.val[1] = 2.;
+  A.val[2] = 3.;
+  A.val[3] = 4.;
+  A.val[4] = 5.;
+  A.val[5] = 6.;
+  A.val[6] = 7.;
+  A.val[7] = 8.;
+  LACE_CALLOC(A.row, (A.num_rows+1));
+  A.row[0] = 1;
+  A.row[1] = 3;
+  A.row[2] = 5;
+  A.row[3] = 7;
+  A.row[4] = 9;
+  LACE_CALLOC(A.col, A.nnz);
+  A.col[0] = 1;
+  A.col[1] = 2;
+  A.col[2] = 1;
+  A.col[3] = 2;
+  A.col[4] = 3;
+  A.col[5] = 4;
+  A.col[6] = 3;
+  A.col[7] = 4;
+  
+  B.blocksize = 2;
+  B.ldblock = B.blocksize*B.blocksize;
+  
+  int job[6] = { 0, 1, 0, 0, 0, -1 };
+  mkl_dcsrbsr(job, &A.num_rows, &B.blocksize, &B.ldblock, A.val, A.col, A.row, NULL, NULL, &B.numblocks, &info);
+  EXPECT_EQ(B.numblocks, nnzblocks_check);
+  
+  B.num_rows = (A.num_rows + B.blocksize - 1)/B.blocksize;
+  LACE_CALLOC(B.val, B.numblocks*B.ldblock);
+  LACE_CALLOC(B.row, (B.num_rows+1));
+  LACE_CALLOC(B.col, B.numblocks);
+  
+  job[5] = 1;
+  mkl_dcsrbsr(job, &A.num_rows, &B.blocksize, &B.ldblock, A.val, A.col, A.row, B.val, B.col, B.row, &info);
+
+  EXPECT_ARRAY_DOUBLE_EQ(2, B.col, bsrcol_check);
+  EXPECT_ARRAY_DOUBLE_EQ(3, B.row, bsrrow_check);
+  EXPECT_ARRAY_DOUBLE_EQ(8, B.val, absr_check);
+  
+}
+
+
 int main(int argc, char* argv[])
 {
   char filename[] = "testing/matrices/sparisty_test.mtx";
   
-  data_d_matrix A = {Magma_CSR};
-  data_z_csr_mtx( &A, filename ); 
-  data_zprint_csr( A );
-  
-  data_d_matrix B = {Magma_CSR};
-  data_z_csr_mtx( &B, filename ); 
-  data_zprint_csr( B );
-  
-  data_d_matrix F = {Magma_DENSE};
-  data_zmconvert( A, &F, Magma_CSR, Magma_DENSE );
-  data_d_matrix G = {Magma_BCSR};
+  //data_d_matrix A = {Magma_CSR};
+  //data_z_csr_mtx( &A, filename ); 
+  //data_zprint_csr( A );
+  //
+  //data_d_matrix B = {Magma_CSR};
+  //data_z_csr_mtx( &B, filename ); 
+  //data_zprint_csr( B );
+  //
+  //data_d_matrix F = {Magma_DENSE};
+  //data_zmconvert( A, &F, Magma_CSR, Magma_DENSE );
+  //data_d_matrix G = {Magma_BCSR};
   
   
   int m = 4;
@@ -168,6 +230,74 @@ int main(int argc, char* argv[])
   }
   printf("\n");
   
+  data_d_matrix A = {Magma_CSR};
+  data_d_matrix B = {Magma_BCSR};
+  
+  A.num_rows = 4;
+  A.num_cols = 4;
+  A.nnz = 8;
+  LACE_CALLOC(A.val, A.nnz);
+  A.val[0] = 1.;
+  A.val[1] = 2.;
+  A.val[2] = 3.;
+  A.val[3] = 4.;
+  A.val[4] = 5.;
+  A.val[5] = 6.;
+  A.val[6] = 7.;
+  A.val[7] = 8.;
+  LACE_CALLOC(A.row, (A.num_rows+1));
+  A.row[0] = 1;
+  A.row[1] = 3;
+  A.row[2] = 5;
+  A.row[3] = 7;
+  A.row[4] = 9;
+  LACE_CALLOC(A.col, A.nnz);
+  A.col[0] = 1;
+  A.col[1] = 2;
+  A.col[2] = 1;
+  A.col[3] = 2;
+  A.col[4] = 3;
+  A.col[5] = 4;
+  A.col[6] = 3;
+  A.col[7] = 4;
+  
+  B.blocksize = 2;
+  B.ldblock = B.blocksize*B.blocksize;
+  
+  mkl_dcsrbsr(job, &A.num_rows, &B.blocksize, &B.ldblock, A.val, A.col, A.row, NULL, NULL, &B.numblocks, &info);
+  printf("info = %d, B.numblocks = %d \n", info, B.numblocks);
+  
+  B.num_rows = (A.num_rows + B.blocksize - 1)/B.blocksize;
+  LACE_CALLOC(B.val, B.numblocks*B.ldblock);
+  LACE_CALLOC(B.row, (B.num_rows+1));
+  LACE_CALLOC(B.col, B.numblocks);
+  
+  mkl_dcsrbsr(job2, &A.num_rows, &B.blocksize, &B.ldblock, A.val, A.col, A.row, B.val, B.col, B.row, &info);
+  for (int i=0; i<B.num_rows; i++ ) {
+    printf("row %d:\n", i);
+    for (int j=B.row[i]; j<B.row[i+1]; j++) {
+      printf("block %d bcol %d\n", j, B.col[j]);
+      for (int k=0; k<B.ldblock; k++ ) {
+        printf("%e ", B.val[j*ldblock+k]);
+      }
+    }
+    printf("\n");
+  }
+  printf("bsr_num_rows = %d\n", B.num_rows);
+  printf("bsrrows:\n");
+  for (int i=0; i<B.num_rows+1; i++ ) {
+    printf("%d, ", B.row[i]);
+  }
+  printf("\nbsrcols:\n");
+  for (int i=0; i<nnzblocks; i++ ) {
+    printf("%d, ", bsrcol[i]);
+  }
+  printf("\nabsr:\n");
+  for (int i=0; i<B.numblocks*B.ldblock; i++ ) {
+    printf("%e, ", absr[i]);
+  }
+  printf("\n");
+  
   //data_zmconvert( B, &G, Magma_CSR, Magma_BCSR );
   DEV_CHECKPT
   //data_zprint_csr( B );
@@ -177,8 +307,8 @@ int main(int argc, char* argv[])
   data_zmfree( &A );
   data_zmfree( &B );
   
-  data_zmfree( &F );
-  data_zmfree( &G );
+  //data_zmfree( &F );
+  //data_zmfree( &G );
   
   
   testing::InitGoogleTest(&argc, argv);
