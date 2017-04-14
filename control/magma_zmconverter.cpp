@@ -591,52 +591,24 @@ data_zmconvert(
         }
         // CSR to BCSR
         else if ( new_format == Magma_BCSR ) {
-          int job[6] = {0,//If job(1)=0, the matrix in the CSR format is converted to the BSR format;
-                     0,//If job(2)=0, zero-based indexing for the matrix in CSR format is used;
-                     0,//If job(3)=0, zero-based indexing for the matrix in the BSR format is used;
-                     0,
-                     0,
-                     1 //If job(6)>0, all output arrays absr, jab, and iab are filled in for the output storage.
-                     };
           B->num_rows = A.num_rows;
           B->nnz = A.nnz;
           B->numblocks = 0;
-          // We need to count the number of blocks (aligned!)
-          {
-              const int maxBlockPerRow = (B->num_rows+B->blocksize-1)/B->blocksize;
-              unsigned* usedBlocks = new unsigned[maxBlockPerRow];
-          
-              for(int idxRow = 0; idxRow < A.num_rows; ++idxRow){
-                  if(idxRow%B->blocksize == 0){
-                      memset(usedBlocks, 0, sizeof(unsigned)*maxBlockPerRow);
-                  }
-                  for(int idxVal = A.row[idxRow]; idxVal < A.row[idxRow+1]; ++idxVal){
-                      const int idxCol = A.col[idxVal];
-                      if(usedBlocks[idxCol/B->blocksize] == 0){
-                          usedBlocks[idxCol/B->blocksize] = 1;
-                          B->numblocks += 1;
-                      }
-                  }
-              }
-          
-              delete[] usedBlocks;
-          }
-          B->num_rows = (B->num_rows+B->blocksize-1)/B->blocksize;
+          B->nnz = A.nnz;
+          B->blocksize = 2;
           B->ldblock = B->blocksize*B->blocksize;
-          B->val = new double[B->numblocks*B->ldblock];
-          B->row = new int[B->num_rows+1];
-          B->col = new int[B->numblocks];
+          B->numblocks = -1;
           
-          // void mkl_dcsrbsr (const MKL_INT *job , const MKL_INT *m , const MKL_INT *mblk ,
-          // const MKL_INT *ldabsr , double *acsr , MKL_INT *ja , MKL_INT *ia , double *absr ,
-          // MKL_INT *jab , MKL_INT *iab , MKL_INT *info );
-          int infobsr;
-          mkl_dcsrbsr( job, &A.num_rows,
-                       &B->blocksize , &B->ldblock,
-                       A.val, A.col, A.row,
-                       B->val, B->col, B->row, &infobsr );
-          assert(B->row[B->num_rows] == B->numblocks);
+          int job[6] = { 0, 1, 0, 0, 0, -1 };
+          mkl_dcsrbsr(job, &A.num_rows, &B->blocksize, &B->ldblock, A.val, A.col, A.row, NULL, NULL, &B->numblocks, &info);
           
+          B->num_rows = (A.num_rows + B->blocksize - 1)/B->blocksize;
+          LACE_CALLOC(B->val, B->numblocks*B->ldblock);
+          LACE_CALLOC(B->row, (B->num_rows+1));
+          LACE_CALLOC(B->col, B->numblocks);
+          
+          job[5] = 1;
+          mkl_dcsrbsr(job, &A.num_rows, &B->blocksize, &B->ldblock, A.val, A.col, A.row, B->val, B->col, B->row, &info);
           
         }
         // CSR to BCSRCOO
