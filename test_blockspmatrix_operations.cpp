@@ -145,7 +145,7 @@ TEST(Conversion, csr_to_bsr_lace) {
   B.ldblock = B.blocksize*B.blocksize;
   B.numblocks = -1;
   
-  int job[6] = { 0, 1, 0, 0, 0, -1 };
+  int job[6] = { 0, 1, 0, 0, 0, -1 };  // One indexing also indicates column major storage!
   mkl_dcsrbsr(job, &A.num_rows, &B.blocksize, &B.ldblock, A.val, A.col, A.row, NULL, NULL, &B.numblocks, &info);
   EXPECT_EQ(B.numblocks, nnzblocks_check);
   
@@ -165,7 +165,7 @@ TEST(Conversion, csr_to_bsr_lace) {
 
 TEST(Conversion, converter_csr_to_bsr_lace) {
   
-  int info;
+  //int info;
   dataType absr_check[8] = { 1.000000e+00, 2.000000e+00, 3.000000e+00, 
   4.000000e+00, 5.000000e+00, 6.000000e+00, 7.000000e+00, 8.000000e+00 };
   int bsrcol_check[2] = { 0, 1 };
@@ -188,30 +188,30 @@ TEST(Conversion, converter_csr_to_bsr_lace) {
   A.val[6] = 7.;
   A.val[7] = 8.;
   LACE_CALLOC(A.row, (A.num_rows+1));
-  A.row[0] = 1;
-  A.row[1] = 3;
-  A.row[2] = 5;
-  A.row[3] = 7;
-  A.row[4] = 9;
+  A.row[0] = 0;
+  A.row[1] = 2;
+  A.row[2] = 4;
+  A.row[3] = 6;
+  A.row[4] = 8;
   LACE_CALLOC(A.col, A.nnz);
-  A.col[0] = 1;
-  A.col[1] = 2;
-  A.col[2] = 1;
-  A.col[3] = 2;
-  A.col[4] = 3;
-  A.col[5] = 4;
-  A.col[6] = 3;
-  A.col[7] = 4;
+  A.col[0] = 0;
+  A.col[1] = 1;
+  A.col[2] = 0;
+  A.col[3] = 1;
+  A.col[4] = 2;
+  A.col[5] = 3;
+  A.col[6] = 2;
+  A.col[7] = 3;
   
-  B.nnz = A.nnz;
+  //B.nnz = A.nnz;
   B.blocksize = 2;
-  B.ldblock = B.blocksize*B.blocksize;
-  B.numblocks = -1;
+  //B.ldblock = B.blocksize*B.blocksize;
+  //B.numblocks = -1;
   
-  data_zmconvert( A, &B, Magma_CSR, Magma_BCSR );
+  CHECK( data_zmconvert( A, &B, Magma_CSR, Magma_BCSR ) );
   //int job[6] = { 0, 1, 0, 0, 0, -1 };
   //mkl_dcsrbsr(job, &A.num_rows, &B.blocksize, &B.ldblock, A.val, A.col, A.row, NULL, NULL, &B.numblocks, &info);
-  //EXPECT_EQ(B.numblocks, nnzblocks_check);
+  EXPECT_EQ(B.numblocks, nnzblocks_check);
   //
   //B.num_rows = (A.num_rows + B.blocksize - 1)/B.blocksize;
   //LACE_CALLOC(B.val, B.numblocks*B.ldblock);
@@ -228,9 +228,33 @@ TEST(Conversion, converter_csr_to_bsr_lace) {
 }
 
 
+TEST(Conversion, read_converter_csr_to_bsr_lace) {
+  char filename[] = "testing/matrices/Trefethen_20.mtx";
+  
+  dataType absr_check[336] = { 3.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 5.000000e+00, 1.000000e+00, 1.000000e+00, 1.000000e+00, 1.000000e+00, 7.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 1.100000e+01, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 1.300000e+01, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.700000e+01, 1.000000e+00, 1.000000e+00, 1.000000e+00, 1.000000e+00, 1.900000e+01, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 2.300000e+01, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 2.900000e+01, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 3.100000e+01, 1.000000e+00, 1.000000e+00, 1.000000e+00, 1.000000e+00, 3.700000e+01, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 4.100000e+01, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 4.300000e+01, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 4.700000e+01, 1.000000e+00, 1.000000e+00, 1.000000e+00, 1.000000e+00, 5.300000e+01, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 5.900000e+01, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 6.100000e+01, 1.000000e+00, 1.000000e+00, 0.000000e+00, 1.000000e+00, 6.700000e+01, 1.000000e+00, 0.000000e+00, 1.000000e+00, 1.000000e+00, 7.100000e+01, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00 };
+  int bsrcol_check[21] = { 0, 1, 2, 4, 0, 1, 2, 3, 0, 1, 2, 3, 4, 1, 2, 3, 4, 0, 2, 3, 4 };
+  int bsrrow_check[6] = { 0, 4, 8, 13, 17, 21 };
+  int nnzblocks_check = 21;
+  int true_nnz_check = 147;
+  int nnz_check = 336;
+  
+  data_d_matrix A = {Magma_CSR};
+  data_z_csr_mtx( &A, filename ); 
+  data_d_matrix B = {Magma_BCSR};
+  B.blocksize = 4;
+  data_zmconvert( A, &B, Magma_CSR, Magma_BCSR );
+  
+  EXPECT_EQ(B.true_nnz, true_nnz_check);
+  EXPECT_EQ(B.nnz, nnz_check);
+  EXPECT_EQ(B.numblocks, nnzblocks_check);
+  EXPECT_ARRAY_DOUBLE_EQ(21, B.col, bsrcol_check);
+  EXPECT_ARRAY_DOUBLE_EQ(6, B.row, bsrrow_check);
+  EXPECT_ARRAY_DOUBLE_EQ(336, B.val, absr_check);
+  
+}
+
 int main(int argc, char* argv[])
 {
-  char filename[] = "testing/matrices/sparisty_test.mtx";
   
   //data_d_matrix A = {Magma_CSR};
   //data_z_csr_mtx( &A, filename ); 
@@ -366,6 +390,9 @@ int main(int argc, char* argv[])
   
   
   data_d_matrix G = {Magma_BCSR};
+  //data_zmconvert( A, &G, Magma_CSR, Magma_BCSR );
+  //DEV_CHECKPT
+  G.blocksize = 2;
   data_zmconvert( A, &G, Magma_CSR, Magma_BCSR );
   DEV_CHECKPT
   for (int i=0; i<G.num_rows; i++ ) {
@@ -373,7 +400,7 @@ int main(int argc, char* argv[])
     for (int j=G.row[i]; j<G.row[i+1]; j++) {
       printf("block %d bcol %d\n", j, G.col[j]);
       for (int k=0; k<G.ldblock; k++ ) {
-        printf("%e ", G.val[j*ldblock+k]);
+        printf("%e ", G.val[j*G.ldblock+k]);
       }
     }
     printf("\n");
@@ -384,30 +411,40 @@ int main(int argc, char* argv[])
     printf("%d, ", G.row[i]);
   }
   printf("\nbsrcols:\n");
-  for (int i=0; i<nnzblocks; i++ ) {
-    printf("%d, ", bsrcol[i]);
+  for (int i=0; i<G.numblocks; i++ ) {
+    printf("%d, ", G.col[i]);
   }
   printf("\nabsr:\n");
   for (int i=0; i<G.numblocks*G.ldblock; i++ ) {
-    printf("%e, ", absr[i]);
+    printf("%e, ", G.val[i]);
   }
   printf("\n");
   //data_zprint_csr( B );
   
-
+  
+  char filename[] = "testing/matrices/Trefethen_20.mtx";
+  data_d_matrix C = {Magma_CSR};
+  data_z_csr_mtx( &C, filename ); 
+  data_d_matrix D = {Magma_BCSR};
+  D.blocksize = 4;
+  data_zmconvert( C, &D, Magma_CSR, Magma_BCSR );
+  DEV_CHECKPT
+  data_zprint_bcsr( &D );
+  
   
   data_zmfree( &A );
   data_zmfree( &B );
+  data_zmfree( &C );
+  data_zmfree( &D );
   
-  //data_zmfree( &F );
   data_zmfree( &G );
   
   
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
   
-  printf("done\n");
-  fflush(stdout); 
-  return 0;
+  //printf("done\n");
+  //fflush(stdout); 
+  //return 0;
   
 }
