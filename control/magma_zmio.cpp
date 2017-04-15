@@ -857,6 +857,42 @@ data_zprint_coo(
     return info;
 }
 
+extern "C"
+int
+data_zprint_bcsr(
+    data_d_matrix* A )
+{
+    int info = 0;
+    for (int i=0; i<A->num_rows; i++ ) {
+    printf("row %d:\n", i);
+    for (int j=A->row[i]; j<A->row[i+1]; j++) {
+      printf("block %d bcol %d\n", j, A->col[j]);
+      for (int k=0; k<A->ldblock; k++ ) {
+        printf("%e ", A->val[j*A->ldblock+k]);
+      }
+    }
+    printf("\n");
+  }
+  printf("numblocks = %d\n", A->numblocks);
+  printf("nnz = %d\n", A->nnz);
+  printf("true_nnz = %d\n", A->true_nnz);
+  printf("bsr_num_rows = %d\n", A->num_rows);
+  printf("bsrrows:\n");
+  for (int i=0; i<A->num_rows+1; i++ ) {
+    printf("%d, ", A->row[i]);
+  }
+  printf("\nbsrcols:\n");
+  for (int i=0; i<A->numblocks; i++ ) {
+    printf("%d, ", A->col[i]);
+  }
+  printf("\nabsr:\n");
+  for (int i=0; i<A->numblocks*A->ldblock; i++ ) {
+    printf("%e, ", A->val[i]);
+  }
+  printf("\n");
+    return info;
+}
+
 
 /**
     Purpose

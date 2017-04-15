@@ -78,6 +78,10 @@ data_zprint_coo_mtx(
     int **col );
 
 int
+data_zprint_bcsr(
+    data_d_matrix* A );
+
+int
 data_zprint_coo(
     data_d_matrix A );
 
