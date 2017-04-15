@@ -591,25 +591,41 @@ data_zmconvert(
         }
         // CSR to BCSR
         else if ( new_format == Magma_BCSR ) {
-          B->num_rows = A.num_rows;
-          B->nnz = A.nnz;
-          B->numblocks = 0;
-          B->nnz = A.nnz;
-          B->blocksize = 2;
-          B->ldblock = B->blocksize*B->blocksize;
-          B->numblocks = -1;
-          
-          int job[6] = { 0, 1, 0, 0, 0, -1 };
-          mkl_dcsrbsr(job, &A.num_rows, &B->blocksize, &B->ldblock, A.val, A.col, A.row, NULL, NULL, &B->numblocks, &info);
-          
-          B->num_rows = (A.num_rows + B->blocksize - 1)/B->blocksize;
-          LACE_CALLOC(B->val, B->numblocks*B->ldblock);
-          LACE_CALLOC(B->row, (B->num_rows+1));
-          LACE_CALLOC(B->col, B->numblocks);
-          
-          job[5] = 1;
-          mkl_dcsrbsr(job, &A.num_rows, &B->blocksize, &B->ldblock, A.val, A.col, A.row, B->val, B->col, B->row, &info);
-          
+          if (B->blocksize > 0) {
+            B->num_rows = A.num_rows;
+            B->nnz = A.nnz;
+            B->numblocks = 0;
+            B->true_nnz = A.nnz;
+            B->ldblock = B->blocksize*B->blocksize;
+            B->numblocks = -1;
+            
+            // One based indexing is associated with column major storage in 
+            //    mkl_dcsrbsr!
+            // Using zero based indexing. 
+            // Handle column major - row major transform separately.
+            int job[6] = { 0, 0, 0, 0, 0, -1 }; 
+            mkl_dcsrbsr(job, &A.num_rows, &B->blocksize, &B->ldblock, 
+              A.val, A.col, A.row, NULL, NULL, &B->numblocks, &info);
+            
+            B->num_rows = (A.num_rows + B->blocksize - 1)/B->blocksize;
+            LACE_CALLOC(B->val, B->numblocks*B->ldblock);
+            LACE_CALLOC(B->row, (B->num_rows+1));
+            LACE_CALLOC(B->col, B->numblocks);
+            
+            job[5] = 1;
+            mkl_dcsrbsr(job, &A.num_rows, &B->blocksize, &B->ldblock, 
+              A.val, A.col, A.row, B->val, B->col, B->row, &info);
+            
+            B->nnz = B->numblocks*B->ldblock;
+          }
+          else {
+             printf("error: conversion from %d to %d requires blocksize to be set.\n",
+               old_format, new_format);
+             printf("\tB->blocksize currently = %d .  B->blocksize > 0 required.\n",
+               B->blocksize);
+             info = DEV_ERR_NOT_SUPPORTED;
+             exit(-1);
+          }
         }
         // CSR to BCSRCOO
         
