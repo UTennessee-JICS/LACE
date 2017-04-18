@@ -115,6 +115,9 @@ int main(int argc, char* argv[])
 	data_d_matrix scaling_factors = {Magma_DENSE};
 	scaling_factors.major = MagmaRowMajor;
 	
+	data_d_matrix A_org = {Magma_CSR};
+	CHECK( data_zmconvert( Asparse, &A_org, Magma_CSR, Magma_CSR ) );
+	
 	// Setup rhs
 	if ( strcmp( rhs_filename, "ONES" ) == 0 ) {
 	  printf("creating a vector of %d ones for the rhs.\n", Asparse.num_rows);
@@ -136,29 +139,34 @@ int main(int argc, char* argv[])
 	  CHECK( data_z_dense_mtx( &rhs_vector, rhs_vector.major, rhs_filename ) );
   }
   
+  
+	data_d_matrix rhs_org = {Magma_DENSE};
+	rhs_org.major = MagmaRowMajor;
+	CHECK( data_zmconvert( rhs_vector, &rhs_org, Magma_DENSE, Magma_DENSE ) );
+  
   // Optionally Scale matrix 
   if ( argc >= 5 ) {
     if ( strcmp( argv[4], "UNITROW" ) == 0 ) {
       printf("rescaling UNITROW ");
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITROW );
-      data_zwrite_csr( &Asparse );
+      //data_zwrite_csr( &Asparse );
       printf("done.\n");
     }
     else if ( strcmp( argv[4], "UNITDIAG" ) == 0 ) {
       printf("rescaling UNITDIAG ");
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITDIAG );
-      data_zwrite_csr( &Asparse );
+      //data_zwrite_csr( &Asparse );
       printf("done.\n");
     }
     else if ( strcmp( argv[4], "UNITROWCOL" ) == 0 ) {
       printf("rescaling UNITROWCOL\n");
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITROWCOL );
-      data_zwrite_csr( &Asparse );
+      //data_zwrite_csr( &Asparse );
     }
     else if ( strcmp( argv[4], "UNITDIAGCOL" ) == 0 ) {
       printf("rescaling UNITDIAG\n");
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITDIAGCOL );
-      data_zwrite_csr( &Asparse );
+      //data_zwrite_csr( &Asparse );
     }
   }
   
@@ -330,7 +338,8 @@ int main(int argc, char* argv[])
     #pragma omp for nowait
 	  for(i=0;i<N;i++)
 	  {
-	  	computed_solution[i]=0.0;
+	  	//computed_solution[i]=0.0;
+	  	computed_solution[i]=rhs[i];
 	  	residual[i] = 0.0;
 	  }
 	}
@@ -738,13 +747,13 @@ COMPLETE:   ipar[12]=0;
     }
   }
   
-  for(i=0;i<N;i++) {
-		printf("computed_solution_%s(%d) = %e;\n", argv[4], i+1, computed_solution[i]);
-	}
-  
+  //for(i=0;i<N;i++) {
+	//	printf("computed_solution_%s(%d) = %e;\n", argv[4], i+1, computed_solution[i]);
+	//}
 	
 	
 	final_residual_nrm2 = dnrm2(&ivar, residual, &incx );
+  
 	//solution_error_nrm2 = 0.0;
 	//for (i=0;i<N;i++)
 	//{
@@ -771,6 +780,15 @@ COMPLETE:   ipar[12]=0;
 	printf("csrilu0_wall = %e\n", ompwcsrilu0time);
 	printf("fgmres_wall = %e\n", ompwfgmrestime);
 
+	
+	cvar='N';
+	mkl_dcsrgemv(&cvar, &ivar, A_org.val, ia, ja, computed_solution, residual);
+	dvar=-1.0E0;
+	i=1;
+	daxpy(&ivar, &dvar, rhs_org.val, &i, residual, &i);
+	final_residual_nrm2 = dnrm2(&ivar,residual,&i);
+	printf("\nfinal residual nrm2 from original system: %e\n" ,final_residual_nrm2);
+	
 	free( ia );
 	free( ja );
 	free( A );
@@ -784,6 +802,9 @@ COMPLETE:   ipar[12]=0;
 	free( computed_solution );
 	free( residual );
 	data_zmfree( &Asparse );
+	data_zmfree( &rhs_vector );
+	data_zmfree( &A_org );
+	data_zmfree( &rhs_org );
 	data_zmfree( &L );
 	data_zmfree( &U );
 	data_zmfree( &LU );
@@ -809,6 +830,9 @@ COMPLETE:   ipar[12]=0;
 	  free( computed_solution );
 	  free( residual );
 	  data_zmfree( &Asparse );
+	  data_zmfree( &rhs_vector );
+	  data_zmfree( &A_org );
+	  data_zmfree( &rhs_org );
 	  data_zmfree( &L );
 	  data_zmfree( &U );
 	  data_zmfree( &LU );
@@ -837,6 +861,9 @@ COMPLETE:   ipar[12]=0;
 	  free( computed_solution );
 	  free( residual );
 	  data_zmfree( &Asparse );
+	  data_zmfree( &rhs_vector );
+	  data_zmfree( &A_org );
+	  data_zmfree( &rhs_org );
 	  data_zmfree( &L );
 	  data_zmfree( &U );
 	  data_zmfree( &LU );
@@ -876,6 +903,9 @@ FAILED1:
 	free( computed_solution );
 	free( residual );
 	data_zmfree( &Asparse );
+	data_zmfree( &rhs_vector );
+	data_zmfree( &A_org );
+	data_zmfree( &rhs_org );
 	data_zmfree( &L );
 	data_zmfree( &U );
 	data_zmfree( &LU );
