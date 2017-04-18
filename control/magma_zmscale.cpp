@@ -158,6 +158,7 @@ data_zmscale_matrix_rhs(
 {
     int info = 0;
     
+    // just use scaling_factors !!! Thanks Taylor 
     dataType *tmp=NULL;
     
     if( A->num_rows != A->num_cols && scaling != Magma_NOSCALE ){
@@ -272,6 +273,13 @@ data_zmscale_matrix_rhs(
               b->val[i] = b->val[i] * tmp[i];
             }
         }
+        // need for scaling by columns???
+        
+        // return scaling factors always???
+        
+        // return only scaling factors and leave application to the 
+        // right hand side and solution vector to separate operations??? 
+        
         else {
             printf( "%%error: scaling not supported.\n" );
             info = DEV_ERR_NOT_SUPPORTED;
