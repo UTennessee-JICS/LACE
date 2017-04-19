@@ -338,8 +338,8 @@ int main(int argc, char* argv[])
     #pragma omp for nowait
 	  for(i=0;i<N;i++)
 	  {
-	  	//computed_solution[i]=0.0;
-	  	computed_solution[i]=rhs[i];
+	  	computed_solution[i] = 0.0;
+	  	//computed_solution[i] = rhs[i];
 	  	residual[i] = 0.0;
 	  }
 	}
