@@ -431,11 +431,25 @@ int main(int argc, char* argv[])
   DEV_CHECKPT
   data_zprint_bcsr( &D );
   
+  data_d_matrix E = {Magma_BCSRL};
+  E.diagorder_type = Magma_NODIAG;
+  data_zmconvert( D, &E, Magma_BCSR, Magma_BCSRL );
+  DEV_CHECKPT
+  data_zprint_bcsr( &E );
+  
+  data_d_matrix F = {Magma_BCSRU};
+  F.diagorder_type = Magma_VALUE;
+  data_zmconvert( D, &F, Magma_BCSR, Magma_BCSRU );
+  DEV_CHECKPT
+  data_zprint_bcsr( &F );
+  
   
   data_zmfree( &A );
   data_zmfree( &B );
   data_zmfree( &C );
   data_zmfree( &D );
+  data_zmfree( &E );
+  data_zmfree( &F );
   
   data_zmfree( &G );
   
