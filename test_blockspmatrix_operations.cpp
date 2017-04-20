@@ -443,6 +443,10 @@ int main(int argc, char* argv[])
   DEV_CHECKPT
   data_zprint_bcsr( &F );
   
+  data_d_matrix H = {Magma_BCSC};
+  data_zmtranspose( D, &H );
+  DEV_CHECKPT
+  data_zprint_bcsr( &H );
   
   data_zmfree( &A );
   data_zmfree( &B );

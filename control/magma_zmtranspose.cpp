@@ -149,9 +149,11 @@ z_transpose_csr(
     // sum up nnz in each original column
     // colptr = [ 3 2 1 2, X ]
     #pragma omp parallel private (j) 
+    {
     #pragma omp for simd nowait
     for( j=0; j < rowlimit+1; j++ ) {
         B->row[ j ] = 0;
+    }
     }
     for( k=0; k < A.nnz; k++ ) {
         B->row[ A.col[k]+1 ]++;
@@ -218,6 +220,167 @@ z_transpose_csr(
         }
     } 
    
+    
+//cleanup:
+    return info;
+}
+
+extern "C" int
+z_transpose_bcsr(
+    data_d_matrix A,
+    data_d_matrix *B )
+{
+    DEV_CHECKPT
+    data_int_t info = 0;
+    data_int_t workaround = 0;
+    
+    B->nnz = A.nnz;
+    B->true_nnz = A.true_nnz;
+    B->fill_mode = A.fill_mode;
+    B->num_rows = A.num_cols; 
+    B->num_cols = A.num_rows;
+    B->pad_rows = A.pad_cols; 
+    B->pad_cols = A.pad_rows;
+    B->diameter = A.diameter;
+    
+    B->blocksize = A.blocksize;
+    B->ldblock = A.ldblock;
+    B->numblocks = A.numblocks;
+    
+    int rowlimit = A.num_rows;
+    //int collimit = A.num_rows;
+    if (A.pad_rows > 0 && A.pad_cols > 0) {
+       rowlimit = A.pad_rows;
+       //collimit = A.pad_rows;
+    }
+    B->row = (int*) malloc( (rowlimit+1)*sizeof(int) );
+    B->col = (int*) malloc( A.nnz*sizeof(int) );
+    B->val = (dataType*) malloc( A.nnz*sizeof(dataType) );
+    B->storage_type = A.storage_type;
+    DEV_CHECKPT
+    // this workaround should resolve the problem with the 1 indexing in case of MKL
+    // we check whether first element in A.rowptr is 1
+    if( A.row[0] == 1 ){
+        // increment to create one-based indexing of the array parameters
+        #pragma omp parallel 
+        {
+        #pragma omp for simd nowait
+        for (data_int_t i=0; i<A.numblocks; i++) {
+            A.col[i] -= 1;
+        }
+        #pragma omp for simd nowait
+        for (data_int_t i=0; i<rowlimit+1; i++) {
+            A.row[i] -= 1;	
+        }
+        }
+        workaround = 1;       
+    }
+    //CHECK( data_zmtransfer( A, B, A.memory_location, A.memory_location, queue) );
+    
+    // easier to keep names straight if we convert CSR to CSC,
+    // which is the same as tranposing CSR.
+    // dataDoubleComplex *csc_values=NULL;
+    // data_index_t *csc_colptr=NULL, *csc_rowind=NULL;
+    
+    // i, j are actual row & col indices (0 <= i < nrows, 0 <= j < ncols).
+    // k is index into col and values (0 <= k < nnz).
+    data_int_t i, j, k, total;
+    
+    // CHECK( data_zmalloc_cpu( &csc_values, nnz ) );
+    // CHECK( data_index_malloc_cpu( &csc_colptr, n_cols + 1 ) );
+    // CHECK( data_index_malloc_cpu( &csc_rowind, nnz ) );
+    
+    // example matrix
+    // [ x x 0 x ]
+    // [ x 0 x x ]
+    // [ x x 0 0 ]
+    // rowptr = [ 0 3 6, 8 ]
+    // colind = [ 0 1 3; 0 2 3; 0 1 ]
+    DEV_CHECKPT
+    // sum up nnz in each original column
+    // colptr = [ 3 2 1 2, X ]
+    #pragma omp parallel private (j) 
+    {
+    #pragma omp for simd nowait
+    for( j=0; j < rowlimit+1; j++ ) {
+        B->row[ j ] = 0;
+    }
+    }
+    DEV_CHECKPT
+    printf("\nA.num_rows=%d\n", A.num_rows );
+    for( k=0; k < A.numblocks; k++ ) {
+        printf("A.col[k]+1=%d\n", A.col[k]+1);
+        B->row[ A.col[k]+1 ]++;
+    }
+    
+    DEV_CHECKPT
+    // running sum to convert to new colptr
+    // colptr = [ 0 3 5 6, 8 ]
+    total = 0;
+    for( j=0; j < rowlimit+1; j++ ) {
+        total = total + B->row[ j ];
+        B->row[ j ] = total;
+    }
+    if (A.pad_rows != 0) {
+        //printf("total=%d A.true_nnz=%d\n", total, A.true_nnz);
+        assert( total == A.numblocks );
+    }
+    else { 
+        //printf("total=%d A.nnz=%d\n", total, A.nnz);
+        assert( total == A.numblocks );
+    }
+    
+    DEV_CHECKPT
+    // copy row indices and values
+    // this increments colptr until it effectively shifts left one
+    // colptr = [ 3 5 6 8, 8 ]
+    // rowind = [ 0 1 2; 0 2; 1; 0 1 ]
+    for( i=0; i < rowlimit; i++ ) {
+        for( k=A.row[i]; k < A.row[i+1]; k++ ) {
+            j = A.col[k];
+            B->col[ B->row[ j ] ] = i;
+            //B->val[ B->row[ j ] ] = A.val[k];
+            for (int ii=0; ii < B->blocksize; ii++) {
+                for (int jj=0; jj < B->blocksize; jj++) {
+                    B->val[k*B->ldblock+ii*B->blocksize+jj] = A.val[k*B->ldblock+jj*B->blocksize+ii];
+                }
+            }
+            B->row[ j ]++;
+        }
+    }
+    if (A.pad_rows != 0) {
+        //printf("total=%d A.true_nnz=%d\n", total, A.true_nnz);
+        assert( B->row[ rowlimit-1 ] == A.numblocks );
+    }
+    else { 
+        //printf("total=%d A.nnz=%d\n", total, A.nnz);
+        assert( B->row[ rowlimit-1 ] == A.numblocks );
+    }
+    
+    // shift colptr right one
+    // colptr = [ 0 3 5 6, 8 ]
+    for( j=rowlimit-1; j > 0; j-- ) {
+        B->row[j] = B->row[j-1];
+    }
+    B->row[0] = 0;
+    
+    if ( workaround == 1 ) {
+        // increment to create one-based indexing of the array parameters
+        #pragma omp parallel 
+        {
+        #pragma omp for simd nowait
+        for (data_int_t it=0; it<B->numblocks; it++) {
+            A.col[it] += 1;
+            B->col[it] += 1;
+        }
+        #pragma omp for simd nowait
+        for (data_int_t it=0; it<rowlimit+1; it++) {
+            A.row[it] += 1;	
+            B->row[it] += 1;	
+        }
+        }
+    } 
+    DEV_CHECKPT
     
 //cleanup:
     return info;
@@ -343,6 +506,15 @@ data_zmtranspose(
       || A.storage_type == Magma_CSCU 
       || A.storage_type == Magma_CSCCOO )
       z_transpose_csr( A, B );
+    else if (A.storage_type == Magma_BCSR
+      || A.storage_type == Magma_BCSRD
+      || A.storage_type == Magma_BCSRL
+      || A.storage_type == Magma_BCSRU
+      || A.storage_type == Magma_BCSC
+      || A.storage_type == Magma_BCSCD
+      || A.storage_type == Magma_BCSCL
+      || A.storage_type == Magma_BCSCU )
+      z_transpose_bcsr( A, B );
     else if (A.storage_type == Magma_DENSE
       || A.storage_type == Magma_DENSEL
       || A.storage_type == Magma_DENSEU )

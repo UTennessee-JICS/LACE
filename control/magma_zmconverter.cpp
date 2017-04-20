@@ -593,7 +593,6 @@ data_zmconvert(
         else if ( new_format == Magma_BCSR ) {
           if (B->blocksize > 0) {
             B->storage_type = Magma_BCSR;
-            B->num_rows = A.num_rows;
             B->nnz = A.nnz;
             B->numblocks = 0;
             B->true_nnz = A.nnz;
@@ -609,6 +608,7 @@ data_zmconvert(
               A.val, A.col, A.row, NULL, NULL, &B->numblocks, &info);
             
             B->num_rows = (A.num_rows + B->blocksize - 1)/B->blocksize;
+            B->num_cols = (A.num_cols + B->blocksize - 1)/B->blocksize;
             LACE_CALLOC(B->val, B->numblocks*B->ldblock);
             LACE_CALLOC(B->row, (B->num_rows+1));
             LACE_CALLOC(B->col, B->numblocks);
@@ -618,6 +618,7 @@ data_zmconvert(
               A.val, A.col, A.row, B->val, B->col, B->row, &info);
             
             B->nnz = B->numblocks*B->ldblock;
+            
           }
           else {
              printf("error: conversion from %d to %d requires blocksize to be set.\n",
@@ -629,97 +630,27 @@ data_zmconvert(
           }
         }
         
-        // BCSR to BCSRL
-        else if ( new_format == Magma_BCSRL ) {
-            // fill in information for B
-            B->storage_type = Magma_BCSRL;
-            B->major = MagmaRowMajor;
-            B->fill_mode = MagmaLower;
-            B->num_rows = A.num_rows; 
-            B->num_cols = A.num_cols;
-            B->pad_rows = A.pad_rows; 
-            B->pad_cols = A.pad_cols;
-            B->diameter = A.diameter;
-            
-            B->numblocks = 0;
-            B->ldblock = A.ldblock;
-            B->numblocks = -1;
-    
-            int numblocks=0;
-            for( int i=0; i < rowlimit; i++) {
-                for( int j=A.row[i]; j < A.row[i+1]; j++) {
-                    if ( A.col[j] < i) {
-                        numblocks++;
-                    }
-                    else if ( A.col[j] == i &&
-                                    B->diagorder_type != Magma_NODIAG ) {
-                        numblocks++;
-                    }
-                }
-            }
-            B->numblocks = numblocks;
-            B->nnz = numblocks*B->ldblock;
-            //CHECK( data_zmalloc_cpu( &B->val, numzeros ));
-            //CHECK( data_index_malloc_cpu( &B->row, rowlimit+1 ));
-            //CHECK( data_index_malloc_cpu( &B->col, numzeros ));
-            B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
-            B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
-            B->col = (int*) calloc( B->numblocks, sizeof(int) );
-            
-            numblocks=0;
-            for( int i=0; i < rowlimit; i++) {
-                B->row[i]=numblocks;
-                for( int j=A.row[i]; j < A.row[i+1]; j++) {
-                    // diagonal omitted by default
-                    if ( A.col[j] < i) {
-                        for (int k=0; k< B->ldblock; k++) {
-                            B->val[numblocks+k] = A.val[j*B->ldblock+k];
-                        }
-                        B->col[numblocks] = A.col[j];
-                        numblocks++;
-                    }
-                    // add option of including diagonal with unit value
-                    else if ( A.col[j] == i &&
-                                    B->diagorder_type == Magma_UNITY) {
-                        for (int k=0; k< B->ldblock; k++) {
-                            B->val[numblocks+k] = 1.0;
-                        }
-                        B->col[numblocks] = A.col[j];
-                        numblocks++;
-                    }
-                    // add option of including diagonal
-                    else if ( A.col[j] == i &&
-                                    B->diagorder_type == Magma_VALUE) {
-                        for (int k=0; k< B->ldblock; k++) {
-                            B->val[numblocks+k] = A.val[j*B->ldblock+k];
-                        }
-                        B->col[numblocks] = A.col[j];
-                        numblocks++;
-                    }
-                    // add option of including diagonal with zero value
-                    else if ( A.col[j] == i &&
-                                    B->diagorder_type == Magma_ZERO) {
-                        for (int k=0; k< B->ldblock; k++) {
-                            B->val[numblocks+k] = 0.0;
-                        }
-                        B->col[numblocks] = A.col[j];
-                        numblocks++;
-                    }
-                    // explicit option to omit diagonal
-                    else if ( A.col[j] == i &&
-                                    B->diagorder_type == Magma_NODIAG) {
-
-                    }
-                }
-            }
-            B->row[rowlimit] = numblocks;
-        }
+        // CSR to BCSRL
+        
+        
+        
+        // CSR to BCSRU
+        
+        
         
         // CSR to BCSRCOO
         
         
         
         // CSR to BCSC
+        
+        
+        
+        // CSR to BCSCL
+        
+        
+        
+        // CSR to BCSCU
         
         
         
@@ -1259,7 +1190,7 @@ data_zmconvert(
                 // diagonal omitted by default
                 if ( A.col[j] < i) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks+k] = A.val[j*B->ldblock+k];
+                        B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
@@ -1268,7 +1199,7 @@ data_zmconvert(
                 else if ( A.col[j] == i &&
                                 B->diagorder_type == Magma_UNITY) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks+k] = 1.0;
+                        B->val[numblocks*B->ldblock+k] = 1.0;
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
@@ -1277,7 +1208,7 @@ data_zmconvert(
                 else if ( A.col[j] == i &&
                                 B->diagorder_type == Magma_VALUE) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks+k] = A.val[j*B->ldblock+k];
+                        B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
@@ -1286,7 +1217,7 @@ data_zmconvert(
                 else if ( A.col[j] == i &&
                                 B->diagorder_type == Magma_ZERO) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks+k] = 0.0;
+                        B->val[numblocks*B->ldblock+k] = 0.0;
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
@@ -1343,7 +1274,7 @@ data_zmconvert(
             for( int j=A.row[i]; j < A.row[i+1]; j++) {
                 if ( A.col[j] > i) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks+k] = A.val[j*B->ldblock+k];
+                        B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
@@ -1351,7 +1282,7 @@ data_zmconvert(
                 else if ( A.col[j] == i &&
                                 B->diagorder_type == Magma_UNITY) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks+k] = 1.0;
+                        B->val[numblocks*B->ldblock+k] = 1.0;
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
@@ -1360,7 +1291,7 @@ data_zmconvert(
                 else if ( A.col[j] == i &&
                                 B->diagorder_type == Magma_VALUE) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks+k] = A.val[j*B->ldblock+k];
+                        B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
@@ -1369,7 +1300,7 @@ data_zmconvert(
                 else if ( A.col[j] == i &&
                                 B->diagorder_type == Magma_ZERO) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks+k] = 0.0;
+                        B->val[numblocks*B->ldblock+k] = 0.0;
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
@@ -1382,7 +1313,7 @@ data_zmconvert(
                 // diagonal included by default
                 else if ( A.col[j] == i ) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks+k] = A.val[j*B->ldblock+k];
+                        B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
