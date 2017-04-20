@@ -251,9 +251,10 @@ typedef enum {
     Magma_BCSRD        = 640,
     Magma_BCSRL        = 641,
     Magma_BCSRU        = 642,
-    Magma_BCSCD        = 643,
-    Magma_BCSCL        = 644,
-    Magma_BCSCU        = 645
+    Magma_BCSC         = 643,
+    Magma_BCSCD        = 644,
+    Magma_BCSCL        = 645,
+    Magma_BCSCU        = 646
 } data_storage_t;
 
 typedef enum {
