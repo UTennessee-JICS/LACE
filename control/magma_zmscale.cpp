@@ -179,6 +179,10 @@ data_zmscale_matrix_rhs(
         
     }
     else if( A->num_rows == A->num_cols ){
+      if ( scaling == Magma_NOSCALE ) {
+        
+      }
+      else {
         if ( scaling == Magma_UNITROW ) {
             // scale to unit rownorm by rows
             tmp = (dataType*) calloc( A->num_rows, sizeof(dataType) );
@@ -191,10 +195,6 @@ data_zmscale_matrix_rhs(
             for( int z=0; z<A->nnz; z++ ) {
                 A->val[z] = A->val[z] * tmp[A->rowidx[z]];
             }
-            for ( int i=0; i<A->num_rows; i++ ) {
-              b->val[i] = b->val[i] * tmp[i];
-            }
-            
         }
         else if ( scaling == Magma_UNITDIAG ) {
             // scale to unit diagonal by rows 
@@ -215,9 +215,16 @@ data_zmscale_matrix_rhs(
             for( int z=0; z<A->nnz; z++ ) {
                 A->val[z] = A->val[z] * tmp[A->rowidx[z]];
             }
-            for ( int i=0; i<A->num_rows; i++ ) {
-              b->val[i] = b->val[i] * tmp[i];
-            }
+            //scaling_factors->num_rows = A->num_rows;
+            //scaling_factors->num_cols = 1;
+            //scaling_factors->ld = 1;
+            //scaling_factors->nnz = A->num_rows;
+            //scaling_factors->val = NULL;
+            //scaling_factors->val = (dataType*) calloc( A->num_rows, sizeof(dataType) );
+            //for ( int i=0; i<A->num_rows; i++ ) {
+            //  scaling_factors->val[i] = tmp[i];
+            //  b->val[i] = b->val[i] * tmp[i];
+            //}
         }
         else if ( scaling == Magma_UNITROWCOL ) {
             // scale to unit rownorm by rows and columns
@@ -231,16 +238,16 @@ data_zmscale_matrix_rhs(
             for( int z=0; z<A->nnz; z++ ) {
                 A->val[z] = A->val[z] * tmp[A->col[z]] * tmp[A->rowidx[z]];
             }
-            scaling_factors->num_rows = A->num_rows;
-            scaling_factors->num_cols = 1;
-            scaling_factors->ld = 1;
-            scaling_factors->nnz = A->num_rows;
-            scaling_factors->val = NULL;
-            scaling_factors->val = (dataType*) calloc( A->num_rows, sizeof(dataType) );
-            for ( int i=0; i<A->num_rows; i++ ) {
-              scaling_factors->val[i] = tmp[i];
-              b->val[i] = b->val[i] * tmp[i];
-            }
+            //scaling_factors->num_rows = A->num_rows;
+            //scaling_factors->num_cols = 1;
+            //scaling_factors->ld = 1;
+            //scaling_factors->nnz = A->num_rows;
+            //scaling_factors->val = NULL;
+            //scaling_factors->val = (dataType*) calloc( A->num_rows, sizeof(dataType) );
+            //for ( int i=0; i<A->num_rows; i++ ) {
+            //  scaling_factors->val[i] = tmp[i];
+            //  b->val[i] = b->val[i] * tmp[i];
+            //}
             
         }
         else if ( scaling == Magma_UNITDIAGCOL ) {
@@ -262,17 +269,38 @@ data_zmscale_matrix_rhs(
             for( int z=0; z<A->nnz; z++ ) {
                 A->val[z] = A->val[z] * tmp[A->col[z]] * tmp[A->rowidx[z]];
             }
-            scaling_factors->num_rows = A->num_rows;
-            scaling_factors->num_cols = 1;
-            scaling_factors->ld = 1;
-            scaling_factors->nnz = A->num_rows;
-            scaling_factors->val = NULL;
-            scaling_factors->val = (dataType*) calloc( A->num_rows, sizeof(dataType) );
-            for ( int i=0; i<A->num_rows; i++ ) {
-              scaling_factors->val[i] = tmp[i];
-              b->val[i] = b->val[i] * tmp[i];
-            }
+            //scaling_factors->num_rows = A->num_rows;
+            //scaling_factors->num_cols = 1;
+            //scaling_factors->ld = 1;
+            //scaling_factors->nnz = A->num_rows;
+            //scaling_factors->val = NULL;
+            //scaling_factors->val = (dataType*) calloc( A->num_rows, sizeof(dataType) );
+            //for ( int i=0; i<A->num_rows; i++ ) {
+            //  scaling_factors->val[i] = tmp[i];
+            //  b->val[i] = b->val[i] * tmp[i];
+            //}
         }
+        
+        else {
+            printf( "%%error: scaling not supported.\n" );
+            info = DEV_ERR_NOT_SUPPORTED;
+        }
+        
+        if ( info != DEV_ERR_NOT_SUPPORTED ) {
+        
+          scaling_factors->num_rows = A->num_rows;
+          scaling_factors->num_cols = 1;
+          scaling_factors->ld = 1;
+          scaling_factors->nnz = A->num_rows;
+          scaling_factors->val = NULL;
+          scaling_factors->val = (dataType*) calloc( A->num_rows, sizeof(dataType) );
+          for ( int i=0; i<A->num_rows; i++ ) {
+            scaling_factors->val[i] = tmp[i];
+            b->val[i] = b->val[i] * tmp[i];
+          }
+            
+        }
+        
         // need for scaling by columns???
         
         // return scaling factors always???
@@ -280,10 +308,8 @@ data_zmscale_matrix_rhs(
         // return only scaling factors and leave application to the 
         // right hand side and solution vector to separate operations??? 
         
-        else {
-            printf( "%%error: scaling not supported.\n" );
-            info = DEV_ERR_NOT_SUPPORTED;
-        }
+        
+      }  
     }
     else {
         printf( "%%error: scaling not supported.\n" );
