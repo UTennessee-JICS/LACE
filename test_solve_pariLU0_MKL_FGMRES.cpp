@@ -69,12 +69,15 @@ int main(int argc, char* argv[])
   //char output_L[256];
   //char output_U[256];
   
+  data_scale_t scaling  = Magma_NOSCALE;
+  
   // for PariLU0
   dataType user_precond_reduction = 1.0e-15;
   
   // for FGMRES
   int user_restart = 150;
   int user_maxiter = 150;
+  int user_gmres_tol_type = 1;
   int user_precond_choice = 0;
   dataType user_rel_tol = 1.0e-6;
   
@@ -88,7 +91,7 @@ int main(int argc, char* argv[])
   
   if (argc < 4) {
     printf("Usage %s <matrix> <rhs vector> <output directory> ", argv[0] );
-    printf("[diagonal scaling] [relative_tolerance] [restart] ");
+    printf("[diagonal scaling] [abs/rel] [GMRES_tolerance] [restart] ");
     printf("[maxiter] [precond_choice] [reduction]\n");
     return 1;
   }
@@ -148,54 +151,64 @@ int main(int argc, char* argv[])
   if ( argc >= 5 ) {
     if ( strcmp( argv[4], "UNITROW" ) == 0 ) {
       printf("rescaling UNITROW ");
+      scaling = Magma_UNITROW;
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITROW );
       //data_zwrite_csr( &Asparse );
       printf("done.\n");
     }
     else if ( strcmp( argv[4], "UNITDIAG" ) == 0 ) {
       printf("rescaling UNITDIAG ");
+      scaling = Magma_UNITDIAG;
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITDIAG );
       //data_zwrite_csr( &Asparse );
       printf("done.\n");
     }
     else if ( strcmp( argv[4], "UNITROWCOL" ) == 0 ) {
       printf("rescaling UNITROWCOL\n");
+      scaling = Magma_UNITROWCOL;
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITROWCOL );
       //data_zwrite_csr( &Asparse );
     }
     else if ( strcmp( argv[4], "UNITDIAGCOL" ) == 0 ) {
-      printf("rescaling UNITDIAG\n");
+      printf("rescaling UNITDIAGCOL\n");
+      scaling = Magma_UNITDIAGCOL;
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITDIAGCOL );
       //data_zwrite_csr( &Asparse );
     }
   }
   
-  // Set relative tolerance stopping citeria for FGMRES
+  // Select absolute=0 or relative=1 tolerance stopping citeria for FGMRES
   if ( argc >= 6 ) {
-    user_rel_tol = atof( argv[5] );
+    user_gmres_tol_type = atoi( argv[5] );
+  }
+  
+  // Set tolerance for stopping citeria for FGMRES
+  if ( argc >= 7 ) {
+    user_rel_tol = atof( argv[6] );
   }
   
   // Set restarts
-  if ( argc >= 7 ) {
-    user_restart = atoi( argv[6] );
+  if ( argc >= 8 ) {
+    user_restart = atoi( argv[7] );
   }
   
   // Set max iterations
-  if ( argc >= 8 ) {
-    user_maxiter = atoi( argv[7] );
+  if ( argc >= 9 ) {
+    user_maxiter = atoi( argv[8] );
   }
   
   // Set precond choice: 0 = PariLU0, 1 = MKL csriLU0
-  if ( argc >= 9 ) {
-    user_precond_choice = atoi( argv[8] );
+  if ( argc >= 10 ) {
+    user_precond_choice = atoi( argv[9] );
   }
   
   // Set PariLU0 iterative improvement tolerance
-  if ( argc >= 10 ) {
-    user_precond_reduction = atof( argv[9] );
+  if ( argc >= 11 ) {
+    user_precond_reduction = atof( argv[10] );
   }
   
-  printf("diagonal scaling = %s\n", argv[4] );
+  printf("diagonal scaling = %s : %d\n", argv[4], scaling );
+  printf("user_gmres_tol_type = %d\n", user_gmres_tol_type);
   printf("user_rel_tol = %e\n", user_rel_tol);
   printf("user_restart = %d\n", user_restart);
   printf("user_maxiter = %d\n", user_maxiter);
@@ -253,6 +266,8 @@ int main(int argc, char* argv[])
 	double* b;
 	double* computed_solution;
 	double* residual;
+	double* b_scaled;
+	double* residual_scaled;
   //tmp = (double*) calloc( ( N*(2*N+1)+(N*(N+9))/2+1 ), sizeof(double) );
   tmp = (double*) calloc( ( N*(2*user_restart+1)+(user_restart*(user_restart+9))/2+1 ), sizeof(double) );
   trvec = (double*) calloc( N, sizeof(double) );
@@ -263,6 +278,11 @@ int main(int argc, char* argv[])
   b = (double*) calloc( N, sizeof(double) );
   computed_solution = (double*) calloc( N, sizeof(double) );
   residual = (double*) calloc( N, sizeof(double) );
+  
+  //if ( scaling != Magma_NOSCALE ) {
+    b_scaled = (double*) calloc( N, sizeof(double) );
+    residual_scaled = (double*) calloc( N, sizeof(double) );
+  //}
 
 	MKL_INT matsize=Asparse.nnz, incx=1; //, ref_nit=2;
 	//double ref_norm2=7.772387E+0, nrm2;
@@ -280,6 +300,7 @@ int main(int argc, char* argv[])
 	MKL_INT itercount=0,ierr=0;
 	MKL_INT RCI_request=0, i=0, ivar=0;
 	double dvar = FLT_MAX;
+	double dvar_scaled = FLT_MAX;
 	char cvar, cvar1, cvar2;
 
 	printf("--------------------------------------------------------\n");
@@ -497,7 +518,13 @@ int main(int argc, char* argv[])
 	
 	ipar[4]=user_maxiter;
 	ipar[7]=1;
-	ipar[8]=1;
+	//if ( scaling == Magma_NOSCALE) {
+	//  ipar[8]=1;
+	//}
+	//else {
+	//  ipar[8]=0;
+	//}
+	ipar[8] = user_gmres_tol_type;
 	ipar[9]=1;
 	ipar[10]=1;
 	//ipar[11]=1;
@@ -639,7 +666,7 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 	  ---------------------------------------------------------------------------*/
 	if (RCI_request==2)
 	{
-	  //printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
+	  printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
 		/* Request to the dfgmres_get routine to put the solution into b[N] via ipar[12]
 		  ---------------------------------------------------------------------------
 		   WARNING: beware that the call to dfgmres_get routine with ipar[12]=0 at this stage may
@@ -657,12 +684,48 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 		i=1;
 		daxpy(&ivar, &dvar, rhs, &i, residual, &i);
 		dvar=dnrm2(&ivar,residual,&i);
-	  //printf("dvar = %e\n", dvar );
+		//printf("dvar = %e\n", dvar );
 	  //printf("dpar[4] = %e\n", dpar[4] );
 	  //printf("dpar[5] = %e\n", dpar[5] );
 		//if (dvar<1.0E-3) goto COMPLETE;
-		if (dvar<tol_gmres_res) goto COMPLETE;
-		else goto ONE;
+		if ( scaling == Magma_NOSCALE ) {
+		  
+		  if (dvar<tol_gmres_res) goto COMPLETE;
+		  else goto ONE;
+		}
+		else {
+		  printf("calculating residual in original system for scaling %s\n", argv[4]);
+		  if ( scaling == Magma_UNITROWCOL 
+          || scaling == Magma_UNITDIAGCOL ) {
+        printf("rescaling computed solution %s\n", argv[4]);
+        DEV_CHECKPT
+        for ( int ii=0; ii<N; ii++ ) {
+          b_scaled[ii] = b[ii] * scaling_factors.val[ii];
+        }
+        DEV_CHECKPT
+		    mkl_dcsrgemv(&cvar, &ivar, A_org.val, ia, ja, b_scaled, residual_scaled);
+		    DEV_CHECKPT
+      }
+      else {
+        DEV_CHECKPT
+		    mkl_dcsrgemv(&cvar, &ivar, A_org.val, ia, ja, b, residual_scaled);
+		    DEV_CHECKPT
+      }
+          
+		  dvar_scaled=-1.0E0;
+		  i=1;
+		  daxpy(&ivar, &dvar_scaled, rhs_org.val, &i, residual_scaled, &i);
+		  DEV_CHECKPT
+		  dvar_scaled=dnrm2(&ivar,residual_scaled,&i);
+		  DEV_CHECKPT
+	    //printf("dvar = %e\n", dvar );
+	    //printf("dpar[4] = %e\n", dpar[4] );
+	    //printf("dpar[5] = %e\n", dpar[5] );
+		  //if (dvar<1.0E-3) goto COMPLETE;
+		  
+		  if (dvar_scaled<tol_gmres_res) goto COMPLETE;
+		  else goto ONE;
+		}
 	}
 	/*---------------------------------------------------------------------------
 	   If RCI_request=3, then apply the preconditioner on the vector
@@ -738,8 +801,15 @@ COMPLETE:   ipar[12]=0;
 	
 	// Scale the computed solution if necessary
   if ( argc >= 5 ) {
-    if ( ( strcmp( argv[4], "UNITROWCOL" ) == 0 ) 
-          || ( strcmp( argv[4], "UNITDIAGCOL" ) == 0 ) ){
+    //if ( ( strcmp( argv[4], "UNITROWCOL" ) == 0 ) 
+    //      || ( strcmp( argv[4], "UNITDIAGCOL" ) == 0 ) ) {
+    //  printf("rescaling computed solution %s\n", argv[4]);
+    //  for ( int i=0; i<N; i++ ) {
+    //    computed_solution[i] = computed_solution[i] * scaling_factors.val[i];
+    //  }
+    //}
+    if ( scaling == Magma_UNITROWCOL 
+          || scaling == Magma_UNITDIAGCOL ) {
       printf("rescaling computed solution %s\n", argv[4]);
       for ( int i=0; i<N; i++ ) {
         computed_solution[i] = computed_solution[i] * scaling_factors.val[i];
@@ -808,6 +878,10 @@ COMPLETE:   ipar[12]=0;
 	data_zmfree( &L );
 	data_zmfree( &U );
 	data_zmfree( &LU );
+	//if ( scaling != Magma_NOSCALE ) {
+	  free( b_scaled );
+	  free( residual_scaled );
+	//}
 	return 0;
 	
 	//if(itercount==ref_nit && fabs(ref_norm2-nrm2)<1.e-6) {
