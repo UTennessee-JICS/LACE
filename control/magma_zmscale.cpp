@@ -191,9 +191,13 @@ data_zmscale_matrix_rhs(
                 for( int f=A->row[z]; f<A->row[z+1]; f++ )
                     s+= A->val[f]*A->val[f];
                 tmp[z] = 1.0/sqrt( s );
-            }        
-            for( int z=0; z<A->nnz; z++ ) {
-                A->val[z] = A->val[z] * tmp[A->rowidx[z]];
+            }  
+            #pragma omp parallel 
+            {
+              #pragma omp for nowait
+              for( int z=0; z<A->nnz; z++ ) {
+                  A->val[z] = A->val[z] * tmp[A->rowidx[z]];
+              }
             }
         }
         else if ( scaling == Magma_UNITDIAG ) {
@@ -212,8 +216,12 @@ data_zmscale_matrix_rhs(
                 }
                 tmp[z] = 1.0/s;
             }
-            for( int z=0; z<A->nnz; z++ ) {
-                A->val[z] = A->val[z] * tmp[A->rowidx[z]];
+            #pragma omp parallel 
+            {
+              #pragma omp for nowait
+              for( int z=0; z<A->nnz; z++ ) {
+                  A->val[z] = A->val[z] * tmp[A->rowidx[z]];
+              }
             }
             //scaling_factors->num_rows = A->num_rows;
             //scaling_factors->num_cols = 1;
@@ -234,9 +242,13 @@ data_zmscale_matrix_rhs(
                 for( int f=A->row[z]; f<A->row[z+1]; f++ )
                     s+= A->val[f]*A->val[f];
                 tmp[z] = 1.0/sqrt( s );
-            }        
-            for( int z=0; z<A->nnz; z++ ) {
-                A->val[z] = A->val[z] * tmp[A->col[z]] * tmp[A->rowidx[z]];
+            } 
+            #pragma omp parallel 
+            {
+              #pragma omp for nowait
+              for( int z=0; z<A->nnz; z++ ) {
+                  A->val[z] = A->val[z] * tmp[A->col[z]] * tmp[A->rowidx[z]];
+              }
             }
             //scaling_factors->num_rows = A->num_rows;
             //scaling_factors->num_cols = 1;
@@ -266,8 +278,12 @@ data_zmscale_matrix_rhs(
                 }
                 tmp[z] = 1.0/sqrt( s );
             }
-            for( int z=0; z<A->nnz; z++ ) {
-                A->val[z] = A->val[z] * tmp[A->col[z]] * tmp[A->rowidx[z]];
+            #pragma omp parallel 
+            {
+              #pragma omp for nowait
+              for( int z=0; z<A->nnz; z++ ) {
+                  A->val[z] = A->val[z] * tmp[A->col[z]] * tmp[A->rowidx[z]];
+              }
             }
             //scaling_factors->num_rows = A->num_rows;
             //scaling_factors->num_cols = 1;
@@ -294,9 +310,13 @@ data_zmscale_matrix_rhs(
           scaling_factors->nnz = A->num_rows;
           scaling_factors->val = NULL;
           scaling_factors->val = (dataType*) calloc( A->num_rows, sizeof(dataType) );
-          for ( int i=0; i<A->num_rows; i++ ) {
-            scaling_factors->val[i] = tmp[i];
-            b->val[i] = b->val[i] * tmp[i];
+          #pragma omp parallel 
+          {
+            #pragma omp for nowait
+            for ( int i=0; i<A->num_rows; i++ ) {
+              scaling_factors->val[i] = tmp[i];
+              b->val[i] = b->val[i] * tmp[i];
+            }
           }
             
         }
