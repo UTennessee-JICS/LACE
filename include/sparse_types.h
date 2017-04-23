@@ -127,6 +127,26 @@ typedef struct data_z_preconditioner
 #endif
 } data_d_preconditioner;
 
+typedef struct data_z_preconditioner_log
+{
+    data_int_t             sweeps;	
+    dataType               precond_generation_time;
+    dataType               initial_residual;
+    dataType               initial_nonlinear_residual;
+    dataType               residual;	
+    dataType               nonlinear_residual;  
+} data_d_preconditioner_log;
+
+
+typedef struct data_z_gmres_log
+{
+    data_int_t             search_directions;	
+    dataType               solve_time;	
+    dataType               initial_residual;
+    dataType               scaled_residual;	
+    dataType               original_residual;  
+} data_d_gmres_log;
+
 
 #ifdef __cplusplus
 }

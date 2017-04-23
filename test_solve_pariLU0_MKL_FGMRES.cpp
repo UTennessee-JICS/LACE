@@ -73,6 +73,7 @@ int main(int argc, char* argv[])
   
   // for PariLU0
   dataType user_precond_reduction = 1.0e-15;
+  data_d_preconditioner_log parilu_log;
   
   // for FGMRES
   int user_restart = 150;
@@ -80,6 +81,7 @@ int main(int argc, char* argv[])
   int user_gmres_tol_type = 1;
   int user_precond_choice = 0;
   dataType user_gmres_tol = 1.0e-6;
+  data_d_gmres_log gmres_log;
   
   // for timing of MKL csriLU0 and FGMRES
   dataType wcsrilu0start = 0.0;
@@ -279,17 +281,17 @@ int main(int argc, char* argv[])
   computed_solution = (double*) calloc( N, sizeof(double) );
   residual = (double*) calloc( N, sizeof(double) );
   
-  //if ( scaling != Magma_NOSCALE ) {
+  if ( scaling != Magma_NOSCALE ) {
     b_scaled = (double*) calloc( N, sizeof(double) );
     residual_scaled = (double*) calloc( N, sizeof(double) );
-  //}
+  }
 
 	MKL_INT matsize=Asparse.nnz, incx=1; //, ref_nit=2;
 	//double ref_norm2=7.772387E+0, nrm2;
 	double ref_norm2 = FLT_MAX, nrm2 = FLT_MAX;
 	double final_residual_nrm2 = FLT_MAX;
 	//double solution_error_nrm2;
-	double tol_gmres_res = 1.0e-10;
+	//double tol_gmres_res = 1.0e-10;
   dataType Ares = 0.0;
   dataType Anonlinres = 0.0;
   //double dvar_bad = 0.0;
@@ -444,11 +446,14 @@ int main(int argc, char* argv[])
   
   if ( user_precond_choice == 0 ) {
     // TODO: return an int from parilu factorizations and check it
-    data_PariLU_v0_2( &Asparse, &L, &U, user_precond_reduction );
+    data_PariLU_v0_3( &Asparse, &L, &U, user_precond_reduction, &parilu_log );
     
     data_zilures(Asparse, L, U, &LU, &Ares, &Anonlinres);
     printf("PariLUv0_2_csrilu0_res = %e\n", Ares);
     printf("PariLUv0_2_csrilu0_nonlinres = %e\n", Anonlinres);
+    
+    parilu_log.residual = Ares;
+    parilu_log.nonlinear_residual = Anonlinres;
     
     data_zmlumerge( L, U, &LU );
     
@@ -832,6 +837,11 @@ COMPLETE:   ipar[12]=0;
 	
 	final_residual_nrm2 = dnrm2(&ivar, residual, &incx );
   
+	gmres_log.search_directions = itercount;
+	gmres_log.solve_time = ompwfgmrestime;
+	gmres_log.initial_residual = dpar[2];
+	gmres_log.scaled_residual = final_residual_nrm2;
+	
 	//solution_error_nrm2 = 0.0;
 	//for (i=0;i<N;i++)
 	//{
@@ -867,6 +877,46 @@ COMPLETE:   ipar[12]=0;
 	final_residual_nrm2 = dnrm2(&ivar,residual,&i);
 	printf("\nfinal residual nrm2 from original system: %e\n" ,final_residual_nrm2);
 	
+	gmres_log.original_residual = final_residual_nrm2;
+	
+	printf("\n\n%%scaling\tuser_gmres_tol_type\tuser_gmres_tol\t");
+	printf("user_restart\tuser_maxiter\t");
+	printf("user_precond_choice\tuser_precond_reduction\n");
+	
+	printf("settings = [ %d\t%d\t%e\t%d\t%d\t%d\t%e ];\n",
+	  scaling, user_gmres_tol_type, user_gmres_tol, user_restart, user_maxiter,
+	  user_precond_choice, user_precond_reduction );
+	
+	printf("\n\n%%sweeps\tprecond_generation_time\tinitial_residual\t");
+	printf("initial_nonlinear_residual\tresidual\tnonlinear_residual\t");
+	
+	printf("search_directions\tsolve_time\tinitial_residual\tscaled_residual\toriginal_residual\n");
+	
+	printf("run_log = [ %d\t%e\t%e\t%e\t%e\t%e\t",
+	  parilu_log.sweeps, parilu_log.precond_generation_time, 
+	  parilu_log.initial_residual, parilu_log.initial_nonlinear_residual,
+	  parilu_log.residual, parilu_log.nonlinear_residual );
+	
+	printf("%d\t%e\t%e\t%e\t%e ];\n",
+	  gmres_log.search_directions, gmres_log.solve_time, 
+	  gmres_log.initial_residual, gmres_log.scaled_residual,
+	  gmres_log.original_residual );
+	
+	
+	printf("\n\n%d\t%d\t%e\t%d\t%d\t%d\t%e\n",
+	  scaling, user_gmres_tol_type, user_gmres_tol, user_restart, user_maxiter,
+	  user_precond_choice, user_precond_reduction );
+	
+	printf("%d\t%e\t%e\t%e\t%e\t%e\t",
+	  parilu_log.sweeps, parilu_log.precond_generation_time, 
+	  parilu_log.initial_residual, parilu_log.initial_nonlinear_residual,
+	  parilu_log.residual, parilu_log.nonlinear_residual );
+	
+	printf("%d\t%e\t%e\t%e\t%e\n",
+	  gmres_log.search_directions, gmres_log.solve_time, 
+	  gmres_log.initial_residual, gmres_log.scaled_residual,
+	  gmres_log.original_residual );
+	
 	free( ia );
 	free( ja );
 	free( A );
@@ -886,10 +936,10 @@ COMPLETE:   ipar[12]=0;
 	data_zmfree( &L );
 	data_zmfree( &U );
 	data_zmfree( &LU );
-	//if ( scaling != Magma_NOSCALE ) {
+	if ( scaling != Magma_NOSCALE ) {
 	  free( b_scaled );
 	  free( residual_scaled );
-	//}
+	}
 	return 0;
 	
 	//if(itercount==ref_nit && fabs(ref_norm2-nrm2)<1.e-6) {

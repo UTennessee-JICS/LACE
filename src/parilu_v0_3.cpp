@@ -16,7 +16,8 @@ void
 data_PariLU_v0_3( data_d_matrix* A, 
   data_d_matrix* L, 
   data_d_matrix* U, 
-  dataType reduction ) 
+  dataType reduction,
+  data_d_preconditioner_log* log ) 
 {
   //data_d_matrix Atmp = {Magma_CSRCOO};
   // TODO: avoid the duplication of the entire csr format.  All that is needed is a rowidx array.
@@ -121,5 +122,10 @@ data_PariLU_v0_3( data_d_matrix* A,
     num_threads, iter, wend-wstart, ompwtime );
   //data_zmfree( &Atmp );
   data_zmfree( &LU );
+  
+  log->sweeps = iter;
+  log->precond_generation_time = wend-wstart;
+  log->initial_residual = Ares;
+  log->initial_nonlinear_residual = Anonlinres;
   
 }

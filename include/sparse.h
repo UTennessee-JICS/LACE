@@ -650,7 +650,8 @@ data_PariLU_v0_3(
   data_d_matrix* A, 
   data_d_matrix* L, 
   data_d_matrix* U,
-  dataType reduction );
+  dataType reduction,
+  data_d_preconditioner_log* log );
 
 void
 data_PariLU_v0_4( 
