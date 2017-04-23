@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
   int user_maxiter = 150;
   int user_gmres_tol_type = 1;
   int user_precond_choice = 0;
-  dataType user_rel_tol = 1.0e-6;
+  dataType user_gmres_tol = 1.0e-6;
   
   // for timing of MKL csriLU0 and FGMRES
   dataType wcsrilu0start = 0.0;
@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
   
   // Set tolerance for stopping citeria for FGMRES
   if ( argc >= 7 ) {
-    user_rel_tol = atof( argv[6] );
+    user_gmres_tol = atof( argv[6] );
   }
   
   // Set restarts
@@ -209,7 +209,7 @@ int main(int argc, char* argv[])
   
   printf("diagonal scaling = %s : %d\n", argv[4], scaling );
   printf("user_gmres_tol_type = %d\n", user_gmres_tol_type);
-  printf("user_rel_tol = %e\n", user_rel_tol);
+  printf("user_gmres_tol = %e\n", user_gmres_tol);
   printf("user_restart = %d\n", user_restart);
   printf("user_maxiter = %d\n", user_maxiter);
   printf("user_precond_choice = %d\n", user_precond_choice);
@@ -317,7 +317,7 @@ int main(int argc, char* argv[])
 	//	expected_solution[i]=1.0;
 	//}
 	//mkl_dcsrgemv(&cvar, &ivar, A, ia, ja, expected_solution, rhs);
-	DEV_CHECKPT
+	
 	//dcopy(&ivar, rhs_vector.val, &i, rhs, &i);
 	#pragma omp parallel 
   {
@@ -326,13 +326,13 @@ int main(int argc, char* argv[])
       rhs[i] = rhs_vector.val[i];
     }
   }
-	DEV_CHECKPT
+	
 /*---------------------------------------------------------------------------
    Save the right-hand side in vector b for future use
   ---------------------------------------------------------------------------*/
 	i=1;
 	dcopy(&ivar, rhs, &i, b, &i);
-	DEV_CHECKPT
+	
 /*---------------------------------------------------------------------------
    Initialize the initial guess
   ---------------------------------------------------------------------------*/
@@ -529,7 +529,7 @@ int main(int argc, char* argv[])
 	ipar[10]=1;
 	//ipar[11]=1;
 	ipar[14]=user_restart;
-	dpar[0]=user_rel_tol;
+	dpar[0]=user_gmres_tol;
 	
 	printf("ipar[4]=%d\n", ipar[4]);
 	printf("ipar[14]=%d\n", ipar[14]);
@@ -666,7 +666,7 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 	  ---------------------------------------------------------------------------*/
 	if (RCI_request==2)
 	{
-	  printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
+	  //printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
 		/* Request to the dfgmres_get routine to put the solution into b[N] via ipar[12]
 		  ---------------------------------------------------------------------------
 		   WARNING: beware that the call to dfgmres_get routine with ipar[12]=0 at this stage may
@@ -690,40 +690,44 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 		//if (dvar<1.0E-3) goto COMPLETE;
 		if ( scaling == Magma_NOSCALE ) {
 		  
-		  if (dvar<tol_gmres_res) goto COMPLETE;
+		  if (dvar<user_gmres_tol) goto COMPLETE;
 		  else goto ONE;
 		}
 		else {
-		  printf("calculating residual in original system for scaling %s\n", argv[4]);
+		  //printf("calculating residual in original system for scaling %s\n", argv[4]);
 		  if ( scaling == Magma_UNITROWCOL 
           || scaling == Magma_UNITDIAGCOL ) {
-        printf("rescaling computed solution %s\n", argv[4]);
-        DEV_CHECKPT
-        for ( int ii=0; ii<N; ii++ ) {
-          b_scaled[ii] = b[ii] * scaling_factors.val[ii];
+        //printf("rescaling computed solution %s\n", argv[4]);
+        
+        #pragma omp parallel 
+        {
+          #pragma omp for nowait
+          for ( int ii=0; ii<N; ii++ ) {
+            b_scaled[ii] = b[ii] * scaling_factors.val[ii];
+          }
         }
-        DEV_CHECKPT
+        
 		    mkl_dcsrgemv(&cvar, &ivar, A_org.val, ia, ja, b_scaled, residual_scaled);
-		    DEV_CHECKPT
+		    
       }
       else {
-        DEV_CHECKPT
+        
 		    mkl_dcsrgemv(&cvar, &ivar, A_org.val, ia, ja, b, residual_scaled);
-		    DEV_CHECKPT
+		    
       }
           
 		  dvar_scaled=-1.0E0;
 		  i=1;
 		  daxpy(&ivar, &dvar_scaled, rhs_org.val, &i, residual_scaled, &i);
-		  DEV_CHECKPT
+		  
 		  dvar_scaled=dnrm2(&ivar,residual_scaled,&i);
-		  DEV_CHECKPT
+		  
 	    //printf("dvar = %e\n", dvar );
 	    //printf("dpar[4] = %e\n", dpar[4] );
 	    //printf("dpar[5] = %e\n", dpar[5] );
 		  //if (dvar<1.0E-3) goto COMPLETE;
 		  
-		  if (dvar_scaled<tol_gmres_res) goto COMPLETE;
+		  if (dvar_scaled<user_gmres_tol) goto COMPLETE;
 		  else goto ONE;
 		}
 	}
@@ -811,8 +815,12 @@ COMPLETE:   ipar[12]=0;
     if ( scaling == Magma_UNITROWCOL 
           || scaling == Magma_UNITDIAGCOL ) {
       printf("rescaling computed solution %s\n", argv[4]);
-      for ( int i=0; i<N; i++ ) {
-        computed_solution[i] = computed_solution[i] * scaling_factors.val[i];
+      #pragma omp parallel 
+      {
+        #pragma omp for nowait
+        for ( int i=0; i<N; i++ ) {
+          computed_solution[i] = computed_solution[i] * scaling_factors.val[i];
+        }
       }
     }
   }
