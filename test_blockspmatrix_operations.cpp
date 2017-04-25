@@ -425,6 +425,8 @@ int main(int argc, char* argv[])
   char filename[] = "testing/matrices/Trefethen_20.mtx";
   data_d_matrix C = {Magma_CSR};
   data_z_csr_mtx( &C, filename ); 
+  DEV_CHECKPT
+  data_zprint_csr( C );
   data_d_matrix D = {Magma_BCSR};
   D.blocksize = 4;
   data_zmconvert( C, &D, Magma_CSR, Magma_BCSR );
@@ -448,6 +450,12 @@ int main(int argc, char* argv[])
   DEV_CHECKPT
   data_zprint_bcsr( &H );
   
+  data_d_matrix I = {Magma_CSR};
+  data_zmconvert( D, &I, Magma_BCSR, Magma_CSR );
+  DEV_CHECKPT
+  data_zprint_csr( I );
+  DEV_CHECKPT
+  
   data_zmfree( &A );
   data_zmfree( &B );
   data_zmfree( &C );
@@ -456,6 +464,8 @@ int main(int argc, char* argv[])
   data_zmfree( &F );
   
   data_zmfree( &G );
+  data_zmfree( &H );
+  data_zmfree( &I );
   
   
   testing::InitGoogleTest(&argc, argv);

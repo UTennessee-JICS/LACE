@@ -750,12 +750,40 @@ data_zmconvert(
         
         // BCSR to CSR
         else if ( old_format == Magma_BCSR ) {
-            //CHECK( data_zmtransfer(A, &A_d, Magma_CPU, Magma_DEV, queue ) );
-            //CHECK( data_zmconvert(A_d, &B_d, Magma_BCSR, Magma_CSR, queue ) );
-            data_zmconvert(A, B, Magma_BCSR, Magma_CSR );
-            //data_zmfree( &A_d, queue );
-            //CHECK( data_zmtransfer(B_d, B, Magma_DEV, Magma_CPU, queue ) );
-            //data_zmfree( &B_d, queue );
+            
+            if (A.blocksize > 0) {
+              B->storage_type = Magma_BCSR;
+              B->nnz = A.numblocks*A.ldblock;
+              B->numblocks = 0;
+              B->blocksize = 0;
+              B->true_nnz = A.nnz;
+              B->ldblock = 0;
+              
+              // One based indexing is associated with column major storage in 
+              //    mkl_dcsrbsr!
+              // Using zero based indexing. 
+              // Handle column major - row major transform separately.
+              int job[6] = { 1, 0, 0, 0, 0, 1 }; 
+              
+              B->num_rows = A.num_rows*A.blocksize;
+              B->num_cols = A.num_cols*A.blocksize;
+              LACE_CALLOC(B->val, B->nnz);
+              LACE_CALLOC(B->row, (B->num_rows+1));
+              LACE_CALLOC(B->col, B->num_cols);
+              
+              mkl_dcsrbsr(job, &A.num_rows, &A.blocksize, &A.ldblock, 
+                B->val, B->col, B->row, A.val, A.col, A.row, &info);
+              printf("\ninfo_bsrcsr=%d\n",info);
+            }
+            else {
+               printf("error: conversion from %d to %d requires blocksize to be set.\n",
+                 old_format, new_format);
+               printf("\tB->blocksize currently = %d .  A.blocksize > 0 required.\n",
+                 A.blocksize);
+               info = DEV_ERR_NOT_SUPPORTED;
+               exit(-1);
+            }
+            
         }
         
         // COO to CSR
