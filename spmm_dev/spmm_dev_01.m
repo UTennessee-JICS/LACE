@@ -20,7 +20,7 @@ display('Dense-matrix multiply')
 step = 1e10;
 iter = 0;
 tol = 1e-8;
-while (step > tol)
+%while (step > tol)
     
     step = 0;
     for ii = 1:N
@@ -37,7 +37,7 @@ while (step > tol)
     end
     
     iter = iter + 1;
-end
+%end
 
 tmp_step
 iter
