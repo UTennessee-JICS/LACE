@@ -175,22 +175,34 @@ int main(int argc, char* argv[])
   x_mkl.nnz = x_mkl.num_rows;
   LACE_CALLOC(x_mkl.val, x_mkl.num_rows);
   
+  
+  for (int i=0; i<L.row[4+1]; i++) {
+    printf("L.val[%d] = %e\n", i, L.val[i] );
+  }
+  
   cvar1='L';
   cvar='N';
   cvar2='U';
   mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &L.num_rows, 
     L.val, il, jl, rhs_vector.val, x_mkl.val);
 	
-  for (int i=0; i<L.num_rows; i++) {
-    printf("x_mkl[%d] = %e\n", i, x_mkl.val[i] );
+  for (int i=0; i<L.row[4+1]; i++) {
+    printf("L.val[%d] = %e\n", i, L.val[i] );
   }
+  
+  //for (int i=0; i<L.num_rows; i++) {
+  //  printf("x_mkl[%d] = %e\n", i, x_mkl.val[i] );
+  //}
   //for (int i=0; i<Asparse.num_rows; i++) {
   //  printf("rhs_vector[%d] = %e\n", i, rhs_vector.val[i] );
   //}
   
   data_forward_solve( &L, &x, &rhs_vector );
-    for (int i=0; i<L.num_rows; i++) {
+  //for (int i=0; i<L.num_rows; i++) {
+  for (int i=0; i<4; i++) {
+    printf("x_mkl[%d] = %e\n", i, x_mkl.val[i] );
     printf("x[%d] = %e\n", i, x.val[i] );
+    printf("diff[%d] = %e\n", i, x_mkl.val[i] -  x.val[i] );
   }
   dataType error = 0.0;
   data_norm_diff_vec( &x, &x_mkl, &error );
