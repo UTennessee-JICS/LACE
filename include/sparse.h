@@ -413,6 +413,12 @@ data_maxfabs_csr(
     int *jmax,
     dataType *max );
 
+int
+data_norm_diff_vec(
+  data_d_matrix* A,
+  data_d_matrix* B,
+  dataType* norm ); 
+
 //======================================
 // dense operations
 //======================================
@@ -722,6 +728,16 @@ data_PariLU_v4_0(
   data_d_matrix* A, 
   data_d_matrix* L, 
   data_d_matrix* U ); 
+
+//======================================
+// Tri-solves
+//======================================
+
+int
+data_forward_solve( 
+  data_d_matrix* L, 
+  data_d_matrix* x, 
+  data_d_matrix* rhs ); 
 
 #ifdef __cplusplus
 }

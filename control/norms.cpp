@@ -413,3 +413,21 @@ data_maxfabs_csr(
 
     return DEV_SUCCESS;
 }
+
+
+extern "C" 
+int
+data_norm_diff_vec(
+  data_d_matrix* A,
+  data_d_matrix* B,
+  dataType* norm )
+{
+  int info = 0;
+  assert(A->nnz == B->nnz);
+  for (int i=0; i<A->nnz; i++) {
+    (*norm) = (*norm) + pow( (A->val[i] - B->val[i]), 2 );
+  }
+  (*norm) = sqrt((*norm));
+  
+  return info;
+}

@@ -1,3 +1,7 @@
+% Preliminary testing and development of parallel tri-solves
+% Stephen Wood, Ryan Glasby
+% 20170426
+
 clc; clear all; close all;
 
 N = 5
@@ -72,26 +76,20 @@ while (step > tol)
     iter = iter + 1;
 end
 
-
-
 tmp_step
 iter
 err
 x
 x_expected
+error = x_expected-x
 
 
 
 display('Parallel Backward Solve')
-
 A = triu(magic(N),0)
-
 x = zeros(N,1)
-
 R = ones(N,1)
-
 Ainv = inv(A)
-
 x_expected = Ainv*R
 
 % x(1) = R(1) / A(1,1)
@@ -140,3 +138,4 @@ iter
 err
 x
 x_expected
+error = x_expected-x
