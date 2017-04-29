@@ -34,19 +34,18 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs )
     //while (iter < 10) {
         
       step = 0;
-      #pragma omp parallel
+      //#pragma omp parallel
       {
-        #pragma omp for private(j, diag_recip) reduction(+:step) nowait
+        //#pragma omp for private(j, diag_recip) reduction(+:step) nowait
         for ( int i=1; i < L->num_rows; i++ ) {
-        //for ( int i=1; i < 4; i++ ) {
+        //for ( int i=1; i < 10; i++ ) {
           tmp = 0.0;
-          diag_recip = 1.0; // /L->val[L->row[i+1] - 1]; 
           
           //printf("all of row %d : ", i);
-          for ( int k=L->row[i]; k < L->row[i+1]; k++) {
-            j = L->col[k];
-            //printf("%d %e ", j, L->val[k]);
-          }
+          //for ( int k=L->row[i]; k < L->row[i+1]; k++) {
+          //  j = L->col[k];
+          //  printf("%d %e ", j, L->val[k]);
+          //}
           //printf("\n");
           
           //printf("off diagonal row %d : ", i);
@@ -55,9 +54,9 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs )
             //printf("%d %e ", j, L->val[k]);
             tmp += L->val[k]*x->val[j];  
           }
-          tmp_step = pow((x->val[i] - (rhs->val[i] - tmp)*diag_recip), 2);
-          step += tmp_step;
-          x->val[i] = (rhs->val[i] - tmp)*diag_recip;
+          tmp = (rhs->val[i] - tmp)/L->val[L->row[i+1] - 1];
+          step += pow((x->val[i] - tmp), 2);
+          x->val[i] = tmp;
           //printf(" => x = %e\n", x->val[i]);
         }
       }

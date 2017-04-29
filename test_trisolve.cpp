@@ -176,9 +176,9 @@ int main(int argc, char* argv[])
   LACE_CALLOC(x_mkl.val, x_mkl.num_rows);
   
   
-  for (int i=0; i<L.row[4+1]; i++) {
-    printf("L.val[%d] = %e\n", i, L.val[i] );
-  }
+  //for (int i=0; i<L.row[4+1]; i++) {
+  //  printf("L.val[%d] = %e\n", i, L.val[i] );
+  //}
   
   cvar1='L';
   cvar='N';
@@ -186,9 +186,9 @@ int main(int argc, char* argv[])
   mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &L.num_rows, 
     L.val, il, jl, rhs_vector.val, x_mkl.val);
 	
-  for (int i=0; i<L.row[4+1]; i++) {
-    printf("L.val[%d] = %e\n", i, L.val[i] );
-  }
+  //for (int i=0; i<L.row[4+1]; i++) {
+  //  printf("L.val[%d] = %e\n", i, L.val[i] );
+  //}
   
   //for (int i=0; i<L.num_rows; i++) {
   //  printf("x_mkl[%d] = %e\n", i, x_mkl.val[i] );
@@ -198,16 +198,48 @@ int main(int argc, char* argv[])
   //}
   
   data_forward_solve( &L, &x, &rhs_vector );
-  //for (int i=0; i<L.num_rows; i++) {
-  for (int i=0; i<4; i++) {
-    printf("x_mkl[%d] = %e\n", i, x_mkl.val[i] );
-    printf("x[%d] = %e\n", i, x.val[i] );
-    printf("diff[%d] = %e\n", i, x_mkl.val[i] -  x.val[i] );
+
+  printf("i:\tx_mkl\tx\tdiff\n");
+  for (int i=0; i<L.num_rows; i++) {
+  //for (int i=0; i<10; i++) {
+    //if (x_mkl.val[i] -  x.val[i] > 1.e-8) {
+    printf("%d:\t%e\t%e\t%e", i, x_mkl.val[i], x.val[i], x_mkl.val[i] -  x.val[i]  );
+    if (x_mkl.val[i] -  x.val[i] > 1.e15) {  
+       printf("\tbad\n");
+    }
+    else {
+      printf("\n");
+    }
+    //}
+    //printf("x[%d] = %e\n", i, x.val[i] );
+    //printf("diff[%d] = %e\n", i, x_mkl.val[i] -  x.val[i] );
   }
   dataType error = 0.0;
   data_norm_diff_vec( &x, &x_mkl, &error );
-  printf("error = %e\n", error);
+  printf("x error = %e\n", error);
   
+  //void mkl_dcsrgemv (const char *transa , const MKL_INT *m , const double *a , 
+  //  const MKL_INT *ia , const MKL_INT *ja , const double *x , double *y );
+  double* Ax_mkl;
+  LACE_CALLOC(Ax_mkl, L.num_rows);
+  mkl_dcsrgemv(&cvar, &L.num_rows, L.val, il, jl, x_mkl.val, Ax_mkl );
+  //void cblas_daxpy (const MKL_INT n, const double a, const double *x, 
+  //  const MKL_INT incx, double *y, const MKL_INT incy);
+  double negone = -1.0;
+  cblas_daxpy(L.num_rows, negone, rhs_vector.val, 1, Ax_mkl, 1 );
+  
+  
+  double* Ax;
+  LACE_CALLOC(Ax, L.num_rows);
+  mkl_dcsrgemv(&cvar, &L.num_rows, L.val, il, jl, x.val, Ax );
+  cblas_daxpy(L.num_rows, negone, rhs_vector.val, 1, Ax, 1 );
+  
+  error = 0.0;
+  for (int i=0; i<L.num_rows; i++) {
+    printf("%d:\t%e\t%e\t%e\n", i, Ax[i], Ax_mkl[i], Ax_mkl[i]  -  Ax[i]  );
+    error += Ax_mkl[i],  -  Ax[i];
+  }
+  printf("system error = %e\n", error);
   
   data_zmfree( &Asparse );
 	data_zmfree( &rhs_vector );
