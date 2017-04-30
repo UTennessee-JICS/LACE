@@ -30,12 +30,12 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs )
     int diag_check = 0;
     
     dataType wstart = omp_get_wtime();
-    //while (step > tol) {
+    while (step > tol) {
         
       step = 0;
-      //#pragma omp parallel
+      #pragma omp parallel
       {
-        //#pragma omp for private(j, diag_recip) reduction(+:step) nowait
+        #pragma omp for private(j, diag_recip) reduction(+:step) nowait
         for ( int i=0; i < L->num_rows; i++ ) {
           tmp = dataType(0.0);
           for ( int k=L->row[i]; k < L->row[i+1]-1; k++) {
@@ -49,7 +49,7 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs )
       }
       iter = iter + 1;
       printf("%% iteration = %d step = %e\n", iter, step);
-    //}
+    }
     dataType wend = omp_get_wtime();
   
   }
@@ -84,12 +84,12 @@ data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs )
     int diag_check = 0;
     
     dataType wstart = omp_get_wtime();
-    //while (step > tol) {
+    while (step > tol) {
         
       step = 0;
-      //#pragma omp parallel
+      #pragma omp parallel
       {
-        //#pragma omp for private(j, diag_recip) reduction(+:step) nowait
+        #pragma omp for private(j, diag_recip) reduction(+:step) nowait
         for ( int i=U->num_rows-1; i>=0; i-- ) {
           tmp = dataType(0.0);
           for ( int k=U->row[i]+1; k < U->row[i+1]; k++) {
@@ -103,14 +103,14 @@ data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs )
       }
       iter = iter + 1;
       printf("%% iteration = %d step = %e\n", iter, step);
-    //}
+    }
     dataType wend = omp_get_wtime();
   
   }
   else {
     info = -1;
     printf("U matrix storage %d and fill mode %d must be CSRL (%d) and lower (%d) for a forward solve.\n",
-      U->storage_type, U->fill_mode, Magma_CSRL, MagmaLower );
+      U->storage_type, U->fill_mode, Magma_CSRU, MagmaUpper );
     
   }
   

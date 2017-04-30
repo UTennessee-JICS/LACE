@@ -249,7 +249,7 @@ int main(int argc, char* argv[])
   
   data_d_matrix U = {Magma_CSRU};
   U.diagorder_type = Magma_VALUE;
-  U.fill_mode = MagmaLower;
+  U.fill_mode = MagmaUpper;
   data_zmconvert( Asparse, &U, Magma_CSR, Magma_CSRU );
   int* iu;
   int* ju;
@@ -287,9 +287,9 @@ int main(int argc, char* argv[])
   
   cvar1='U';
   cvar='N';
-  cvar2='U';
-  mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &L.num_rows, 
-    U.val, il, jl, rhs_vector.val, x_mkl.val);
+  cvar2='N';
+  mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &U.num_rows, 
+    U.val, iu, ju, rhs_vector.val, x_mkl.val);
 	
   data_backward_solve( &U, &x, &rhs_vector );
   
