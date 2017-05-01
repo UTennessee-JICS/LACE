@@ -28,7 +28,6 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs )
     dataType step = 1.e8;
     dataType tmp = 0.0;
     dataType tmp_step = 0.0;
-    dataType diag_recip = 1.0;
     int diag_check = 0;
     
     while (step > tol) {
@@ -36,7 +35,7 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs )
       step = 0;
       #pragma omp parallel
       {
-        #pragma omp for private(j, diag_recip) reduction(+:step) nowait
+        #pragma omp for private(j, tmp) reduction(+:step) nowait
         for ( int i=0; i < L->num_rows; i++ ) {
           tmp = dataType(0.0);
           for ( int k=L->row[i]; k < L->row[i+1]-1; k++) {
@@ -88,7 +87,7 @@ data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs )
       step = 0;
       #pragma omp parallel
       {
-        #pragma omp for private(j, diag_recip) reduction(+:step) nowait
+        #pragma omp for private(j, tmp) reduction(+:step) nowait
         for ( int i=U->num_rows-1; i>=0; i-- ) {
           tmp = dataType(0.0);
           for ( int k=U->row[i]+1; k < U->row[i+1]; k++) {
@@ -152,7 +151,7 @@ data_forward_solve_permute( data_d_matrix* L, data_d_matrix* x, data_d_matrix* r
       step = 0;
       #pragma omp parallel
       {
-        #pragma omp for private(j, diag_recip) reduction(+:step) nowait
+        #pragma omp for private(j, tmp) reduction(+:step) nowait
         for ( int ii=0; ii < L->num_rows; ii++ ) {
           i = c[ii];
           tmp = dataType(0.0);
@@ -226,7 +225,7 @@ data_backward_solve_permute( data_d_matrix* U, data_d_matrix* x, data_d_matrix* 
       step = 0;
       #pragma omp parallel
       {
-        #pragma omp for private(j, diag_recip) reduction(+:step) nowait
+        #pragma omp for private(j, tmp) reduction(+:step) nowait
         for ( int i=U->num_rows-1; i>=0; i-- ) {
           tmp = dataType(0.0);
           for ( int k=U->row[i]+1; k < U->row[i+1]; k++) {
