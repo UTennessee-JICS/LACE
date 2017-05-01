@@ -70,6 +70,7 @@ while (step > tol)
     end
     [iter step];
     iter = iter + 1;
+    c = randperm(N);
 end
 
 step
@@ -104,8 +105,8 @@ x_bexp = x_expected;
 % x;
 
 x = zeros(N,1);
-%c = randperm(N);
-c = N:-1:1;
+c = randperm(N);
+%c = N:-1:1;
 
 display('Parallel Backward Solve')
 step = 1e10;
