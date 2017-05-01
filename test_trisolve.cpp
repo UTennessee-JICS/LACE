@@ -76,6 +76,8 @@ int main(int argc, char* argv[])
   //char output_L[256];
   //char output_U[256];
   
+  int permute = 0;
+  
   data_scale_t scaling  = Magma_NOSCALE;
   
   
@@ -85,10 +87,11 @@ int main(int argc, char* argv[])
   // for timing of MKL csriLU0 and FGMRES
   dataType wcsrtrsvstart = 0.0;
   dataType wcsrtrsvend = 0.0;
-  dataType ompwcsrtrsvtime = 0.0;
+  dataType mklwcsrtrsvtime = 0.0;
+  dataType parwcsrtrsvtime = 0.0;
   
   if (argc < 3) {
-    printf("Usage %s <matrix> <rhs vector> ", argv[0] );
+    printf("Usage %s <matrix> <rhs vector> [permute]", argv[0] );
     //printf("[diagonal scaling] [abs/rel] [GMRES_tolerance] [restart] ");
     //printf("[maxiter] [precond_choice] [reduction]\n");
     return 1;
@@ -133,6 +136,11 @@ int main(int argc, char* argv[])
 	else {
 	  
 	  CHECK( data_z_dense_mtx( &rhs_vector, rhs_vector.major, rhs_filename ) );
+  }
+  
+  if (argc > 3) {
+    permute = atoi(argv[3]); 
+    printf("reading permute %d\n", permute);
   }
   
   DEV_CHECKPT
@@ -184,8 +192,11 @@ int main(int argc, char* argv[])
   cvar1='L';
   cvar='N';
   cvar2='U';
+  wcsrtrsvstart = omp_get_wtime();
   mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &L.num_rows, 
     L.val, il, jl, rhs_vector.val, y_mkl.val);
+	wcsrtrsvend = omp_get_wtime();
+	mklwcsrtrsvtime = wcsrtrsvend - wcsrtrsvstart;
 	
   //for (int i=0; i<L.row[4+1]; i++) {
   //  printf("L.val[%d] = %e\n", i, L.val[i] );
@@ -198,7 +209,17 @@ int main(int argc, char* argv[])
   //  printf("rhs_vector[%d] = %e\n", i, rhs_vector.val[i] );
   //}
   
-  data_forward_solve( &L, &y, &rhs_vector );
+  if (permute == 0) { 
+    wcsrtrsvstart = omp_get_wtime();
+    data_forward_solve( &L, &y, &rhs_vector );
+    wcsrtrsvend = omp_get_wtime();
+  }
+  else if (permute == 1) {
+    wcsrtrsvstart = omp_get_wtime();
+    data_forward_solve_permute( &L, &y, &rhs_vector );
+    wcsrtrsvend = omp_get_wtime();
+  }
+	parwcsrtrsvtime = wcsrtrsvend - wcsrtrsvstart;
 
   //printf("i:\ty_mkl\ty\tdiff\n");
   //for (int i=0; i<L.num_rows; i++) {
@@ -245,6 +266,8 @@ int main(int argc, char* argv[])
   error_mkl = sqrt(error_mkl);
   error = sqrt(error);
   printf("system errors:\n\t error_mkl = %e\terror = %e\n", error_mkl, error);
+  printf("MKL time : %e Par time : %e  permute = %d\n", 
+    mklwcsrtrsvtime, parwcsrtrsvtime, permute); 
   
   
   data_d_matrix U = {Magma_CSRU};
@@ -288,10 +311,23 @@ int main(int argc, char* argv[])
   cvar1='U';
   cvar='N';
   cvar2='N';
+  wcsrtrsvstart = omp_get_wtime();
   mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &U.num_rows, 
     U.val, iu, ju, rhs_vector.val, x_mkl.val);
+  wcsrtrsvend = omp_get_wtime();
+	mklwcsrtrsvtime = wcsrtrsvend - wcsrtrsvstart;
 	
-  data_backward_solve( &U, &x, &rhs_vector );
+	if (permute == 0) {
+    wcsrtrsvstart = omp_get_wtime();
+    data_backward_solve( &U, &x, &rhs_vector );
+    wcsrtrsvend = omp_get_wtime();
+  }
+  else if (permute == 1) {
+    wcsrtrsvstart = omp_get_wtime();
+    data_backward_solve_permute( &U, &x, &rhs_vector );
+    wcsrtrsvend = omp_get_wtime();
+  }
+	parwcsrtrsvtime = wcsrtrsvend - wcsrtrsvstart;
   
   error = 0.0;
   data_norm_diff_vec( &x, &x_mkl, &error );
@@ -322,7 +358,16 @@ int main(int argc, char* argv[])
   error_mkl = sqrt(error_mkl);
   error = sqrt(error);
   printf("system errors:\n\t error_mkl = %e\terror = %e\n", error_mkl, error);
+  printf("MKL time : %e Par time : %e  permute = %d\n", 
+    mklwcsrtrsvtime, parwcsrtrsvtime, permute); 
   
+  
+  int num_threads = 0;
+  #pragma omp parallel
+  {
+    num_threads = omp_get_num_threads();
+  }
+  printf("omp_get_num_threads = %d\n", num_threads);
   
   data_zmfree( &Asparse );
 	data_zmfree( &rhs_vector );

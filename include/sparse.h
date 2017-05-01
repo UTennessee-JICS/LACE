@@ -740,7 +740,19 @@ data_forward_solve(
   data_d_matrix* rhs ); 
 
 int
+data_forward_solve_permute( 
+  data_d_matrix* L, 
+  data_d_matrix* x, 
+  data_d_matrix* rhs ); 
+
+int
 data_backward_solve( 
+  data_d_matrix* L, 
+  data_d_matrix* x, 
+  data_d_matrix* rhs ); 
+
+int
+data_backward_solve_permute( 
   data_d_matrix* L, 
   data_d_matrix* x, 
   data_d_matrix* rhs ); 
