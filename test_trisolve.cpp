@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
   
   cvar1='L';
   cvar='N';
-  cvar2='U';
+  cvar2='N';
   wcsrtrsvstart = omp_get_wtime();
   mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &L.num_rows, 
     L.val, il, jl, rhs_vector.val, y_mkl.val);
@@ -242,21 +242,21 @@ int main(int argc, char* argv[])
   
   //void mkl_dcsrgemv (const char *transa , const MKL_INT *m , const double *a , 
   //  const MKL_INT *ia , const MKL_INT *ja , const double *x , double *y );
-  double* Ay_mkl;
+  dataType* Ay_mkl;
   LACE_CALLOC(Ay_mkl, L.num_rows);
   mkl_dcsrgemv(&cvar, &L.num_rows, L.val, il, jl, y_mkl.val, Ay_mkl );
   //void cblas_daxpy (const MKL_INT n, const double a, const double *x, 
   //  const MKL_INT incx, double *y, const MKL_INT incy);
-  double negone = -1.0;
+  dataType negone = -1.0;
   cblas_daxpy(L.num_rows, negone, rhs_vector.val, 1, Ay_mkl, 1 );
   
   
-  double* Ay;
+  dataType* Ay;
   LACE_CALLOC(Ay, L.num_rows);
   mkl_dcsrgemv(&cvar, &L.num_rows, L.val, il, jl, y.val, Ay );
   cblas_daxpy(L.num_rows, negone, rhs_vector.val, 1, Ay, 1 );
   
-  double error_mkl = 0.0;
+  dataType error_mkl = 0.0;
   error = 0.0;
   for (int i=0; i<L.num_rows; i++) {
     //printf("%d:\t%e\t%e\t%e\n", i, Ay[i], Ay_mkl[i], Ay_mkl[i]  -  Ay[i]  );
@@ -335,18 +335,18 @@ int main(int argc, char* argv[])
   
   //void mkl_dcsrgemv (const char *transa , const MKL_INT *m , const double *a , 
   //  const MKL_INT *ia , const MKL_INT *ja , const double *x , double *y );
-  double* Ax_mkl;
-  LACE_CALLOC(Ax_mkl, L.num_rows);
-  mkl_dcsrgemv(&cvar, &L.num_rows, L.val, il, jl, x_mkl.val, Ax_mkl );
+  dataType* Ax_mkl;
+  LACE_CALLOC(Ax_mkl, U.num_rows);
+  mkl_dcsrgemv(&cvar, &U.num_rows, U.val, iu, ju, x_mkl.val, Ax_mkl );
   //void cblas_daxpy (const MKL_INT n, const double a, const double *x, 
   //  const MKL_INT incx, double *y, const MKL_INT incy);
-  cblas_daxpy(L.num_rows, negone, rhs_vector.val, 1, Ax_mkl, 1 );
+  cblas_daxpy(U.num_rows, negone, rhs_vector.val, 1, Ax_mkl, 1 );
   
   
-  double* Ax;
-  LACE_CALLOC(Ax, L.num_rows);
-  mkl_dcsrgemv(&cvar, &L.num_rows, L.val, il, jl, x.val, Ax );
-  cblas_daxpy(L.num_rows, negone, rhs_vector.val, 1, Ax, 1 );
+  dataType* Ax;
+  LACE_CALLOC(Ax, U.num_rows);
+  mkl_dcsrgemv(&cvar, &L.num_rows, U.val, iu, ju, x.val, Ax );
+  cblas_daxpy(U.num_rows, negone, rhs_vector.val, 1, Ax, 1 );
   
   error_mkl = 0.0;
   error = 0.0;

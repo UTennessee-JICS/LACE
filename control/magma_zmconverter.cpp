@@ -209,6 +209,8 @@ data_zmconvert(
     //dataType *val_tmp2 = NULL;
     //dataType *transpose=NULL;
     //int *nnz_per_row=NULL;
+    dataType one = dataType(1.0);
+    dataType zero = dataType(0.0);
     
     B->val = NULL;
     B->col = NULL;
@@ -314,7 +316,7 @@ data_zmconvert(
                     // add option of including diagonal with unit value
                     else if ( A.col[j] == i &&
                                     B->diagorder_type == Magma_UNITY) {
-                        B->val[numzeros] = 1.0;
+                        B->val[numzeros] = one;
                         B->col[numzeros] = A.col[j];
                         numzeros++;
                     }
@@ -328,7 +330,7 @@ data_zmconvert(
                     // add option of including diagonal with zero value
                     else if ( A.col[j] == i &&
                                     B->diagorder_type == Magma_ZERO) {
-                        B->val[numzeros] = 0.0;
+                        B->val[numzeros] = zero;
                         B->col[numzeros] = A.col[j];
                         numzeros++;
                     }
@@ -386,7 +388,7 @@ data_zmconvert(
                     }
                     else if ( A.col[j] == i &&
                                     B->diagorder_type == Magma_UNITY) {
-                        B->val[numzeros] = DEV_D_MAKE(1.0, 0.0);
+                        B->val[numzeros] = DEV_D_MAKE(one, zero);
                         B->col[numzeros] = A.col[j];
                         numzeros++;
                     }
@@ -400,7 +402,7 @@ data_zmconvert(
                     // explicit option of including diagonal with zero value
                     else if ( A.col[j] == i &&
                                     B->diagorder_type == Magma_ZERO) {
-                        B->val[numzeros] = DEV_D_MAKE(0.0, 0.0);
+                        B->val[numzeros] = DEV_D_MAKE(zero, zero);
                         B->col[numzeros] = A.col[j];
                         numzeros++;
                     }
@@ -715,7 +717,7 @@ data_zmconvert(
             // conversion
             B->nnz=0;
             for( int i=0; i<(A.num_rows)*(A.num_cols); i++ ) {
-                if ( DEV_D_REAL(A.val[i]) != 0.0 )
+                if ( DEV_D_REAL(A.val[i]) != zero )
                     (B->nnz)++;
             }
             //CHECK( data_zmalloc_cpu( &B->val, B->nnz));
@@ -976,12 +978,12 @@ data_zmconvert(
           if (A.pad_rows > 0 && A.pad_cols > 0) {
               if (B->major == MagmaRowMajor) { 
                   for ( int i = A.num_rows; i < A.pad_rows; i++ ) {
-                      B->val[ i*A.ld + i ] = 1.0;
+                      B->val[ i*A.ld + i ] = one;
                   }
               }
               else {
                   for ( int i = A.num_cols; i < A.pad_cols; i++ ) {
-                      B->val[ i + i*A.ld ] = 1.0;
+                      B->val[ i + i*A.ld ] = one;
                   }
               }
           }
@@ -1004,9 +1006,9 @@ data_zmconvert(
                       if ( B->diagorder_type == Magma_VALUE )
                         B->val[ i * (A.ld) + i ] = A.val[ i * (A.ld) + i ];
                       else if ( B->diagorder_type == Magma_UNITY )
-                        B->val[ i * (A.ld) + i ] = 1.0;
+                        B->val[ i * (A.ld) + i ] = one;
                       else if ( B->diagorder_type == Magma_NODIAG )
-                        B->val[ i * (A.ld) + i ] = 0.0;
+                        B->val[ i * (A.ld) + i ] = zero;
                   }
               }
               else {
@@ -1015,9 +1017,9 @@ data_zmconvert(
                       if ( B->diagorder_type == Magma_VALUE )
                         B->val[ j + j * (A.ld) ] = A.val[ j * (A.ld) + j ];
                       else if ( B->diagorder_type == Magma_UNITY )
-                        B->val[ j + j * (A.ld) ] = 1.0;
+                        B->val[ j + j * (A.ld) ] = one;
                       else if ( B->diagorder_type == Magma_NODIAG )
-                        B->val[ j + j * (A.ld) ] = 0.0;
+                        B->val[ j + j * (A.ld) ] = zero;
                       for(int i=j+1; i < A.num_rows; i++ )
                           B->val[ i + j * (A.ld) ] = A.val[ i * (A.ld) + j ];
                   }
@@ -1031,9 +1033,9 @@ data_zmconvert(
                       if ( B->diagorder_type == Magma_VALUE )
                         B->val[ j * (A.ld) + j ] = A.val[ j + j * (A.ld) ];
                       else if ( B->diagorder_type == Magma_UNITY )
-                        B->val[ j * (A.ld) + j ] = 1.0;
+                        B->val[ j * (A.ld) + j ] = one;
                       else if ( B->diagorder_type == Magma_NODIAG )
-                        B->val[ j * (A.ld) + j ] = 0.0;  
+                        B->val[ j * (A.ld) + j ] = zero;  
                       for(int i=j+1; i < A.num_rows; i++ ) 
                           B->val[ i * (A.ld) + j ] = A.val[ i + j * (A.ld) ];
                   }
@@ -1044,9 +1046,9 @@ data_zmconvert(
                     if ( B->diagorder_type == Magma_VALUE )
                       B->val[ j + j * (A.ld) ] = A.val[ j + j * (A.ld) ];
                     else if ( B->diagorder_type == Magma_UNITY )
-                      B->val[ j + j * (A.ld) ] = 1.0;
+                      B->val[ j + j * (A.ld) ] = one;
                     else if ( B->diagorder_type == Magma_NODIAG )
-                      B->val[ j + j * (A.ld) ] = 0.0;  
+                      B->val[ j + j * (A.ld) ] = zero;  
                     for(int i=j+1; i < A.num_rows; i++ ) 
                         B->val[ i + j * (A.ld) ] = A.val[ i + j * (A.ld) ];
                   }
@@ -1057,12 +1059,12 @@ data_zmconvert(
           if (A.pad_rows > 0 && A.pad_cols > 0) {
               if (B->major == MagmaRowMajor) { 
                   for ( int i = A.num_rows; i < A.pad_rows; i++ ) {
-                      B->val[ i*A.ld + i ] = 1.0;
+                      B->val[ i*A.ld + i ] = one;
                   }
               }
               else {
                   for ( int i = A.num_cols; i < A.pad_cols; i++ ) {
-                      B->val[ i + i*A.ld ] = 1.0;
+                      B->val[ i + i*A.ld ] = one;
                   }
               }
           }
@@ -1084,9 +1086,9 @@ data_zmconvert(
                           if ( B->diagorder_type == Magma_VALUE )
                             B->val[ i * (A.ld) + i ] = A.val[ i * (A.ld) + i ];
                           else if ( B->diagorder_type == Magma_UNITY )
-                            B->val[ i * (A.ld) + i ] = 1.0;
+                            B->val[ i * (A.ld) + i ] = one;
                           else if ( B->diagorder_type == Magma_NODIAG )
-                            B->val[ i * (A.ld) + i ] = 0.0;
+                            B->val[ i * (A.ld) + i ] = zero;
                           for(int j=i+1; j < A.num_cols; j++ )
                               B->val[ i * (A.ld) + j ] = A.val[ i * (A.ld) + j ];   
                       }
@@ -1099,9 +1101,9 @@ data_zmconvert(
                           if ( B->diagorder_type == Magma_VALUE )
                             B->val[ i + i * (A.ld) ] = A.val[ i * (A.ld) + i ];
                           else if ( B->diagorder_type == Magma_UNITY )
-                            B->val[ i + i * (A.ld)] = 1.0;
+                            B->val[ i + i * (A.ld)] = one;
                           else if ( B->diagorder_type == Magma_NODIAG )
-                            B->val[ i + i * (A.ld) ] = 0.0;
+                            B->val[ i + i * (A.ld) ] = zero;
                           for(int j=i+1; j < A.num_cols; j++ )
                               B->val[ i + j * (A.ld) ] = A.val[ i * (A.ld) + j ];   
                       }
@@ -1117,9 +1119,9 @@ data_zmconvert(
                           if ( B->diagorder_type == Magma_VALUE )
                             B->val[ j * (A.ld) + j ] = A.val[ j + j * (A.ld) ];
                           else if ( B->diagorder_type == Magma_UNITY )
-                            B->val[ j * (A.ld) + j ] = 1.0;
+                            B->val[ j * (A.ld) + j ] = one;
                           else if ( B->diagorder_type == Magma_NODIAG )
-                            B->val[ j * (A.ld) + j ] = 0.0; 
+                            B->val[ j * (A.ld) + j ] = zero; 
                           for(int i=0; i < j; i++ ) 
                               B->val[ i * (A.ld) + j ] = A.val[ i + j * (A.ld) ];  
                       }
@@ -1132,9 +1134,9 @@ data_zmconvert(
                           if ( B->diagorder_type == Magma_VALUE )
                             B->val[ j + j * (A.ld) ] = A.val[ j + j * (A.ld) ];
                           else if ( B->diagorder_type == Magma_UNITY )
-                            B->val[ j + j * (A.ld) ] = 1.0;
+                            B->val[ j + j * (A.ld) ] = one;
                           else if ( B->diagorder_type == Magma_NODIAG )
-                            B->val[ j + j * (A.ld) ] = 0.0; 
+                            B->val[ j + j * (A.ld) ] = zero; 
                           for(int i=j+1; i < A.num_rows; i++ ) 
                               B->val[ i + j * (A.ld) ] = A.val[ i + j * (A.ld) ];  
                       }
@@ -1147,12 +1149,12 @@ data_zmconvert(
               //printf("\n U padded!!!\n");
                 if (B->major == MagmaRowMajor) { 
                     for ( int i = A.num_rows; i < A.pad_rows; i++ ) {
-                        B->val[ i*A.ld + i ] = 1.0;
+                        B->val[ i*A.ld + i ] = one;
                     }
                 }
                 else {
                     for ( int i = A.num_cols; i < A.pad_cols; i++ ) {
-                        B->val[ i + i*A.ld ] = 1.0;
+                        B->val[ i + i*A.ld ] = one;
                     }
                 }
             }
@@ -1227,7 +1229,7 @@ data_zmconvert(
                 else if ( A.col[j] == i &&
                                 B->diagorder_type == Magma_UNITY) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks*B->ldblock+k] = 1.0;
+                        B->val[numblocks*B->ldblock+k] = one;
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
@@ -1245,7 +1247,7 @@ data_zmconvert(
                 else if ( A.col[j] == i &&
                                 B->diagorder_type == Magma_ZERO) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks*B->ldblock+k] = 0.0;
+                        B->val[numblocks*B->ldblock+k] = zero;
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
@@ -1310,7 +1312,7 @@ data_zmconvert(
                 else if ( A.col[j] == i &&
                                 B->diagorder_type == Magma_UNITY) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks*B->ldblock+k] = 1.0;
+                        B->val[numblocks*B->ldblock+k] = one;
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
@@ -1328,7 +1330,7 @@ data_zmconvert(
                 else if ( A.col[j] == i &&
                                 B->diagorder_type == Magma_ZERO) {
                     for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks*B->ldblock+k] = 0.0;
+                        B->val[numblocks*B->ldblock+k] = zero;
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;

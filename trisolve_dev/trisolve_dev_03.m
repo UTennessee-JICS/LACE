@@ -5,8 +5,8 @@
 clc; clear all; close all;
 format longE;
 
-[A_all, rows, cols, entries] = mmread('Trefethen_20.mtx');
-%[A_all, rows, cols, entries] = mmread('../testing/matrices/paper1_matrices/ani5_crop.mtx');
+%[A_all, rows, cols, entries] = mmread('Trefethen_20.mtx');
+[A_all, rows, cols, entries] = mmread('../testing/matrices/paper1_matrices/ani5_crop.mtx');
 
 N = rows
 A = tril(A_all,-1);
@@ -22,9 +22,7 @@ R = ones(N,1);
 % x = ones(N,1);
 % R = A*x;
 
-Ainv = inv(A);
-
-x_expected = Ainv*R;
+x_expected = A\R;
 sys_expected_error = norm(R - A*x_expected)
 x_fexp = x_expected;
 
@@ -68,7 +66,7 @@ while (step > tol)
         step = step + tmp_step;
         x(i) = tmp;
     end
-    [iter step];
+    %[iter step]
     iter = iter + 1;
     c = randperm(N);
 end
@@ -87,8 +85,7 @@ spy(A,'r+')
 %A = full(A);
 x = zeros(N,1);
 R = ones(N,1);
-Ainv = inv(A);
-x_expected = Ainv*R;
+x_expected = A\R;
 sys_expected_error = norm(R - A*x_expected)
 x_bexp = x_expected;
 
@@ -126,7 +123,7 @@ while (step > tol)
         step = step + tmp_step;
         x(i) = tmp;
     end
-    [iter step];
+    %[iter step]
     iter = iter + 1;
     c = randperm(N);
 end
