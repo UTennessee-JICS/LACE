@@ -40,9 +40,6 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs )
             j = L->col[k];
             tmp += L->val[k]*x->val[j];  
           }
-          //if ( L->col[L->row[i+1] - 1] != i ) {
-          //  printf("Wrong diagonal entry!!! %d %d\n", L->col[L->row[i+1] - 1], i); 
-          //}
           tmp = (rhs->val[i] - tmp)/L->val[L->row[i+1] - 1];
           step += pow((x->val[i] - tmp), 2);
           x->val[i] = tmp;
@@ -137,7 +134,6 @@ data_forward_solve_permute( data_d_matrix* L, data_d_matrix* x, data_d_matrix* r
         c[i] = i; 
       }
     }
-    //std::srand(0);
     std::srand( unsigned ( std::time(0) ) );
     int i = 0;
     
@@ -162,10 +158,6 @@ data_forward_solve_permute( data_d_matrix* L, data_d_matrix* x, data_d_matrix* r
       iter = iter + 1;
       printf("%% iteration = %d step = %e\n", iter, step);
       
-      //for ( int i=0; i < L->num_rows; i++ ) {
-      //  printf("c[%d]=%d\n", i, c[i]); 
-      //}
-      //std::next_permutation(c,c+L->num_rows);
       std::random_shuffle(c,c+L->num_rows);
       
     }
@@ -208,7 +200,6 @@ data_backward_solve_permute( data_d_matrix* U, data_d_matrix* x, data_d_matrix* 
         c[i] = i; 
       }
     }
-    //std::srand(0);
     std::srand( unsigned ( std::time(0) ) );
     int i = 0;
     
@@ -233,10 +224,6 @@ data_backward_solve_permute( data_d_matrix* U, data_d_matrix* x, data_d_matrix* 
       iter = iter + 1;
       printf("%% iteration = %d step = %e\n", iter, step);
       
-      //for ( int i=0; i < U->num_rows; i++ ) {
-      //  printf("c[%d]=%d\n", i, c[i]); 
-      //}
-      //std::prev_permutation(c,c+U->num_rows);
       std::random_shuffle(c,c+U->num_rows);
       
     }
