@@ -12,6 +12,8 @@
 #include <float.h> 
 #include "math.h"
 
+#define size 128
+
 //+++++++
 #define EXPECT_ITERABLE_DOUBLE_EQ( TYPE, ref, target) \
 { \
@@ -149,11 +151,84 @@ int main(int argc, char* argv[])
   L.diagorder_type = Magma_UNITY;
   //L.diagorder_type = Magma_VALUE;
   L.fill_mode = MagmaLower;
-  data_zmconvert( Asparse, &L, Magma_CSR, Magma_CSRL );
+  
+  // use an ilu0 factorization not tril and triu! 
+  // tril and triu were only useful for low level debugging.
+/*---------------------------------------------------------------------------
+   Calculate ILU0 preconditioner.
+                        !ATTENTION!
+   DCSRILU0 routine uses some IPAR, DPAR set by DFGMRES_INIT routine.
+   Important for DCSRILU0 default entries set by DFGMRES_INIT are
+   ipar[1] = 6 - output of error messages to the screen,
+   ipar[5] = 1 - allow output of errors,
+   ipar[30]= 0 - abort DCSRILU0 calculations if routine meets zero diagonal element.
+  
+   If ILU0 is going to be used out of MKL FGMRES context, than the values
+   of ipar[1], ipar[5], ipar[30], dpar[30], and dpar[31] should be user
+   provided before the DCSRILU0 routine call.
+  
+   In this example, specific for DCSRILU0 entries are set in turn:
+   ipar[30]= 1 - change small diagonal value to that given by dpar[31],
+   dpar[30]= 1.E-20 instead of the default value set by DFGMRES_INIT.
+                    It is a small value to compare a diagonal entry with it.
+   dpar[31]= 1.E-16 instead of the default value set by DFGMRES_INIT.
+                    It is the target value of the diagonal value if it is
+                    small as compared to dpar[30] and the routine should change
+                    it rather than abort DCSRILU0 calculations.
+  ---------------------------------------------------------------------------*/
+  MKL_INT ipar[size];
+	double dpar[size];
+  MKL_INT ierr=0;
+  ipar[1] = 6;
+  ipar[5] = 1;
+	ipar[30]=1;
+	dpar[30]=1.E-20;
+	dpar[31]=1.E-16;
+	      
+	int* ia;
+  int* ja;
+  dataType* A;
+  ia = (int*) calloc( (Asparse.num_rows+1), sizeof(int) );
+  ja = (int*) calloc( Asparse.nnz, sizeof(int) );
+  A = (dataType*) calloc( Asparse.nnz, sizeof(dataType) );
+  
+	data_d_matrix LU = {Magma_CSR};
+	CHECK( data_zmconvert( Asparse, &LU, Magma_CSR, Magma_CSR ) );
+	
+  
+  // TODO: create indexing wrapper functions 
+  #pragma omp parallel 
+  {
+    #pragma omp for nowait
+    for (int i=0; i<Asparse.num_rows+1; i++) {
+    	ia[i] = Asparse.row[i] + 1;	
+    }
+    #pragma omp for nowait
+    for (int i=0; i<Asparse.nnz; i++) {
+    	ja[i] = Asparse.col[i] + 1;
+    	A[i] = Asparse.val[i];
+    }
+  }
+	
+	//MKL's iLU0
+  dataType wcsrilu0start = 0.0;
+  dataType wcsrilu0end = 0.0;
+  dataType ompwcsrilu0time = 0.0;
+	wcsrilu0start = omp_get_wtime();
+  dcsrilu0(&Asparse.num_rows, A, ia, ja, LU.val, ipar, dpar, &ierr);
+  wcsrilu0end = omp_get_wtime();
+  ompwcsrilu0time = (dataType) (wcsrilu0end-wcsrilu0start);  
+  
+  
+  
+  data_zmconvert( LU, &L, Magma_CSR, Magma_CSRL );
+  //data_zwrite_csr_mtx( L, L.major, "30p30n-L.mtx" );
   int* il;
   int* jl;
+  dataType* Lval;
   il = (int*) calloc( (L.num_rows+1), sizeof(int) );
   jl = (int*) calloc( L.nnz, sizeof(int) );
+  Lval = (dataType*) calloc( L.nnz, sizeof(dataType) );
   
   // TODO: create indexing wrapper functions 
   #pragma omp parallel 
@@ -165,16 +240,20 @@ int main(int argc, char* argv[])
     #pragma omp for nowait
     for (int i=0; i<L.nnz; i++) {
     	jl[i] = L.col[i] + 1;
+    	Lval[i] = L.val[i];
     }
   }
+  
   DEV_CHECKPT
   
+ 
   data_d_matrix y = {Magma_DENSE};
   y.num_rows = Asparse.num_rows;
   y.num_cols = 1;
   y.ld = 1;
   y.nnz = y.num_rows;
-  LACE_CALLOC(y.val, y.num_rows);
+  //LACE_CALLOC(y.val, y.num_rows);
+  y.val = (dataType*) calloc( (y.num_rows), sizeof(dataType) );
   
   
   data_d_matrix y_mkl = {Magma_DENSE};
@@ -182,8 +261,10 @@ int main(int argc, char* argv[])
   y_mkl.num_cols = 1;
   y_mkl.ld = 1;
   y_mkl.nnz = y_mkl.num_rows;
-  LACE_CALLOC(y_mkl.val, y_mkl.num_rows);
+  //LACE_CALLOC(y_mkl.val, y_mkl.num_rows);
+  y_mkl.val = (dataType*) calloc( (y_mkl.num_rows), sizeof(dataType) );
   
+  DEV_CHECKPT
   
   //for (int i=0; i<L.row[4+1]; i++) {
   //  printf("L.val[%d] = %e\n", i, L.val[i] );
@@ -195,8 +276,14 @@ int main(int argc, char* argv[])
   wcsrtrsvstart = omp_get_wtime();
   mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &L.num_rows, 
     L.val, il, jl, rhs_vector.val, y_mkl.val);
+  //mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &L.num_rows, 
+  //  Lval, il, jl, rhs_vector.val, y_mkl.val);
+  //mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &Asparse.num_rows, 
+  //  Asparse.val, ia, ja, rhs_vector.val, y_mkl.val);
 	wcsrtrsvend = omp_get_wtime();
 	mklwcsrtrsvtime = wcsrtrsvend - wcsrtrsvstart;
+	
+	DEV_CHECKPT
 	
   //for (int i=0; i<L.row[4+1]; i++) {
   //  printf("L.val[%d] = %e\n", i, L.val[i] );
@@ -220,8 +307,10 @@ int main(int argc, char* argv[])
     wcsrtrsvend = omp_get_wtime();
   }
 	parwcsrtrsvtime = wcsrtrsvend - wcsrtrsvstart;
-
-  //printf("i:\ty_mkl\ty\tdiff\n");
+	
+	DEV_CHECKPT
+  
+	//printf("i:\ty_mkl\ty\tdiff\n");
   //for (int i=0; i<L.num_rows; i++) {
   ////for (int i=0; i<10; i++) {
   //  //if (y_mkl.val[i] -  y.val[i] > 1.e-8) {
@@ -243,21 +332,24 @@ int main(int argc, char* argv[])
   //void mkl_dcsrgemv (const char *transa , const MKL_INT *m , const double *a , 
   //  const MKL_INT *ia , const MKL_INT *ja , const double *x , double *y );
   dataType* Ay_mkl;
-  LACE_CALLOC(Ay_mkl, L.num_rows);
+  //LACE_CALLOC(Ay_mkl, L.num_rows);
+  Ay_mkl = (dataType*) calloc( (L.num_rows), sizeof(dataType) );
   mkl_dcsrgemv(&cvar, &L.num_rows, L.val, il, jl, y_mkl.val, Ay_mkl );
   //void cblas_daxpy (const MKL_INT n, const double a, const double *x, 
   //  const MKL_INT incx, double *y, const MKL_INT incy);
-  dataType negone = -1.0;
+  dataType negone = dataType(-1.0);
   cblas_daxpy(L.num_rows, negone, rhs_vector.val, 1, Ay_mkl, 1 );
   
-  
+  DEV_CHECKPT
+
   dataType* Ay;
-  LACE_CALLOC(Ay, L.num_rows);
+  //LACE_CALLOC(Ay, L.num_rows);
+  Ay = (dataType*) calloc( (L.num_rows), sizeof(dataType) );
   mkl_dcsrgemv(&cvar, &L.num_rows, L.val, il, jl, y.val, Ay );
   cblas_daxpy(L.num_rows, negone, rhs_vector.val, 1, Ay, 1 );
   
-  dataType error_mkl = 0.0;
-  error = 0.0;
+  dataType error_mkl = dataType(0.0);
+  error = dataType(0.0);
   for (int i=0; i<L.num_rows; i++) {
     //printf("%d:\t%e\t%e\t%e\n", i, Ay[i], Ay_mkl[i], Ay_mkl[i]  -  Ay[i]  );
     error_mkl += pow(Ay_mkl[i], 2);
@@ -265,15 +357,16 @@ int main(int argc, char* argv[])
   }
   error_mkl = sqrt(error_mkl);
   error = sqrt(error);
-  printf("system errors:\n\t error_mkl = %e\terror = %e\n", error_mkl, error);
+printf("system errors:\n\t error_mkl = %e\terror = %e\n", error_mkl, error);
+//  printf("system errors:\n\t error_mkl = %e\n", error_mkl);
   printf("MKL time : %e Par time : %e  permute = %d\n", 
     mklwcsrtrsvtime, parwcsrtrsvtime, permute); 
   
-  
+ 
   data_d_matrix U = {Magma_CSRU};
   U.diagorder_type = Magma_VALUE;
   U.fill_mode = MagmaUpper;
-  data_zmconvert( Asparse, &U, Magma_CSR, Magma_CSRU );
+  data_zmconvert( LU, &U, Magma_CSR, Magma_CSRU );
   int* iu;
   int* ju;
   iu = (int*) calloc( (U.num_rows+1), sizeof(int) );
@@ -298,7 +391,8 @@ int main(int argc, char* argv[])
   x.num_cols = 1;
   x.ld = 1;
   x.nnz = x.num_rows;
-  LACE_CALLOC(x.val, x.num_rows);
+  //LACE_CALLOC(x.val, x.num_rows);
+  x.val = (dataType*) calloc( (x.num_rows), sizeof(dataType) );
   
   
   data_d_matrix x_mkl = {Magma_DENSE};
@@ -306,51 +400,62 @@ int main(int argc, char* argv[])
   x_mkl.num_cols = 1;
   x_mkl.ld = 1;
   x_mkl.nnz = x_mkl.num_rows;
-  LACE_CALLOC(x_mkl.val, x_mkl.num_rows);
+  //LACE_CALLOC(x_mkl.val, x_mkl.num_rows);
+  x_mkl.val = (dataType*) calloc( (x_mkl.num_rows), sizeof(dataType) );
   
   cvar1='U';
   cvar='N';
   cvar2='N';
   wcsrtrsvstart = omp_get_wtime();
   mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &U.num_rows, 
-    U.val, iu, ju, rhs_vector.val, x_mkl.val);
+    U.val, iu, ju, y_mkl.val, x_mkl.val);
+  //mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &U.num_rows, 
+  //  U.val, iu, ju, rhs_vector.val, x_mkl.val);
+  //mkl_dcsrtrsv(&cvar1, &cvar, &cvar2, &Asparse.num_rows, 
+  //  Asparse.val, ia, ja, rhs_vector.val, x_mkl.val);
   wcsrtrsvend = omp_get_wtime();
 	mklwcsrtrsvtime = wcsrtrsvend - wcsrtrsvstart;
 	
 	if (permute == 0) {
     wcsrtrsvstart = omp_get_wtime();
-    data_backward_solve( &U, &x, &rhs_vector );
+    //data_backward_solve( &U, &x, &rhs_vector );
+    data_backward_solve( &U, &x, &y );
     wcsrtrsvend = omp_get_wtime();
   }
   else if (permute == 1) {
     wcsrtrsvstart = omp_get_wtime();
-    data_backward_solve_permute( &U, &x, &rhs_vector );
+    //data_backward_solve_permute( &U, &x, &rhs_vector );
+    data_backward_solve_permute( &U, &x, &y );
     wcsrtrsvend = omp_get_wtime();
   }
 	parwcsrtrsvtime = wcsrtrsvend - wcsrtrsvstart;
   
-  error = 0.0;
+  error = dataType(0.0);
   data_norm_diff_vec( &x, &x_mkl, &error );
   printf("x error = %e\n", error);
   
   //void mkl_dcsrgemv (const char *transa , const MKL_INT *m , const double *a , 
   //  const MKL_INT *ia , const MKL_INT *ja , const double *x , double *y );
   dataType* Ax_mkl;
-  LACE_CALLOC(Ax_mkl, U.num_rows);
-  mkl_dcsrgemv(&cvar, &U.num_rows, U.val, iu, ju, x_mkl.val, Ax_mkl );
+  //LACE_CALLOC(Ax_mkl, U.num_rows);
+  Ax_mkl = (dataType*) calloc( (U.num_rows), sizeof(dataType) );
+  
+  mkl_dcsrgemv(&cvar, &Asparse.num_rows, Asparse.val, ia, ja, x_mkl.val, Ax_mkl );
+  //mkl_dcsrgemv(&cvar, &U.num_rows, U.val, iu, ju, x_mkl.val, Ax_mkl );
   //void cblas_daxpy (const MKL_INT n, const double a, const double *x, 
   //  const MKL_INT incx, double *y, const MKL_INT incy);
   cblas_daxpy(U.num_rows, negone, rhs_vector.val, 1, Ax_mkl, 1 );
   
   
   dataType* Ax;
-  LACE_CALLOC(Ax, U.num_rows);
-  mkl_dcsrgemv(&cvar, &L.num_rows, U.val, iu, ju, x.val, Ax );
+  //LACE_CALLOC(Ax, U.num_rows);
+  Ax = (dataType*) calloc( (U.num_rows), sizeof(dataType) );
+  mkl_dcsrgemv(&cvar, &Asparse.num_rows, Asparse.val, ia, ja, x.val, Ax );
   cblas_daxpy(U.num_rows, negone, rhs_vector.val, 1, Ax, 1 );
   
-  error_mkl = 0.0;
-  error = 0.0;
-  for (int i=0; i<L.num_rows; i++) {
+  error_mkl = dataType(0.0);
+  error = dataType(0.0);
+  for (int i=0; i<U.num_rows; i++) {
     //printf("%d:\t%e\t%e\t%e\n", i, Ax[i], Ax_mkl[i], Ax_mkl[i]  -  Ax[i]  );
     error_mkl += pow(Ax_mkl[i], 2);
     error += pow(Ax[i], 2);
@@ -368,7 +473,8 @@ int main(int argc, char* argv[])
     num_threads = omp_get_num_threads();
   }
   printf("omp_get_num_threads = %d\n", num_threads);
-  
+    
+
   data_zmfree( &Asparse );
 	data_zmfree( &rhs_vector );
   data_zmfree( &y );
@@ -378,7 +484,18 @@ int main(int argc, char* argv[])
   data_zmfree( &L );
   data_zmfree( &U );
   
-  
+  free( il );
+  free( jl );
+  free( ia );
+  free( ja );
+  free( Lval );
+  free( iu );
+  free( ju );
+  free( Ay_mkl );
+  free( Ay );
+  free( Ax_mkl );
+  free( Ax );
+
   
   //testing::InitGoogleTest(&argc, argv);
   //return RUN_ALL_TESTS();

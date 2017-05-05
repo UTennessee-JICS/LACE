@@ -756,6 +756,7 @@ data_zmconvert(
             if (A.blocksize > 0) {
               B->storage_type = Magma_BCSR;
               B->nnz = A.numblocks*A.ldblock;
+              B->major = MagmaRowMajor;
               B->numblocks = 0;
               B->blocksize = 0;
               B->true_nnz = A.nnz;
@@ -800,6 +801,7 @@ data_zmconvert(
             B->num_cols = A.num_cols;
             B->pad_rows = A.pad_rows; 
             B->pad_cols = A.pad_cols;
+            B->major = MagmaRowMajor;
             B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
             B->col = (int*) calloc( A.nnz, sizeof(int) );
             B->val = (dataType*) calloc( A.nnz, sizeof(dataType) );

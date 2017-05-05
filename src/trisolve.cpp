@@ -40,6 +40,9 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs )
             j = L->col[k];
             tmp += L->val[k]*x->val[j];  
           }
+          //if ( L->col[L->row[i+1] - 1] != i ) {
+          //  printf("Wrong diagonal entry!!! %d %d\n", L->col[L->row[i+1] - 1], i); 
+          //}
           tmp = (rhs->val[i] - tmp)/L->val[L->row[i+1] - 1];
           step += pow((x->val[i] - tmp), 2);
           x->val[i] = tmp;
