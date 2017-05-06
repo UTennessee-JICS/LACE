@@ -757,6 +757,12 @@ data_backward_solve_permute(
   data_d_matrix* x, 
   data_d_matrix* rhs ); 
 
+int
+data_pardcsrtrsv( const data_uplo_t uplo, const data_storage_t storage, 
+  const data_diagorder_t diag, 
+  const int num_rows, const double *Aval, const int *row, const int *col, 
+  const double *rhsval, double *yval); 
+
 #ifdef __cplusplus
 }
 #endif
