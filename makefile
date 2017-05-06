@@ -4,9 +4,7 @@ CC=g++-6
 #
 #
 VPATH=blas control include src testing
-#CFLAGS=-std=c++11 -g -Wall -O0 -fopenmp
-#CFLAGS=-std=c++11 -g -Wall -O2 -fp-model precise -fp-model source -fopenmp 
-CFLAGS=-std=c++11 -g -Wall -O3 -mfpmath=sse -fopenmp
+CFLAGS=-std=c++11 -g -Wall -O2 -fno-unsafe-math-optimizations -fopenmp
 LDFLAGS=-isystem ${GTEST_DIR}/include -pthread libgtest.a
 LDFLAGS2=-isystem ${GTEST_DIR}/include -isystem ${GMOCK_DIR}/include -pthread libgmock.a
 SOURCES=example_01.cpp
@@ -283,6 +281,22 @@ test_trisolve: test_trisolve.cpp
 	test_trisolve.cpp \
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@			
+
+	
+test_solve_pariLU0_partrsv_MKL_FGMRES: test_solve_pariLU0_partrsv_MKL_FGMRES.cpp
+	$(CC) $(CFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	control/constants.cpp control/magma_zmio.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	src/parilu_v0_3.cpp \
+	src/trisolve.cpp \
+	test_solve_pariLU0_partrsv_MKL_FGMRES.cpp \
+	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+	-o $@		
 	
 libgtest.a: gtest-all.o
 	ar -rv libgtest.a gtest-all.o

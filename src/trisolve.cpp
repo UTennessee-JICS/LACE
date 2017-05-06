@@ -27,16 +27,16 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs,
     *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;
-    const dataType one = 0.0;
+    const dataType zero = dataType(0.0);
     
     while (step > tol) {
         
-      step = 0;
+      step = zero;
       #pragma omp parallel
       {
         #pragma omp for private(j, tmp) reduction(+:step) nowait
         for ( int i=0; i < L->num_rows; i++ ) {
-          tmp = one;
+          tmp = zero;
           for ( int k=L->row[i]; k < L->row[i+1]-1; k++) {
             j = L->col[k];
             tmp += L->val[k]*x->val[j];  
@@ -77,16 +77,16 @@ data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs,
     *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;
-    const dataType one = 0.0;
+    const dataType zero = dataType(0.0);
     
     while (step > tol) {
         
-      step = 0;
+      step = zero;
       #pragma omp parallel
       {
         #pragma omp for private(j, tmp) reduction(+:step) nowait
         for ( int i=U->num_rows-1; i>=0; i-- ) {
-          tmp = one;
+          tmp = zero;
           for ( int k=U->row[i]+1; k < U->row[i+1]; k++) {
             j = U->col[k];
             tmp += U->val[k]*x->val[j];  
@@ -126,7 +126,7 @@ data_forward_solve_permute( data_d_matrix* L, data_d_matrix* x, data_d_matrix* r
     *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;
-    const dataType one = 0.0;
+    const dataType zero = dataType(0.0);
     
     int* c;
     LACE_CALLOC(c, L->num_rows);
@@ -142,13 +142,13 @@ data_forward_solve_permute( data_d_matrix* L, data_d_matrix* x, data_d_matrix* r
     
     while (step > tol) {
       
-      step = 0;
+      step = zero;
       #pragma omp parallel
       {
         #pragma omp for private(j, tmp) reduction(+:step) nowait
         for ( int ii=0; ii < L->num_rows; ii++ ) {
           i = c[ii];
-          tmp = one;
+          tmp = zero;
           for ( int k=L->row[i]; k < L->row[i+1]-1; k++) {
             j = L->col[k];
             tmp += L->val[k]*x->val[j];  
@@ -193,7 +193,7 @@ data_backward_solve_permute( data_d_matrix* U, data_d_matrix* x, data_d_matrix* 
     *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;
-    const dataType one = 0.0;
+    const dataType zero = dataType(0.0);
     
     int* c;
     LACE_CALLOC(c, U->num_rows);
@@ -209,13 +209,13 @@ data_backward_solve_permute( data_d_matrix* U, data_d_matrix* x, data_d_matrix* 
     
     while (step > tol) {
         
-      step = 0;
+      step = zero;
       #pragma omp parallel
       {
         #pragma omp for private(j, tmp) reduction(+:step) nowait
         for ( int ii=U->num_rows-1; ii>=0; ii-- ) {
           i = c[ii];
-          tmp = one;
+          tmp = zero;
           for ( int k=U->row[i]+1; k < U->row[i+1]; k++) {
             j = U->col[k];
             tmp += U->val[k]*x->val[j];  
@@ -262,16 +262,16 @@ data_pardcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
     *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;
-    const dataType one = 0.0;
+    const dataType zero = dataType(0.0);
     
     while (step > tol) {
         
-      step = 0;
+      step = zero;
       #pragma omp parallel
       {
         #pragma omp for private(j, tmp) reduction(+:step) nowait
         for ( int i=0; i < num_rows; i++ ) {
-          tmp = one;
+          tmp = zero;
           for ( int k=row[i]; k < row[i+1]-1; k++) {
             j = col[k];
             tmp += Aval[k]*yval[j];  
@@ -302,16 +302,16 @@ data_pardcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
     
     dataType step = 1.e8;
     dataType tmp = 0.0;
-    const dataType one = 0.0;
+    const dataType zero = dataType(0.0);
     
     while (step > tol) {
         
-      step = 0;
+      step = zero;
       #pragma omp parallel
       {
         #pragma omp for private(j, tmp) reduction(+:step) nowait
         for ( int i=num_rows-1; i>=0; i-- ) {
-          tmp = one;
+          tmp = zero;
           for ( int k=row[i]+1; k < row[i+1]; k++) {
             j = col[k];
             tmp += Aval[k]*yval[j];  

@@ -95,7 +95,6 @@ int main(int argc, char* argv[])
   
   // Partrsv
   dataType ptrsv_tol = 1.0e-15;
-  dataType ptrsv_step = 1.0e10;
   int ptrsv_iter = 0;
   
   if (argc < 3) {
@@ -152,7 +151,7 @@ int main(int argc, char* argv[])
   }
   if (argc > 4) {
     ptrsv_tol = atof(argv[4]); 
-    printf("reading ptrs_tol %e\n", ptrsv_tol);
+    printf("reading ptrsv_tol %e\n", ptrsv_tol);
   }
   
   DEV_CHECKPT
