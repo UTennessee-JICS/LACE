@@ -92,6 +92,12 @@ int main(int argc, char* argv[])
   dataType mklwcsrtrsvtime = 0.0;
   dataType parwcsrtrsvtime = 0.0;
   
+  
+  // Partrsv
+  dataType ptrsv_tol = 1.0e-15;
+  dataType ptrsv_step = 1.0e10;
+  int ptrsv_iter = 0;
+  
   if (argc < 3) {
     printf("Usage %s <matrix> <rhs vector> [permute]", argv[0] );
     //printf("[diagonal scaling] [abs/rel] [GMRES_tolerance] [restart] ");
@@ -143,6 +149,10 @@ int main(int argc, char* argv[])
   if (argc > 3) {
     permute = atoi(argv[3]); 
     printf("reading permute %d\n", permute);
+  }
+  if (argc > 4) {
+    ptrsv_tol = atof(argv[4]); 
+    printf("reading ptrs_tol %e\n", ptrsv_tol);
   }
   
   DEV_CHECKPT
@@ -209,7 +219,7 @@ int main(int argc, char* argv[])
     }
   }
 	
-	//MKL's iLU0
+	// MKL's iLU0
   dataType wcsrilu0start = 0.0;
   dataType wcsrilu0end = 0.0;
   dataType ompwcsrilu0time = 0.0;
@@ -217,6 +227,7 @@ int main(int argc, char* argv[])
   dcsrilu0(&Asparse.num_rows, A, ia, ja, LU.val, ipar, dpar, &ierr);
   wcsrilu0end = omp_get_wtime();
   ompwcsrilu0time = (dataType) (wcsrilu0end-wcsrilu0start);  
+  
   
   
   
@@ -278,18 +289,20 @@ int main(int argc, char* argv[])
     wcsrtrsvstart = omp_get_wtime();
     //data_forward_solve( &L, &y, &rhs_vector );
     data_pardcsrtrsv( MagmaLower, Magma_CSRL, Magma_UNITY,
-      L.num_rows, L.val, L.row, L.col, rhs_vector.val, y.val );
+      L.num_rows, L.val, L.row, L.col, rhs_vector.val, y.val, 
+      ptrsv_tol, &ptrsv_iter );
     wcsrtrsvend = omp_get_wtime();
   }
   else if (permute == 1) {
     wcsrtrsvstart = omp_get_wtime();
-    data_forward_solve_permute( &L, &y, &rhs_vector );
+    data_forward_solve_permute( &L, &y, &rhs_vector, ptrsv_tol, &ptrsv_iter );
     wcsrtrsvend = omp_get_wtime();
   }
 	parwcsrtrsvtime = wcsrtrsvend - wcsrtrsvstart;
 	
   dataType error = 0.0;
   data_norm_diff_vec( &y, &y_mkl, &error );
+  printf("ptrsv_tol = %e ptrsv_iter = %d\n", ptrsv_tol, ptrsv_iter );
   printf("y error = %e\n", error);
   
   dataType* Ay_mkl;
@@ -371,20 +384,22 @@ int main(int argc, char* argv[])
 	
 	if (permute == 0) {
     wcsrtrsvstart = omp_get_wtime();
-    //data_backward_solve( &U, &x, &y );
+    //data_backward_solve( &U, &x, &y, ptrsv_tol, &ptrsv_iter );
     data_pardcsrtrsv( MagmaUpper, Magma_CSRU, Magma_VALUE,
-      U.num_rows, U.val, U.row, U.col, y.val, x.val );
+      U.num_rows, U.val, U.row, U.col, y.val, x.val, 
+      ptrsv_tol, &ptrsv_iter );
     wcsrtrsvend = omp_get_wtime();
   }
   else if (permute == 1) {
     wcsrtrsvstart = omp_get_wtime();
-    data_backward_solve_permute( &U, &x, &y );
+    data_backward_solve_permute( &U, &x, &y, ptrsv_tol, &ptrsv_iter );
     wcsrtrsvend = omp_get_wtime();
   }
 	parwcsrtrsvtime = wcsrtrsvend - wcsrtrsvstart;
   
   error = dataType(0.0);
   data_norm_diff_vec( &x, &x_mkl, &error );
+  printf("ptrsv_tol = %e ptrsv_iter = %d\n", ptrsv_tol, ptrsv_iter );
   printf("x error = %e\n", error);
   
   dataType* Ax_mkl;

@@ -14,7 +14,8 @@
 
 extern "C" 
 int
-data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs ) 
+data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs,
+  const dataType tol, int *iter ) 
 {
   int info = 0;
   
@@ -23,8 +24,7 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs )
     && L->diagorder_type != Magma_NODIAG ) { 
   
     int j = 0;
-    int iter = 0;
-    dataType tol = 1.e-15;
+    *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;
     const dataType one = 0.0;
@@ -46,8 +46,8 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs )
           x->val[i] = tmp;
         }
       }
-      iter = iter + 1;
-      printf("%% iteration = %d step = %e\n", iter, step);
+      *iter = *iter + 1;
+      printf("%% iteration = %d step = %e\n", *iter, step);
     }
   
   }
@@ -64,7 +64,8 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs )
 
 extern "C" 
 int
-data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs ) 
+data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs,
+  const dataType tol, int *iter ) 
 {
   int info = 0;
   
@@ -73,8 +74,7 @@ data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs )
     && U->diagorder_type != Magma_NODIAG ) { 
   
     int j = 0;
-    int iter = 0;
-    dataType tol = 1.e-15;
+    *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;
     const dataType one = 0.0;
@@ -96,8 +96,8 @@ data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs )
           x->val[i] = tmp;
         }
       }
-      iter = iter + 1;
-      printf("%% iteration = %d step = %e\n", iter, step);
+      *iter = *iter + 1;
+      printf("%% iteration = %d step = %e\n", *iter, step);
     }
   
   }
@@ -113,7 +113,8 @@ data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs )
 
 extern "C" 
 int
-data_forward_solve_permute( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs ) 
+data_forward_solve_permute( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs,
+  const dataType tol, int *iter ) 
 {
   int info = 0;
   
@@ -122,8 +123,7 @@ data_forward_solve_permute( data_d_matrix* L, data_d_matrix* x, data_d_matrix* r
     && L->diagorder_type != Magma_NODIAG ) { 
   
     int j = 0;
-    int iter = 0;
-    dataType tol = 1.e-15;
+    *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;
     const dataType one = 0.0;
@@ -158,8 +158,8 @@ data_forward_solve_permute( data_d_matrix* L, data_d_matrix* x, data_d_matrix* r
           x->val[i] = tmp;
         }
       }
-      iter = iter + 1;
-      printf("%% iteration = %d step = %e\n", iter, step);
+      *iter = *iter + 1;
+      printf("%% iteration = %d step = %e\n", *iter, step);
       
       std::random_shuffle(c,c+L->num_rows);
       
@@ -180,7 +180,8 @@ data_forward_solve_permute( data_d_matrix* L, data_d_matrix* x, data_d_matrix* r
 
 extern "C" 
 int
-data_backward_solve_permute( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs ) 
+data_backward_solve_permute( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs,
+  const dataType tol, int *iter ) 
 {
   int info = 0;
   
@@ -189,8 +190,7 @@ data_backward_solve_permute( data_d_matrix* U, data_d_matrix* x, data_d_matrix* 
     && U->diagorder_type != Magma_NODIAG ) { 
   
     int j = 0;
-    int iter = 0;
-    dataType tol = 1.e-15;
+    *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;
     const dataType one = 0.0;
@@ -225,8 +225,8 @@ data_backward_solve_permute( data_d_matrix* U, data_d_matrix* x, data_d_matrix* 
           x->val[i] = tmp;
         }
       }
-      iter = iter + 1;
-      printf("%% iteration = %d step = %e\n", iter, step);
+      *iter = *iter + 1;
+      printf("%% iteration = %d step = %e\n", *iter, step);
       
       std::random_shuffle(c,c+U->num_rows);
       
@@ -248,8 +248,9 @@ extern "C"
 int
 data_pardcsrtrsv( const data_uplo_t uplo, const data_storage_t storage, 
   const data_diagorder_t diag, 
-  const int num_rows, const double *Aval, const int *row, const int *col, 
-  const double *rhsval, double *yval) 
+  const int num_rows, const dataType *Aval, const int *row, const int *col, 
+  const dataType *rhsval, dataType *yval,
+  const dataType tol, int *iter  ) 
 {
   int info = 0;
   
@@ -258,8 +259,7 @@ data_pardcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
     && diag != Magma_NODIAG ) { 
   
     int j = 0;
-    int iter = 0;
-    dataType tol = 1.e-15;
+    *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;
     const dataType one = 0.0;
@@ -281,8 +281,8 @@ data_pardcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
           yval[i] = tmp;
         }
       }
-      iter = iter + 1;
-      printf("%% iteration = %d step = %e\n", iter, step);
+      *iter = *iter + 1;
+      printf("%% iteration = %d step = %e\n", *iter, step);
     }
   
   }
@@ -298,8 +298,8 @@ data_pardcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
     && diag != Magma_NODIAG ) { 
   
     int j = 0;
-    int iter = 0;
-    dataType tol = 1.e-15;
+    *iter = 0;
+    
     dataType step = 1.e8;
     dataType tmp = 0.0;
     const dataType one = 0.0;
@@ -321,8 +321,8 @@ data_pardcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
           yval[i] = tmp;
         }
       }
-      iter = iter + 1;
-      printf("%% iteration = %d step = %e\n", iter, step);
+      *iter = *iter + 1;
+      printf("%% iteration = %d step = %e\n", *iter, step);
     }
   
   }

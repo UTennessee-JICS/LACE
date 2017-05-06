@@ -737,31 +737,47 @@ int
 data_forward_solve( 
   data_d_matrix* L, 
   data_d_matrix* x, 
-  data_d_matrix* rhs ); 
+  data_d_matrix* rhs,
+  const dataType tol, 
+  int *iter ); 
 
 int
 data_forward_solve_permute( 
   data_d_matrix* L, 
   data_d_matrix* x, 
-  data_d_matrix* rhs ); 
+  data_d_matrix* rhs,
+  const dataType tol, 
+  int *iter ); 
 
 int
 data_backward_solve( 
   data_d_matrix* L, 
   data_d_matrix* x, 
-  data_d_matrix* rhs ); 
+  data_d_matrix* rhs,
+  const dataType tol, 
+  int *iter ); 
 
 int
 data_backward_solve_permute( 
   data_d_matrix* L, 
   data_d_matrix* x, 
-  data_d_matrix* rhs ); 
+  data_d_matrix* rhs,
+  const dataType tol, 
+  int *iter ); 
 
 int
-data_pardcsrtrsv( const data_uplo_t uplo, const data_storage_t storage, 
+data_pardcsrtrsv( 
+  const data_uplo_t uplo, 
+  const data_storage_t storage, 
   const data_diagorder_t diag, 
-  const int num_rows, const double *Aval, const int *row, const int *col, 
-  const double *rhsval, double *yval); 
+  const int num_rows, 
+  const dataType *Aval, 
+  const int *row, 
+  const int *col, 
+  const dataType *rhsval, 
+  dataType *yval,
+  const dataType tol, 
+  int *iter ); 
 
 #ifdef __cplusplus
 }
