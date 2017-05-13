@@ -342,6 +342,33 @@ data_zmdiagadd(
     dataType add );
 
 int
+data_zmscale_generate( 
+	  int n, 
+	  data_scale_t* scaling, 
+	  data_side_t* side, 
+	  data_d_matrix* A, 
+	  data_d_matrix* scaling_factors );
+
+int
+data_zmscale_apply( 
+	  int n,  
+	  data_side_t* side, 
+	  data_d_matrix* scaling_factors, 
+	  data_d_matrix* A );
+
+int
+data_zdimv( 
+    data_d_matrix* vecA, 
+    data_d_matrix* vecB );
+
+int
+data_zlascl2(
+    data_type_t type, int m, int n,
+    dataType* dD,
+    dataType* dA, 
+    int ldda );
+
+int
 data_zmlumerge(
     data_d_matrix L,
     data_d_matrix U,
