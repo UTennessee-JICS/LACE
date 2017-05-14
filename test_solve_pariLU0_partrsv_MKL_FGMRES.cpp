@@ -772,7 +772,7 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 		cvar2='U';
 		//mkl_dcsrtrsv(&cvar1,&cvar,&cvar2,&ivar,bilu0,ia,ja,&tmp[ipar[21]-1],trvec);
 		
-    data_pardcsrtrsv( MagmaLower, Magma_CSRL, Magma_UNITY,
+    data_parcsrtrsv( MagmaLower, Magma_CSRL, Magma_UNITY,
       L.num_rows, L.val, L.row, L.col, &tmp[ipar[21]-1], trvec, 
       ptrsv_tol, &ptrsv_iter );
     
@@ -781,7 +781,7 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 		cvar2='N';
 		//mkl_dcsrtrsv(&cvar1,&cvar,&cvar2,&ivar,bilu0,ia,ja,trvec,&tmp[ipar[22]-1]);
 	  
-    data_pardcsrtrsv( MagmaUpper, Magma_CSRU, Magma_VALUE,
+    data_parcsrtrsv( MagmaUpper, Magma_CSRU, Magma_VALUE,
       U.num_rows, U.val, U.row, U.col, trvec, &tmp[ipar[22]-1], 
       ptrsv_tol, &ptrsv_iter );
     

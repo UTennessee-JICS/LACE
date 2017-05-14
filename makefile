@@ -18,7 +18,10 @@ all: gtest-all.o gmock-all.o exampleGoogleTest_01 exampleGoogleTest_02 \
 	test_iLU_ops test_iLU test_MKL_iLU post_iLU \
 	test_MKL_iLU0_FGMRES test_pariLU0_MKL_FGMRES \
 	test_read_pariLU0_MKL_FGMRES test_read_rhs_pariLU0_MKL_FGMRES \
-	test_solve_pariLU0_MKL_FGMRES
+	test_solve_pariLU0_MKL_FGMRES \
+	test_trisolve \
+	test_solve_pariLU0_partrsv_MKL_FGMRES \
+	test_dense_trisolve
 
 exampleGoogleTest_01: example_01.cpp libgtest.a
 	$(CC) $(LDFLAGS) $(CFLAGS) example_01.cpp -o $@
@@ -282,6 +285,20 @@ test_trisolve: test_trisolve.cpp
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@			
 
+test_dense_trisolve: test_dense_trisolve.cpp
+	$(CC) $(CFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	control/constants.cpp control/magma_zmio.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	src/parilu_v0_3.cpp \
+	src/trisolve.cpp \
+	test_dense_trisolve.cpp \
+	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+	-o $@		
 	
 test_solve_pariLU0_partrsv_MKL_FGMRES: test_solve_pariLU0_partrsv_MKL_FGMRES.cpp
 	$(CC) $(CFLAGS) \

@@ -287,7 +287,7 @@ int main(int argc, char* argv[])
   if (permute == 0) { 
     wcsrtrsvstart = omp_get_wtime();
     //data_forward_solve( &L, &y, &rhs_vector );
-    data_pardcsrtrsv( MagmaLower, Magma_CSRL, Magma_UNITY,
+    data_parcsrtrsv( MagmaLower, Magma_CSRL, Magma_UNITY,
       L.num_rows, L.val, L.row, L.col, rhs_vector.val, y.val, 
       ptrsv_tol, &ptrsv_iter );
     wcsrtrsvend = omp_get_wtime();
@@ -384,7 +384,7 @@ int main(int argc, char* argv[])
 	if (permute == 0) {
     wcsrtrsvstart = omp_get_wtime();
     //data_backward_solve( &U, &x, &y, ptrsv_tol, &ptrsv_iter );
-    data_pardcsrtrsv( MagmaUpper, Magma_CSRU, Magma_VALUE,
+    data_parcsrtrsv( MagmaUpper, Magma_CSRU, Magma_VALUE,
       U.num_rows, U.val, U.row, U.col, y.val, x.val, 
       ptrsv_tol, &ptrsv_iter );
     wcsrtrsvend = omp_get_wtime();

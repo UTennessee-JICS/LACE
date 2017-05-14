@@ -793,7 +793,7 @@ data_backward_solve_permute(
   int *iter ); 
 
 int
-data_pardcsrtrsv( 
+data_parcsrtrsv( 
   const data_uplo_t uplo, 
   const data_storage_t storage, 
   const data_diagorder_t diag, 
@@ -805,6 +805,22 @@ data_pardcsrtrsv(
   dataType *yval,
   const dataType tol, 
   int *iter ); 
+
+int
+data_partrsv( 
+  const data_order_t major, 
+  const data_uplo_t uplo, 
+  const data_storage_t storage, 
+  const data_diagorder_t diag, 
+  const int num_rows, 
+  const dataType *Aval, 
+  const int lda, 
+  const dataType *rhsval, 
+  const int incr,
+  dataType *yval,
+  const int incx,
+  const dataType tol, 
+  int *iter );
 
 #ifdef __cplusplus
 }
