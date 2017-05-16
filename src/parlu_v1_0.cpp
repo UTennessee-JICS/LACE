@@ -15,7 +15,8 @@ void
 data_ParLU_v1_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U ) 
 {
   // Separate the strictly lower and upper elements into L, and U respectively.
-  L->diagorder_type = Magma_NODIAG;
+  //L->diagorder_type = Magma_NODIAG;
+  L->diagorder_type = Magma_UNITY;
   data_zmconvert(*A, L, Magma_DENSE, Magma_DENSEL);
   
   U->diagorder_type = Magma_VALUE;

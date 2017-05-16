@@ -839,6 +839,14 @@ data_partrsv_dot(
   const dataType tol, 
   int *iter );
 
+//======================================
+// Form an inverse matrix
+//======================================
+
+int
+data_inverse( 
+  data_d_matrix* A, 
+  data_d_matrix* Ainv );
 
 #ifdef __cplusplus
 }
