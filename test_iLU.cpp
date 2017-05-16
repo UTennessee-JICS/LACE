@@ -357,7 +357,8 @@ int main(int argc, char* argv[])
   //U.diagorder_type = Magma_VALUE;
   //data_zmconvert(A, &U, Magma_CSR, Magma_CSRU);
   reduction = 1.0e-10;
-  data_PariLU_v0_3( &A, &L, &U, reduction);
+  data_d_preconditioner_log p03_log;
+  data_PariLU_v0_3( &A, &L, &U, reduction, &p03_log );
   // Check ||A-LU||_Frobenius
   Ares = 0.0;
   Anonlinres = 0.0;
