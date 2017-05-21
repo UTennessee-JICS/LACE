@@ -294,6 +294,7 @@ test_dense_trisolve: test_dense_trisolve.cpp
 	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
 	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
 	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	src/parlu_v1_0.cpp \
 	src/trisolve.cpp \
 	test_dense_trisolve.cpp \
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
