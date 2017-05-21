@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
   DEV_CHECKPT
   data_zprint_csr( C );
   data_d_matrix D = {Magma_BCSR};
-  D.blocksize = 4;
+  D.blocksize = 5;
   data_zmconvert( C, &D, Magma_CSR, Magma_BCSR );
   DEV_CHECKPT
   data_zprint_bcsr( &D );
@@ -210,26 +210,73 @@ int main(int argc, char* argv[])
   binvhandle.major = MagmaRowMajor;
   //LACE_CALLOC(binvhandle.val, binvhandle.nnz);
   
+  data_d_matrix binvcheck = {Magma_DENSE};
+  binvcheck.num_rows = D.blocksize;
+  binvcheck.num_cols = D.blocksize;
+  binvcheck.blocksize = D.blocksize;
+  binvcheck.nnz = binvcheck.num_rows*binvcheck.num_cols;
+  binvcheck.true_nnz = binvcheck.nnz;
+  binvcheck.ld = binvcheck.num_cols;
+  binvcheck.major = MagmaRowMajor;
+  LACE_CALLOC(binvcheck.val, binvcheck.nnz);
+  
   DEV_CHECKPT
   
-  bhandle.val = &D.val[0*D.ldblock];
-  binvhandle.val = &Dinv.val[0*Dinv.ldblock];
+  //TODO: create a wrapper routine to invert each block in a bcsr matrix
+  // exemplar use is to preform block diagonal scaling:
+  // first extract diagonal blocks from matrix A 
+  //    data_zmextract_diagonal( A, &Adiag, Magma_BCSR, Magma_BCSR );
+  // then invert each block
+  //    data_inverse_bcsr( &Adiag, &Adiaginv );  
+  // then apply scaling
   
-  data_zprint_dense( bhandle );
-  DEV_CHECKPT
-  data_zprint_dense( binvhandle );
+  for (int i=0; i<D.num_rows; i++ ) {
+    printf("row %d:\n", i);
+    for (int j=D.row[i]; j<D.row[i+1]; j++) {
+      printf("block %d bcol %d\n", j, D.col[j]);
   
-  data_inverse( &bhandle, &binvhandle );
+      bhandle.val = &D.val[j*D.ldblock];
+      binvhandle.val = &Dinv.val[j*Dinv.ldblock];
+      
+      //data_zprint_dense( bhandle );
+      //DEV_CHECKPT
+      //data_zprint_dense( binvhandle );
+      
+      data_inverse( &bhandle, &binvhandle );
+      
+      data_dgemm_mkl( MagmaRowMajor, MagmaNoTrans, MagmaNoTrans, 
+        bhandle.num_rows, bhandle.num_cols, binvhandle.num_cols, 
+        one, bhandle.val, bhandle.ld, binvhandle.val, binvhandle.ld,
+        zero, binvcheck.val, binvcheck.ld );
   
-  data_zprint_dense( bhandle );
-  DEV_CHECKPT
-  data_zprint_dense( binvhandle );
+      printf("bhandle*binvhandle block %d bcol %d : \n", j, D.col[j]);
+      data_zdisplay_dense( &binvcheck );
+      
+      //data_zprint_dense( bhandle );
+      //DEV_CHECKPT
+      //data_zprint_dense( binvhandle );
   
-  //TODO: create a wrapper routine to invert each block
-  //data_inverse_bcsr( &A, &Ainv );  
+    }
+  }
   
   //testing::InitGoogleTest(&argc, argv);
   //return RUN_ALL_TESTS();
+  
+  
+  //data_zmfree( &A );
+  //data_zmfree( &Ainv );
+  //data_zmfree( &B );
+  data_zmfree( &C );
+  DEV_CHECKPT
+  data_zmfree( &D );
+  DEV_CHECKPT
+  data_zmfree( &Dinv );
+  DEV_CHECKPT
+  //data_zmfree( &bhandle );
+  DEV_CHECKPT
+  //data_zmfree( &binvhandle );
+  DEV_CHECKPT
+  data_zmfree( &binvcheck );
   
   printf("done\n");
   fflush(stdout); 
