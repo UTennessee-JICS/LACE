@@ -92,9 +92,9 @@ data_inverse( data_d_matrix* A, data_d_matrix* Ainv )
   
   for ( int col=0; col<A->num_cols; col++) {
     e.val[col] = 1.0;
-    for ( int i=0; i<e.num_rows; i++ ) {
-      printf("e[%d]=%e\n", i, e.val[i]);
-    }
+    //for ( int i=0; i<e.num_rows; i++ ) {
+    //  printf("e[%d]=%e\n", i, e.val[i]);
+    //}
     printf("col=%d forward ", col);
     data_partrsv_dot( MagmaRowMajor, MagmaLower, Magma_DENSEL, Magma_UNITY,
       L.num_rows, L.val, L.ld, e.val, 1, y.val, 1, 
@@ -103,7 +103,7 @@ data_inverse( data_d_matrix* A, data_d_matrix* Ainv )
     
     // TODO: inspect and correct indexing so that column vectors are writen correctly
     //data_partrsv_dot( MagmaRowMajor, MagmaUpper, Magma_DENSEU, Magma_VALUE,
-    //  U.num_rows, U.val, U.ld, y.val, 1, &Ainv->val[col], Ainv->ld, 
+    //  U.num_rows, U.val, U.ld, y.val, 1, &(Ainv->val[col]), Ainv->ld, 
     //  ptrsv_tol, &ptrsv_iter );
     
     data_partrsv_dot( MagmaRowMajor, MagmaUpper, Magma_DENSEU, Magma_VALUE,
@@ -112,14 +112,14 @@ data_inverse( data_d_matrix* A, data_d_matrix* Ainv )
     printf("done.\n");
     
     for ( int i=0; i<f.num_rows; i++ ) {
-      printf("f[%d]=%e\n", i, f.val[i]);
+      //printf("f[%d]=%e\n", i, f.val[i]);
       Ainv->val[col + i*Ainv->ld] = f.val[i];
     }
     
     e.val[col] = 0.0;
     
-    printf("Ainv:\n");
-    data_zdisplay_dense( Ainv );
+    //printf("Ainv:\n");
+    //data_zdisplay_dense( Ainv );
   }
   
   

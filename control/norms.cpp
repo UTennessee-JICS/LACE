@@ -426,6 +426,7 @@ data_norm_diff_vec(
   assert(A->nnz == B->nnz);
   for (int i=0; i<A->nnz; i++) {
     (*norm) = (*norm) + pow( (A->val[i] - B->val[i]), 2 );
+    //printf("data_norm_diff_vec %d %e %e %e\n", i, A->val[i], B->val[i], (A->val[i] - B->val[i]) ); 
   }
   (*norm) = sqrt((*norm));
   

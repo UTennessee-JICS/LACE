@@ -481,7 +481,7 @@ data_partrsv_dot(
             //  tmp += Aval[j+i*lda]*yval[j];  
             //}
             tmp = data_zdot_mkl( i, &Aval[i*lda], 1, yval, incx );
-            tmp2 = tmp;
+            //tmp2 = tmp;
             tmp = (rhsval[i*incr] - tmp)/Aval[i+i*lda];
             step += pow((yval[i*incx] - tmp), 2);
             yval[i*incx] = tmp;
@@ -531,6 +531,7 @@ data_partrsv_dot(
             tmp = (rhsval[i*incr] - tmp)/Aval[i+i*lda];
             step += pow((yval[i*incx] - tmp), 2);
             yval[i*incx] = tmp;
+            //printf("yval[%d] = %e\n", i, tmp);
           }
         }
         *iter = *iter + 1;
