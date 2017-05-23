@@ -374,6 +374,12 @@ data_zmlumerge(
     data_d_matrix U,
     data_d_matrix *A );
 
+
+int
+data_zmextractdiag(
+    data_d_matrix A,
+    data_d_matrix *B );
+
 //======================================
 // norms
 //======================================
