@@ -51,7 +51,7 @@ data_zmextractdiag(
     //   collimit = A.pad_cols;
     //}
     
-    // CSR to anything
+    // CSR
     if ( A.storage_type == Magma_CSR 
       || A.storage_type == Magma_CSRL 
       || A.storage_type == Magma_CSRU )
@@ -59,7 +59,7 @@ data_zmextractdiag(
       // fill in information for B
       B->storage_type = Magma_CSR;
       B->major = MagmaRowMajor;
-      B->num_cols = 1;
+      B->num_cols = A.num_cols;
       B->max_nnz_row = 1;
       B->diameter = 1;
     
@@ -69,7 +69,10 @@ data_zmextractdiag(
           if ( A.col[j] == i ) {
             printf("row=%d, col=%d, val=%e \n", i, A.col[j], A.val[j]);
             count++;
-          } 
+          }
+          else {
+            count++; 
+          }
         }
       }
       
@@ -86,6 +89,66 @@ data_zmextractdiag(
             printf("row=%d, col=%d, val=%e \n", i, A.col[j], A.val[j]);
             B->col[count] = A.col[j];
             B->val[count] = A.val[j];
+            B->row[count] = count;
+            count++;
+          }
+          else {
+            printf("zero on diagonal row=%d, col=%d, val=%e \n", i, i, 0);
+            B->col[count] = i;
+            B->val[count] = 0.0;
+            B->row[count] = count;
+            count++; 
+          }
+        }
+      }
+      B->row[count] = count;
+    }
+    else // BCSR 
+    if ( A.storage_type == Magma_BCSR 
+      || A.storage_type == Magma_BCSRL 
+      || A.storage_type == Magma_BCSRU )
+    {
+      // fill in information for B
+      B->storage_type = Magma_CSR;
+      B->major = MagmaRowMajor;
+      B->num_cols = A.num_cols;
+      B->max_nnz_row = 1;
+      B->diameter = 1;
+    
+      B->blocksize = A.blocksize;
+      B->ldblock = A.ldblock;
+      B->numblocks = -1;
+        
+      int count = 0;
+      for(int i=0; i < A.num_rows; i++) {
+        for(int j=A.row[i]; j < A.row[i+1]; j++) {
+          if ( A.col[j] == i ) {
+            printf("row=%d, col=%d, val=%e \n", i, A.col[j], A.val[j]);
+            count++;
+          } 
+        }
+      }
+      
+      B->nnz = count*B->ldblock;
+      B->num_rows = count;
+      B->true_nnz = B->nnz;
+      B->numblocks = count;
+      B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
+      B->row = (int*) calloc( (B->nnz+1), sizeof(int) );
+      B->col = (int*) calloc( B->numblocks, sizeof(int) );
+      count = 0;
+      for(int i=0; i < A.num_rows; i++) {
+        for(int j=A.row[i]; j < A.row[i+1]; j++) {
+          if ( A.col[j] == i ) {
+            printf("+row=%d, col=%d, val=%e \n", i, A.col[j], A.val[j]);
+            B->col[count] = A.col[j];
+            //B->val[count] = A.val[j];
+            for (int k=0; k<B->ldblock; k++ ) {
+              B->val[count*B->ldblock+k] = A.val[j*A.ldblock+k];
+              printf("%e ", A.val[j*A.ldblock+k]);
+              if ((k+1)%A.blocksize==0)
+                printf("\n");
+            }
             B->row[count] = count;
             count++;
           } 

@@ -380,6 +380,11 @@ data_zmextractdiag(
     data_d_matrix A,
     data_d_matrix *B );
 
+int
+data_zmcopy(
+    data_d_matrix A,
+    data_d_matrix *B );
+
 //======================================
 // norms
 //======================================
@@ -851,6 +856,11 @@ data_partrsv_dot(
 
 int
 data_inverse( 
+  data_d_matrix* A, 
+  data_d_matrix* Ainv );
+
+int
+data_inverse_bcsr( 
   data_d_matrix* A, 
   data_d_matrix* Ainv );
 

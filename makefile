@@ -327,6 +327,9 @@ test_extract_diag: test_extract_diag.cpp
 	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
 	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
 	test_extract_diag.cpp \
+	src/parlu_v1_0.cpp \
+	src/trisolve.cpp \
+	src/inverse.cpp \
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@			
 	

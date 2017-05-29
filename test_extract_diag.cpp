@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
   //char output_U[256];
   
   if (argc < 2) {
-    printf("Usage %s <matrix> ", argv[0] );
+    printf("Usage %s <matrix>\n", argv[0] );
     return 1;
   }
   else {
@@ -109,7 +109,45 @@ int main(int argc, char* argv[])
   data_zprint_csr( Adiag );
   
   
-
+  char filename[] = "testing/matrices/bcsr_test.mtx";
+  data_d_matrix B = {Magma_CSR};
+  data_z_csr_mtx( &B, filename ); 
+  data_zprint_csr( B );
+  
+  // estimate condition number of B
+  
+  data_d_matrix C = {Magma_BCSR};
+  C.blocksize = 5;
+  data_zmconvert( B, &C, Magma_CSR, Magma_BCSR );
+  
+  // estimate condition number of C
+  
+  data_zprint_bcsr( &C );
+  
+  data_d_matrix Cdiag = {Magma_BCSR};
+  Cdiag.blocksize = 5;
+  
+  data_zmextractdiag( C, &Cdiag );
+  DEV_CHECKPT
+  data_zprint_bcsr( &Cdiag );
+  
+  // copy diagonal block matrix into Cdiaginv
+  data_d_matrix Cdiaginv = {Magma_BCSR};
+  Cdiaginv.blocksize = 5;
+  data_zmcopy(Cdiag, &Cdiaginv);
+  DEV_CHECKPT
+  data_zprint_bcsr( &Cdiaginv );
+  getchar();
+  DEV_CHECKPT
+  // calculate block inverses
+  data_inverse_bcsr(&Cdiag, &Cdiaginv);
+  
+  // block multiply Cdiag and Cdiaginv
+  // check for identity blocks
+  
+  // block multiply C and Cdiaginv
+  // estimate condition number
+  
   data_zmfree( &Asparse );
 	data_zmfree( &Adiag );
 	

@@ -181,10 +181,6 @@ data_rowindex(
     new_format  data_storage_t
                 new storage format
 
-    @param[in]
-    queue       data_queue_t
-                Queue to execute in.
-
     @ingroup datasparse_zaux
     ********************************************************************/
 
@@ -1397,4 +1393,104 @@ data_zcheckupperlower(
   
   return info;
   
+}
+
+extern "C" 
+int
+data_zmcopy(
+    data_d_matrix A,
+    data_d_matrix *B )
+{
+	
+    int info = 0;
+    dataType one = dataType(1.0);
+    dataType zero = dataType(0.0);
+    
+    B->val = NULL;
+    B->col = NULL;
+    B->row = NULL;
+    B->rowidx = NULL;
+    B->list = NULL;
+    B->blockinfo = NULL;
+    B->diag = NULL;
+    
+    int rowlimit = A.num_rows;
+    int collimit = A.num_cols;
+    if (A.pad_rows > 0 && A.pad_cols > 0) {
+       rowlimit = A.pad_rows;
+       collimit = A.pad_cols;
+    }
+      
+    
+    // CSR
+    if ( A.storage_type == Magma_CSR 
+      || A.storage_type == Magma_CSRL 
+      || A.storage_type == Magma_CSRU )
+    {
+      // fill in information for B
+      B->storage_type = A.storage_type;
+      B->major = A.major;
+      B->fill_mode = A.fill_mode;
+      B->num_rows = A.num_rows; 
+      B->num_cols = A.num_cols;
+      B->pad_rows = A.pad_rows; 
+      B->pad_cols = A.pad_cols;
+      B->nnz = A.nnz;
+      B->true_nnz = A.true_nnz;
+      B->max_nnz_row = A.max_nnz_row;
+      B->diameter = A.diameter;
+      
+      B->val = (dataType*) calloc( A.nnz, sizeof(dataType) );
+      B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
+      B->col = (int*) calloc( A.nnz, sizeof(int) );
+      
+      for( int i=0; i < A.nnz; i++) {
+          B->val[i] = A.val[i];
+          B->col[i] = A.col[i];
+      }
+      for( int i=0; i < rowlimit+1; i++) {
+          B->row[i] = A.row[i];
+      }
+        
+    }
+    
+    // BCSR 
+    else if ( A.storage_type == Magma_BCSR ) {
+        // fill in information for B
+        B->storage_type = A.storage_type;
+        B->major = A.major;
+        B->fill_mode = A.fill_mode;
+        B->num_rows = A.num_rows; 
+        B->num_cols = A.num_cols;
+        B->pad_rows = A.pad_rows; 
+        B->pad_cols = A.pad_cols;
+        B->diameter = A.diameter;
+        
+        B->blocksize = A.blocksize;
+        B->ldblock = A.ldblock;
+        B->numblocks = A.numblocks;
+        B->nnz = A.nnz;
+        //CHECK( data_zmalloc_cpu( &B->val, numzeros ));
+        //CHECK( data_index_malloc_cpu( &B->row, rowlimit+1 ));
+        //CHECK( data_index_malloc_cpu( &B->col, numzeros ));
+        B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
+        B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
+        B->col = (int*) calloc( B->numblocks, sizeof(int) );
+        
+        for( int i=0; i < A.numblocks; i++) {
+          B->col[i] = A.col[i];
+          for (int k=0; k< B->ldblock; k++) {
+              B->val[i*B->ldblock+k] = A.val[i*B->ldblock+k];
+          }
+        }
+        for( int i=0; i < rowlimit+1; i++) {
+            B->row[i] = A.row[i];
+        }
+        
+    }
+    
+    if ( info != 0 ) {
+      free( B );
+    }
+    return info;
 }

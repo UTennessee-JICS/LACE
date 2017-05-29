@@ -875,7 +875,7 @@ data_zprint_bcsr(
       printf("block %d bcol %d\n", j, A->col[j]);
       for (int k=0; k<A->ldblock; k++ ) {
         printf("%e ", A->val[j*A->ldblock+k]);
-        if (k%A->blocksize==0)
+        if ((k+1)%A->blocksize==0)
           printf("\n");
       }
       printf("\n");

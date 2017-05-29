@@ -88,6 +88,7 @@ data_zmfree(
                                     || A->storage_type == Magma_CSCD
                                     || A->storage_type == Magma_CSCL
                                     || A->storage_type == Magma_CSCU ) {
+    
         free( A->val );
         free( A->col );
         free( A->row );
@@ -135,7 +136,8 @@ data_zmfree(
     else if ( A->storage_type == Magma_DENSE  || A->storage_type == Magma_DENSEL 
                                          || A->storage_type == Magma_DENSEU 
                                          || A->storage_type == Magma_DENSED ) {
-        free( A->val );
+        if ( A->val )
+          free( A->val );
         A->num_rows = 0;
         A->num_cols = 0;
         A->pad_rows = 0;
