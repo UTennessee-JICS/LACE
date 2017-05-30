@@ -326,6 +326,7 @@ test_extract_diag: test_extract_diag.cpp
 	control/extract_diag.cpp \
 	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
 	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	blas/zbcsrmultbcsr.cpp \
 	test_extract_diag.cpp \
 	src/parlu_v1_0.cpp \
 	src/trisolve.cpp \

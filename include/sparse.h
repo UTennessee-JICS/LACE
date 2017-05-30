@@ -583,6 +583,11 @@ data_zset_csr(
     data_d_matrix *A,
     data_d_matrix *B );
 
+int
+data_diagbcsr_mult_bcsr( 
+  data_d_matrix* diagA, 
+  data_d_matrix* A );
+
 //======================================
 // dense factorizations
 //======================================

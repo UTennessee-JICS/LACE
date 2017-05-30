@@ -119,6 +119,7 @@ int main(int argc, char* argv[])
   data_d_matrix C = {Magma_BCSR};
   C.blocksize = 5;
   data_zmconvert( B, &C, Magma_CSR, Magma_BCSR );
+  printf("C.ldblock=%d\n", C.ldblock);
   
   // estimate condition number of C
   
@@ -128,6 +129,8 @@ int main(int argc, char* argv[])
   Cdiag.blocksize = 5;
   
   data_zmextractdiag( C, &Cdiag );
+  printf("Cdiag.ldblock=%d\n", Cdiag.ldblock);
+  
   DEV_CHECKPT
   data_zprint_bcsr( &Cdiag );
   
@@ -135,6 +138,8 @@ int main(int argc, char* argv[])
   data_d_matrix Cdiaginv = {Magma_BCSR};
   Cdiaginv.blocksize = 5;
   data_zmcopy(Cdiag, &Cdiaginv);
+  printf("Cdiaginv.ldblock=%d\n", Cdiaginv.ldblock);
+  
   DEV_CHECKPT
   data_zprint_bcsr( &Cdiaginv );
   getchar();
@@ -143,7 +148,9 @@ int main(int argc, char* argv[])
   data_inverse_bcsr(&Cdiag, &Cdiaginv);
   
   // block multiply Cdiag and Cdiaginv
+  
   // check for identity blocks
+  data_diagbcsr_mult_bcsr( &Cdiaginv, &C );
   
   // block multiply C and Cdiaginv
   // estimate condition number

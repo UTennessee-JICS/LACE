@@ -29,7 +29,9 @@ data_inverse(
   Ainv->num_cols = A->num_cols;
   Ainv->ld = A->num_cols;
   Ainv->nnz = A->nnz;
-  LACE_CALLOC(Ainv->val, Ainv->nnz);
+  if (Ainv->val == NULL) {
+    LACE_CALLOC(Ainv->val, Ainv->nnz);
+  }
   printf("Ainv:\n");
   data_zdisplay_dense( Ainv );
   
@@ -203,6 +205,7 @@ data_inverse_bcsr(
     for (int j=A->row[i]; j<A->row[i+1]; j++) {
       printf("block %d bcol %d\n", j, A->col[j]);
   
+      printf("A->ldblock=%d Ainv->ldblock=%d\n", A->ldblock, Ainv->ldblock);
       bhandle.val = &A->val[j*A->ldblock];
       binvhandle.val = &Ainv->val[j*Ainv->ldblock];
       
@@ -220,6 +223,12 @@ data_inverse_bcsr(
       printf("bhandle*binvhandle block %d bcol %d : \n", j, A->col[j]);
       data_zdisplay_dense( &binvcheck );
       
+      getchar();
+      
+      //for (int ii=0; ii<Ainv->ldblock; ii++ ) {
+      //  Ainv->val[j*Ainv->ldblock+ii] = binvhandle.val[ii];
+      //}
+      
       //data_zprint_dense( bhandle );
       //DEV_CHECKPT
       //data_zprint_dense( binvhandle );
@@ -227,6 +236,7 @@ data_inverse_bcsr(
     }
   }
   
+  data_zmfree( &binvcheck );
   
   return info;
 }

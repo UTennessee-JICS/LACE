@@ -109,7 +109,7 @@ data_zmextractdiag(
       || A.storage_type == Magma_BCSRU )
     {
       // fill in information for B
-      B->storage_type = Magma_CSR;
+      B->storage_type = Magma_BCSR;
       B->major = MagmaRowMajor;
       B->num_cols = A.num_cols;
       B->max_nnz_row = 1;
@@ -117,6 +117,7 @@ data_zmextractdiag(
     
       B->blocksize = A.blocksize;
       B->ldblock = A.ldblock;
+      printf("%s %d B->ldblock=%d\n", __FILE__, __LINE__, B->ldblock);
       B->numblocks = -1;
         
       int count = 0;

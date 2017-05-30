@@ -1402,6 +1402,7 @@ data_zmcopy(
     data_d_matrix *B )
 {
 	
+    printf("data_zmcopy\n");
     int info = 0;
     dataType one = dataType(1.0);
     dataType zero = dataType(0.0);
@@ -1427,6 +1428,7 @@ data_zmcopy(
       || A.storage_type == Magma_CSRL 
       || A.storage_type == Magma_CSRU )
     {
+      printf("copying CSR\n");
       // fill in information for B
       B->storage_type = A.storage_type;
       B->major = A.major;
@@ -1455,7 +1457,10 @@ data_zmcopy(
     }
     
     // BCSR 
-    else if ( A.storage_type == Magma_BCSR ) {
+    else if ( A.storage_type == Magma_BCSR 
+      || A.storage_type == Magma_BCSRL 
+      || A.storage_type == Magma_BCSRU ) {
+        printf("copying BCSR\n");
         // fill in information for B
         B->storage_type = A.storage_type;
         B->major = A.major;
@@ -1468,6 +1473,7 @@ data_zmcopy(
         
         B->blocksize = A.blocksize;
         B->ldblock = A.ldblock;
+        printf("%s %d B->ldblock=%d\n", __FILE__, __LINE__, B->ldblock);
         B->numblocks = A.numblocks;
         B->nnz = A.nnz;
         //CHECK( data_zmalloc_cpu( &B->val, numzeros ));
