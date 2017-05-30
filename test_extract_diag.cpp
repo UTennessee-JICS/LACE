@@ -147,16 +147,18 @@ int main(int argc, char* argv[])
   // calculate block inverses
   data_inverse_bcsr(&Cdiag, &Cdiaginv);
   
-  // block multiply Cdiag and Cdiaginv
-  
+  // block multiply C and Cdiaginv
   // check for identity blocks
   data_diagbcsr_mult_bcsr( &Cdiaginv, &C );
   
-  // block multiply C and Cdiaginv
-  // estimate condition number
+  // estimate condition number of C
   
   data_zmfree( &Asparse );
 	data_zmfree( &Adiag );
+	data_zmfree( &C );
+	data_zmfree( &Cdiag );
+	data_zmfree( &Cdiaginv );
+	
 	
   //testing::InitGoogleTest(&argc, argv);
   //return RUN_ALL_TESTS();
