@@ -6,12 +6,17 @@
 %
 clc; clear all; close all;
 
-N = 10000
 
-density = 0.01;
-diagscale = 1.;
-A = sprand(N,N,density) + diagscale*speye(N,N);
-%[L,U] = lu(A);
+% N = 10000
+% 
+% density = 0.01;
+% diagscale = 1.;
+% A = sprand(N,N,density) + diagscale*speye(N,N);
+
+%[A, N, cols, entries] = mmread('testing/matrices/Trefethen_20.mtx');
+[A, N, cols, entries] = mmread('testing/matrices/30p30n.mtx');
+
+tic
 setup.type = 'nofill';
 [L, U] = ilu(A, setup);
 
@@ -98,19 +103,22 @@ while (test>0 && iter < 10)
     end
     iter = iter + 1;
 end
-
+myconesttime = toc;
 iter
 if (iter == 10)
     CON = -1;
 end
 CON
+tic
 mlcon = condest(A)
-if (CON > mlcon)
-    estimation_error = CON/mlcon
-else
-    estimation_error = mlcon/CON
-end
-if (CON > 0 && estimation_error <= 10)
+mlconesttime = toc;
+% if (CON > mlcon)
+%     estimation_error = CON/mlcon
+% else
+%     estimation_error = mlcon/CON
+% end
+estimation_error = CON/mlcon
+if (CON > 0 && 0.1 <=estimation_error && estimation_error <= 10)
     display('success')
 else
     display('failure')
@@ -120,3 +128,6 @@ else
     C
     R
 end
+
+myconesttime
+mlconesttime

@@ -6,10 +6,11 @@
 %
 clc; clear all; close all;
 
-N = 1500
+N = 9000
 
 diagscale = 1.;
 A = rand(N,N) + diagscale*eye(N,N);
+tic
 [L,U] = lu(A);
 
 % setup and initialize vector workspace for condition estimation
@@ -115,19 +116,23 @@ while (test>0 && iter < 10)
     end
     iter = iter + 1;
 end
+myconesttime = toc;
 
 iter
 if (iter == 10)
     CON = -1;
 end
 CON
+tic
 mlcon = cond(A)
-if (CON > mlcon)
-    estimation_error = CON/mlcon
-else
-    estimation_error = mlcon/CON
-end
-if (CON > 0 && estimation_error <= 10)
+mlconesttime = toc;
+% if (CON > mlcon)
+%     estimation_error = CON/mlcon
+% else
+%     estimation_error = mlcon/CON
+% end
+estimation_error = CON/mlcon
+if (CON > 0 && 0.1 <=estimation_error && estimation_error <= 10)
     display('success')
 else
     display('failure')
@@ -137,3 +142,6 @@ else
     C
     R
 end
+
+myconesttime
+mlconesttime
