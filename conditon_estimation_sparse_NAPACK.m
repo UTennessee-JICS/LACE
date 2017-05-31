@@ -13,8 +13,17 @@ clc; clear all; close all;
 % diagscale = 1.;
 % A = sprand(N,N,density) + diagscale*speye(N,N);
 
-%[A, N, cols, entries] = mmread('testing/matrices/Trefethen_20.mtx');
-[A, N, cols, entries] = mmread('testing/matrices/30p30n.mtx');
+% [A, N, cols, entries] = mmread('testing/matrices/Trefethen_20.mtx');
+% [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/ani5_crop.mtx');
+% [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/apache2_rcm.mtx');
+% [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/ecology2_rcm.mtx');
+% [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/G3_circuit_rcm.mtx');
+% [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/L2D_1024_5pt.mtx');
+ [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/L3D_64_27pt.mtx');
+% [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/offshore_rcm.mtx');
+% [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/parabolic_fem_rcm.mtx');
+% [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/thermal2_rcm.mtx');
+% [A, N, cols, entries] = mmread('testing/matrices/30p30n.mtx');
 
 tic
 setup.type = 'nofill';
@@ -103,7 +112,7 @@ while (test>0 && iter < 10)
     end
     iter = iter + 1;
 end
-myconesttime = toc;
+hagerconesttime = toc;
 iter
 if (iter == 10)
     CON = -1;
@@ -120,6 +129,7 @@ mlconesttime = toc;
 estimation_error = CON/mlcon
 if (CON > 0 && 0.1 <=estimation_error && estimation_error <= 10)
     display('success')
+    success = 1;
 else
     display('failure')
     M
@@ -127,7 +137,11 @@ else
     D
     C
     R
+    success = 0;
 end
 
-myconesttime
+hagerconesttime
 mlconesttime
+
+format longE
+[ iter; CON; mlcon; estimation_error; hagerconesttime; mlconesttime; mlconesttime/hagerconesttime; success ]
