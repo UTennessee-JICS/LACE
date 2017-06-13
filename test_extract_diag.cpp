@@ -151,11 +151,20 @@ int main(int argc, char* argv[])
   // check for identity blocks
   data_diagbcsr_mult_bcsr( &Cdiaginv, &C );
   
+  DEV_CHECKPT
+  data_zprint_bcsr( &C );
+  
   // estimate condition number of C
+  // for now write to a file and check with matlab
+  data_d_matrix Cw = {Magma_CSR};
+  data_zmconvert( C, &Cw, Magma_BCSR, Magma_CSR );
+  data_zprint_csr( Cw );
+  data_zwrite_csr_mtx( Cw, MagmaRowMajor, "testing/matrices/diagbcsr_scaled.mtx" );
   
   data_zmfree( &Asparse );
 	data_zmfree( &Adiag );
 	data_zmfree( &C );
+	data_zmfree( &Cw );
 	data_zmfree( &Cdiag );
 	data_zmfree( &Cdiaginv );
 	
