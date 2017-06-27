@@ -750,6 +750,7 @@ data_zmconvert(
         else if ( old_format == Magma_BCSR ) {
             
             if (A.blocksize > 0) {
+              //printf("\nBSCSR to CSR A.numblocks=%d\n", A.numblocks);
               B->storage_type = Magma_BCSR;
               B->nnz = A.numblocks*A.ldblock;
               B->major = MagmaRowMajor;
@@ -766,13 +767,21 @@ data_zmconvert(
               
               B->num_rows = A.num_rows*A.blocksize;
               B->num_cols = A.num_cols*A.blocksize;
-              LACE_CALLOC(B->val, B->nnz);
-              LACE_CALLOC(B->row, (B->num_rows+1));
-              LACE_CALLOC(B->col, B->num_cols);
+              //LACE_CALLOC(B->val, B->nnz);
+              //LACE_CALLOC(B->row, (B->num_rows+1));
+              //LACE_CALLOC(B->col, B->nnz);
+              B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
+              B->row = (int*) calloc( (B->num_rows+1), sizeof(int) );
+              B->col = (int*) calloc( B->nnz, sizeof(int) );
               
+              //printf("\nBSCSR to CSR A.numblocks=%d\n", A.numblocks);
+              //printf("\nBSCSR to CSR A.blocksize=%d\n", A.blocksize);
+              //printf("\nBSCSR to CSR B->num_rows=%d\n", B->num_rows);
+              //fflush(stdout);
               mkl_dcsrbsr(job, &A.num_rows, &A.blocksize, &A.ldblock, 
                 B->val, B->col, B->row, A.val, A.col, A.row, &info);
-              printf("\ninfo_bsrcsr=%d\n",info);
+              //printf("\ninfo_bsrcsr=%d\n",info);
+              //fflush(stdout);
             }
             else {
                printf("error: conversion from %d to %d requires blocksize to be set.\n",
@@ -1404,8 +1413,8 @@ data_zmcopy(
 	
     printf("data_zmcopy\n");
     int info = 0;
-    dataType one = dataType(1.0);
-    dataType zero = dataType(0.0);
+    //dataType one = dataType(1.0);
+    //dataType zero = dataType(0.0);
     
     B->val = NULL;
     B->col = NULL;
@@ -1416,10 +1425,10 @@ data_zmcopy(
     B->diag = NULL;
     
     int rowlimit = A.num_rows;
-    int collimit = A.num_cols;
+    //int collimit = A.num_cols;
     if (A.pad_rows > 0 && A.pad_cols > 0) {
        rowlimit = A.pad_rows;
-       collimit = A.pad_cols;
+       //collimit = A.pad_cols;
     }
       
     
