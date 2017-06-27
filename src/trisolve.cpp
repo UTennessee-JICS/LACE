@@ -465,8 +465,8 @@ data_partrsv_dot(
       *iter = 0;
       dataType step = 1.e8;
       dataType tmp = 0.0;
-      dataType tmp2 = 0.0;
-      dataType relax = -1.0e-5; //5.0e-1;
+      //dataType tmp2 = 0.0;
+      //dataType relax = -1.0e-5; //5.0e-1;
       const dataType zero = dataType(0.0);
       
       while (step > tol) {
@@ -474,7 +474,7 @@ data_partrsv_dot(
         step = zero;
         #pragma omp parallel
         {
-          #pragma omp for private(tmp, tmp2) reduction(+:step) nowait
+          #pragma omp for private(tmp) reduction(+:step) nowait
           for ( int i=0; i < num_rows; i++ ) {
             tmp = zero;
             //for ( int j=0; j <i; j++) {
@@ -495,7 +495,7 @@ data_partrsv_dot(
           }
         }
         *iter = *iter + 1;
-        printf("%% iteration = %d step = %e\n", *iter, step);
+        //printf("%% iteration = %d step = %e\n", *iter, step);
       }
     
     }
@@ -535,7 +535,7 @@ data_partrsv_dot(
           }
         }
         *iter = *iter + 1;
-        printf("%% iteration = %d step = %e\n", *iter, step);
+        //printf("%% iteration = %d step = %e\n", *iter, step);
       }
     
     }

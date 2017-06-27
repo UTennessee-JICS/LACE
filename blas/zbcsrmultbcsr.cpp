@@ -61,18 +61,18 @@ data_diagbcsr_mult_bcsr(
   DEV_CHECKPT
   
   for (int i=0; i<A->num_rows; i++ ) {
-    printf("row %d:\n", i);
+    //printf("row %d:\n", i);
     for (int j=A->row[i]; j<A->row[i+1]; j++) {
-      printf("block %d bcol %d\n", j, A->col[j]);
+      //printf("block %d bcol %d\n", j, A->col[j]);
   
       bhandle.val = &A->val[j*A->ldblock];
       binvhandle.val = &diagA->val[A->col[j]*diagA->ldblock];
       
-      printf("A:\n");
-      data_zdisplay_dense( &bhandle );
-      
-      printf("diagAinv:\n");
-      data_zdisplay_dense( &binvhandle );
+      //printf("A:\n");
+      //data_zdisplay_dense( &bhandle );
+      //
+      //printf("diagAinv:\n");
+      //data_zdisplay_dense( &binvhandle );
       
       //data_zprint_dense( bhandle );
       //DEV_CHECKPT
@@ -85,8 +85,8 @@ data_diagbcsr_mult_bcsr(
         one, bhandle.val, bhandle.ld, binvhandle.val, binvhandle.ld,
         zero, result.val, result.ld );
   
-      printf("bhandle*binvhandle block %d bcol %d : \n", j, A->col[j]);
-      data_zdisplay_dense( &result );
+      //printf("bhandle*binvhandle block %d bcol %d : \n", j, A->col[j]);
+      //data_zdisplay_dense( &result );
       
       for (int ii=0; ii<A->ldblock; ii++ ) {
         A->val[j*A->ldblock+ii] = result.val[ii];

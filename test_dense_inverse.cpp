@@ -273,7 +273,7 @@ int main(int argc, char* argv[])
   data_zmfree( &Dinv );
   DEV_CHECKPT
   //data_zmfree( &bhandle );
-  DEV_CHECKPT
+  //DEV_CHECKPT
   //data_zmfree( &binvhandle );
   DEV_CHECKPT
   data_zmfree( &binvcheck );

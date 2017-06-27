@@ -6,7 +6,7 @@
 %
 clc; clear all; close all;
 
-N = 9000
+N = 1000
 
 diagscale = 1.;
 A = rand(N,N) + diagscale*eye(N,N);
@@ -24,15 +24,23 @@ end
 % calculate norm of pivot row 
 R = 0.;
 O = N + 1;
+%O = N;
 P = O + 1;
-LL = 5 + N*P;
+%P = O;
+%LL = 5 + N*P;
+LL = N*N;
 I = -N -3;
-LL = LL - O;
+%I = -N;
+%LL = LL - O;
+
 if ( LL ~= 4) 
     S = 0.;
     for k = 1:N
-       j = LL - k;
-       T = A(I+j);
+       %j = LL - k;
+       j = LL - (k-1)*N
+       %I+j
+       %T = A(I+j);
+       T = A(j);
        S = S + abs(T);
     end
     if ( R < S ) 

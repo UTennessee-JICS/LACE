@@ -20,10 +20,10 @@ data_inverse(
 {
   int info = 0;
   
-  DEV_CHECKPT
+  //DEV_CHECKPT
   
-  printf("A:\n");
-  data_zdisplay_dense( A );
+  //printf("A:\n");
+  //data_zdisplay_dense( A );
   
   Ainv->num_rows = A->num_rows;
   Ainv->num_cols = A->num_cols;
@@ -32,8 +32,10 @@ data_inverse(
   if (Ainv->val == NULL) {
     LACE_CALLOC(Ainv->val, Ainv->nnz);
   }
-  printf("Ainv:\n");
-  data_zdisplay_dense( Ainv );
+  //printf("Ainv:\n");
+  //data_zdisplay_dense( Ainv );
+  
+  //DEV_CHECKPT
   
   // parLU
   data_d_matrix L = {Magma_DENSE};
@@ -43,10 +45,10 @@ data_inverse(
   U.diagorder_type = Magma_VALUE;
   U.fill_mode = MagmaUpper;
   data_ParLU_v1_0(A, &L, &U);
-  printf("L:\n");
-  data_zdisplay_dense( &L );
-  printf("U:\n");
-  data_zdisplay_dense( &U );
+  //printf("L:\n");
+  //data_zdisplay_dense( &L );
+  //printf("U:\n");
+  //data_zdisplay_dense( &U );
   
   // mxm identity matrix
   //data_d_matrix Eye = {Magma_DENSE};
@@ -99,11 +101,11 @@ data_inverse(
     //for ( int i=0; i<e.num_rows; i++ ) {
     //  printf("e[%d]=%e\n", i, e.val[i]);
     //}
-    printf("col=%d forward ", col);
+    //printf("col=%d forward ", col);
     data_partrsv_dot( MagmaRowMajor, MagmaLower, Magma_DENSEL, Magma_UNITY,
       L.num_rows, L.val, L.ld, e.val, 1, y.val, 1, 
       ptrsv_tol, &ptrsv_iter );
-    printf("backward ");
+    //printf("backward ");
     
     // TODO: inspect and correct indexing so that column vectors are writen correctly
     //data_partrsv_dot( MagmaRowMajor, MagmaUpper, Magma_DENSEU, Magma_VALUE,
@@ -113,7 +115,7 @@ data_inverse(
     data_partrsv_dot( MagmaRowMajor, MagmaUpper, Magma_DENSEU, Magma_VALUE,
       U.num_rows, U.val, U.ld, y.val, 1, f.val, 1, 
       ptrsv_tol, &ptrsv_iter );
-    printf("done.\n");
+    //printf("done.\n");
     
     for ( int i=0; i<f.num_rows; i++ ) {
       //printf("f[%d]=%e\n", i, f.val[i]);
@@ -129,8 +131,8 @@ data_inverse(
   
   
   
-  printf("Ainv:\n");
-  data_zdisplay_dense( Ainv );
+  //printf("Ainv:\n");
+  //data_zdisplay_dense( Ainv );
   
   //for ( int col=0; col<A->num_cols; col++) {
   //  data_partrsv_dot( MagmaRowMajor, MagmaLower, Magma_DENSEL, Magma_UNITY,
@@ -150,6 +152,7 @@ data_inverse(
   data_zmfree( &U );
   data_zmfree( &e );
   data_zmfree( &y );
+  data_zmfree( &f );
   
   return info;
 }
@@ -162,8 +165,8 @@ data_inverse_bcsr(
 {
  
   int info = 0;
-  dataType one = 1.0;
-  dataType zero = 0.0;
+  //dataType one = 1.0;
+  //dataType zero = 0.0;
   
   DEV_CHECKPT
   
@@ -188,26 +191,26 @@ data_inverse_bcsr(
   binvhandle.major = MagmaRowMajor;
   //LACE_CALLOC(binvhandle.val, binvhandle.nnz);
   
-  data_d_matrix binvcheck = {Magma_DENSE};
-  binvcheck.num_rows = A->blocksize;
-  binvcheck.num_cols = A->blocksize;
-  binvcheck.blocksize = A->blocksize;
-  binvcheck.nnz = binvcheck.num_rows*binvcheck.num_cols;
-  binvcheck.true_nnz = binvcheck.nnz;
-  binvcheck.ld = binvcheck.num_cols;
-  binvcheck.major = MagmaRowMajor;
-  LACE_CALLOC(binvcheck.val, binvcheck.nnz);
+  //data_d_matrix binvcheck = {Magma_DENSE};
+  //binvcheck.num_rows = A->blocksize;
+  //binvcheck.num_cols = A->blocksize;
+  //binvcheck.blocksize = A->blocksize;
+  //binvcheck.nnz = binvcheck.num_rows*binvcheck.num_cols;
+  //binvcheck.true_nnz = binvcheck.nnz;
+  //binvcheck.ld = binvcheck.num_cols;
+  //binvcheck.major = MagmaRowMajor;
+  //LACE_CALLOC(binvcheck.val, binvcheck.nnz);
   
   DEV_CHECKPT
   
   for (int i=0; i<A->num_rows; i++ ) {
-    printf("row %d:\n", i);
+    //printf("row %d:\n", i);
     for (int j=A->row[i]; j<A->row[i+1]; j++) {
-      printf("block %d bcol %d\n", j, A->col[j]);
+      //printf("block %d bcol %d\n", j, A->col[j]);
   
-      printf("A->ldblock=%d Ainv->ldblock=%d\n", A->ldblock, Ainv->ldblock);
-      bhandle.val = &A->val[j*A->ldblock];
-      binvhandle.val = &Ainv->val[j*Ainv->ldblock];
+      //printf("A->ldblock=%d Ainv->ldblock=%d\n", A->ldblock, Ainv->ldblock);
+      bhandle.val = &(A->val[j*A->ldblock]);
+      binvhandle.val = &(Ainv->val[j*Ainv->ldblock]);
       
       //data_zprint_dense( bhandle );
       //DEV_CHECKPT
@@ -215,15 +218,15 @@ data_inverse_bcsr(
       
       data_inverse( &bhandle, &binvhandle );
       
-      data_dgemm_mkl( MagmaRowMajor, MagmaNoTrans, MagmaNoTrans, 
-        bhandle.num_rows, bhandle.num_cols, binvhandle.num_cols, 
-        one, bhandle.val, bhandle.ld, binvhandle.val, binvhandle.ld,
-        zero, binvcheck.val, binvcheck.ld );
+      //data_dgemm_mkl( MagmaRowMajor, MagmaNoTrans, MagmaNoTrans, 
+      //  bhandle.num_rows, bhandle.num_cols, binvhandle.num_cols, 
+      //  one, bhandle.val, bhandle.ld, binvhandle.val, binvhandle.ld,
+      //  zero, binvcheck.val, binvcheck.ld );
   
-      printf("bhandle*binvhandle block %d bcol %d : \n", j, A->col[j]);
-      data_zdisplay_dense( &binvcheck );
+      //printf("bhandle*binvhandle block %d bcol %d : \n", j, A->col[j]);
+      //data_zdisplay_dense( &binvcheck );
       
-      getchar();
+      //getchar();
       
       //for (int ii=0; ii<Ainv->ldblock; ii++ ) {
       //  Ainv->val[j*Ainv->ldblock+ii] = binvhandle.val[ii];
@@ -236,7 +239,7 @@ data_inverse_bcsr(
     }
   }
   
-  data_zmfree( &binvcheck );
+  //data_zmfree( &binvcheck );
   
   return info;
 }

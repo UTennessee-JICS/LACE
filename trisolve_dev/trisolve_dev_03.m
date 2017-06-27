@@ -5,8 +5,8 @@
 clc; clear all; close all;
 format longE;
 
-%[A_all, rows, cols, entries] = mmread('Trefethen_20.mtx');
-[A_all, rows, cols, entries] = mmread('../testing/matrices/paper1_matrices/ani5_crop.mtx');
+[A_all, rows, cols, entries] = mmread('Trefethen_20.mtx');
+%[A_all, rows, cols, entries] = mmread('../testing/matrices/paper1_matrices/ani5_crop.mtx');
 
 N = rows
 A = tril(A_all,-1);

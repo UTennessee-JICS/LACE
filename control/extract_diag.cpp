@@ -93,7 +93,7 @@ data_zmextractdiag(
             count++;
           }
           else {
-            printf("zero on diagonal row=%d, col=%d, val=%e \n", i, i, 0);
+            printf("zero on diagonal row=%d, col=%d, val=%e \n", i, i, 0.0);
             B->col[count] = i;
             B->val[count] = 0.0;
             B->row[count] = count;
@@ -103,10 +103,9 @@ data_zmextractdiag(
       }
       B->row[count] = count;
     }
-    else // BCSR 
-    if ( A.storage_type == Magma_BCSR 
+    else if ( A.storage_type == Magma_BCSR 
       || A.storage_type == Magma_BCSRL 
-      || A.storage_type == Magma_BCSRU )
+      || A.storage_type == Magma_BCSRU ) // BCSR
     {
       // fill in information for B
       B->storage_type = Magma_BCSR;
@@ -117,14 +116,14 @@ data_zmextractdiag(
     
       B->blocksize = A.blocksize;
       B->ldblock = A.ldblock;
-      printf("%s %d B->ldblock=%d\n", __FILE__, __LINE__, B->ldblock);
+      //printf("%s %d B->ldblock=%d\n", __FILE__, __LINE__, B->ldblock);
       B->numblocks = -1;
         
       int count = 0;
       for(int i=0; i < A.num_rows; i++) {
         for(int j=A.row[i]; j < A.row[i+1]; j++) {
           if ( A.col[j] == i ) {
-            printf("row=%d, col=%d, val=%e \n", i, A.col[j], A.val[j]);
+            //printf("row=%d, col=%d, val=%e \n", i, A.col[j], A.val[j]);
             count++;
           } 
         }
@@ -135,20 +134,20 @@ data_zmextractdiag(
       B->true_nnz = B->nnz;
       B->numblocks = count;
       B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
-      B->row = (int*) calloc( (B->nnz+1), sizeof(int) );
+      B->row = (int*) calloc( (B->num_rows+1), sizeof(int) );
       B->col = (int*) calloc( B->numblocks, sizeof(int) );
       count = 0;
       for(int i=0; i < A.num_rows; i++) {
         for(int j=A.row[i]; j < A.row[i+1]; j++) {
           if ( A.col[j] == i ) {
-            printf("+row=%d, col=%d, val=%e \n", i, A.col[j], A.val[j]);
+            //printf("+row=%d, col=%d, val=%e \n", i, A.col[j], A.val[j]);
             B->col[count] = A.col[j];
             //B->val[count] = A.val[j];
             for (int k=0; k<B->ldblock; k++ ) {
               B->val[count*B->ldblock+k] = A.val[j*A.ldblock+k];
-              printf("%e ", A.val[j*A.ldblock+k]);
-              if ((k+1)%A.blocksize==0)
-                printf("\n");
+              //printf("%e ", A.val[j*A.ldblock+k]);
+              //if ((k+1)%A.blocksize==0)
+                //printf("\n");
             }
             B->row[count] = count;
             count++;

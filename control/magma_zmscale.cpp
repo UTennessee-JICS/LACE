@@ -442,7 +442,7 @@ data_zmscale_generate(
     int info = 0;
     
     data_d_matrix hA={Magma_CSR}, CSRA={Magma_CSR};
-    
+    printf("n = %d scale = %d side = %d\n", n, scaling[0], side[0] ); 
     
     if( A->num_rows != A->num_cols && scaling[0] != Magma_NOSCALE ) {
         printf("%% warning: non-square matrix.\n");
@@ -451,9 +451,9 @@ data_zmscale_generate(
     } 
         
    
-    if ( A->storage_type == Magma_CSRCOO ) {
+    //if ( A->storage_type == Magma_CSRCOO ) {
       for ( int j=0; j<n; j++ ) {
-        //printf("%% scaling[%d] = %d n=%d\n", j, scaling[j], n);
+        printf("%% scaling[%d] = %d n=%d\n", j, scaling[j], n);
         if ( scaling[j] == Magma_NOSCALE ) {
             // no scale
             
@@ -502,6 +502,7 @@ data_zmscale_generate(
             }
             else if (scaling[j] == Magma_UNITDIAG && side[j] == MagmaBothSides ) {
                 // scale to unit diagonal by rows and columns
+                printf("scale to unit diagonal by rows and columns\n");
                 for( int z=0; z<A->num_rows; z++ ) {
                     dataType s = 0.0;
                     for( int f=A->row[z]; f<A->row[z+1]; f++ ) {
@@ -535,7 +536,7 @@ data_zmscale_generate(
             info = DEV_ERR_NOT_SUPPORTED;
         }
       }
-    }
+    //}
     //else {
     //    magma_storage_t A_storage = A->storage_type;
     //    magma_location_t A_location = A->memory_location;
@@ -596,56 +597,59 @@ data_zmscale_apply(
 	  data_d_matrix* A )
 {
     int info = 0;
-      
-    data_d_matrix hA={Magma_CSR}, CSRA={Magma_CSR};
     
-    if ( A->storage_type == Magma_CSRCOO ) {
+    //if ( A->storage_type == Magma_CSRCOO ) {
+      if ( A->rowidx == NULL ) {
+        printf("creating rowidx\n");
+        fflush(stdout);
+        CHECK( data_rowindex( A, &(A->rowidx) ));
+      }
+      
       for ( int j=0; j<n; j++ ) {
         
         if( A->num_rows == A->num_cols ) {
-            if ( side[j] == MagmaLeft ) {
-                // scale by rows       
-                for( int z=0; z<A->nnz; z++ ) {
-                    A->val[z] = A->val[z] * scaling_factors[j].val[A->rowidx[z]];
-                }
+          if ( side[j] == MagmaLeft ) {
+            // scale by rows       
+            for( int z=0; z<A->nnz; z++ ) {
+                A->val[z] = A->val[z] * scaling_factors[j].val[A->rowidx[z]];
             }
-            else if ( side[j] == MagmaBothSides ) {
-                // scale by rows and columns       
-                for( int z=0; z<A->nnz; z++ ) {
-                    A->val[z] = A->val[z] 
-                        * scaling_factors[j].val[A->col[z]] 
-                        * scaling_factors[j].val[A->rowidx[z]];
-                }
+          }
+          else if ( side[j] == MagmaBothSides ) {
+            printf("scale by rows and columns \n");
+            fflush(stdout);
+            // scale by rows and columns       
+            for( int z=0; z<A->nnz; z++ ) {
+                A->val[z] = A->val[z] 
+                    * scaling_factors[j].val[A->col[z]] 
+                    * scaling_factors[j].val[A->rowidx[z]];
             }
-            else if ( side[j] == MagmaRight ) {
-                // scale by columns
-                for( int z=0; z<A->nnz; z++ ) {
-                    A->val[z] = A->val[z] * scaling_factors[j].val[A->rowidx[z]];
-                }
-                
+          }
+          else if ( side[j] == MagmaRight ) {
+            // scale by columns
+            for( int z=0; z<A->nnz; z++ ) {
+                A->val[z] = A->val[z] * scaling_factors[j].val[A->rowidx[z]];
             }
+              
+          }
         }
+        
       }
-    }
+      
+    //}
     //else {
-    //    magma_storage_t A_storage = A->storage_type;
-    //    magma_location_t A_location = A->memory_location;
-    //    CHECK( magma_zmtransfer( *A, &hA, A->memory_location, Magma_CPU, queue ));
-    //    CHECK( magma_zmconvert( hA, &CSRA, hA.storage_type, Magma_CSRCOO, queue ));
-    //
-    //    CHECK( magma_zmscale_apply( n, side, scaling_factors, &CSRA, queue ));
-    //
-    //    magma_zmfree( &hA, queue );
-    //    magma_zmfree( A, queue );
-    //    CHECK( magma_zmconvert( CSRA, &hA, Magma_CSRCOO, A_storage, queue ));
-    //    CHECK( magma_zmtransfer( hA, A, Magma_CPU, A_location, queue ));
+    //    DEV_CHECKPT
+    //    CHECK( data_rowindex( A, &A->rowidx ));
+    //    data_storage_t Astore = A->storage_type;
+    //    A->storage_type = Magma_CSRCOO;
+    //    DEV_CHECKPT
+    //    CHECK( data_zmscale_apply( n, side, scaling_factors, A ));
+    //    free( A->rowidx ); 
+    //    A->storage_type = Astore;
+    //    DEV_CHECKPT
     //}
     
     
 //cleanup:
-    data_zmfree( &hA );
-    data_zmfree( &CSRA );
-  
   
     return info;
 }

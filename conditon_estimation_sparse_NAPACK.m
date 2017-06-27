@@ -15,11 +15,11 @@ clc; clear all; close all;
 
 % [A, N, cols, entries] = mmread('testing/matrices/Trefethen_20.mtx');
 % [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/ani5_crop.mtx');
-% [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/apache2_rcm.mtx');
+ [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/apache2_rcm.mtx');
 % [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/ecology2_rcm.mtx');
 % [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/G3_circuit_rcm.mtx');
 % [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/L2D_1024_5pt.mtx');
- [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/L3D_64_27pt.mtx');
+% [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/L3D_64_27pt.mtx');
 % [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/offshore_rcm.mtx');
 % [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/parabolic_fem_rcm.mtx');
 % [A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/thermal2_rcm.mtx');
@@ -44,11 +44,14 @@ P = O + 1;
 LL = 5 + N*P;
 I = -N -3;
 LL = LL - O;
+LL = N*N
 if ( LL ~= 4) 
     S = 0.;
     for k = 1:N
-       j = LL - k;
-       T = A(I+j);
+       %j = LL - k;
+       %T = A(I+j);
+       j = LL - (k-1)*N;
+       T = A(j);
        S = S + abs(T);
     end
     if ( R < S ) 

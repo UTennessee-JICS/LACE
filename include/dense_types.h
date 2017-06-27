@@ -29,6 +29,15 @@
 
 #define DEV_CHECKPT {printf("Checkpoint: %s, line %d\n", __FILE__, __LINE__);\
   fflush(stdout);}
+
+#ifdef DEBUG_P
+  #define DEV_PRINTF(f_, ...) {\
+    printf((f_), __VA_ARGS__);\
+    fflush(stdout);}
+#else
+  #define DEV_PRINTF(f_, ...) {\
+    (void)0 }
+#endif    
   
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))

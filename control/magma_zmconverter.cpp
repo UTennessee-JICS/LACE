@@ -151,7 +151,9 @@ data_rowindex(
   for(int i=0; i < rowlimit; i++) {
       for(int j=A->row[i]; j < A->row[i+1]; j++) {
           (*rowidx)[j] = i;
+          printf("%d ", i);
       }
+      printf("\n");
   }
   return info;
 }
