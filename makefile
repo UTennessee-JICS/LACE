@@ -351,6 +351,25 @@ test_scaling: test_scaling.cpp
 	src/inverse.cpp \
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@				
+
+test_iLU_bcsr: test_iLU_bcsr.cpp
+	$(CC) $(CFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	control/constants.cpp control/magma_zmio.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+	control/extract_diag.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	blas/zbcsrmultbcsr.cpp blas/zdomatadd.cpp \
+	test_iLU_bcsr.cpp \
+	src/parlu_v1_0.cpp \
+	src/parilu_v0_3_bcsr.cpp \
+	src/trisolve.cpp \
+	src/inverse.cpp \
+	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+	-o $@		
 	
 test_solve_pariLU0_partrsv_MKL_FGMRES: test_solve_pariLU0_partrsv_MKL_FGMRES.cpp
 	$(CC) $(CFLAGS) \

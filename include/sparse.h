@@ -489,6 +489,13 @@ data_dgemm_mkl(
     dataDouble_const_ptr B, int ldb, 
     dataDouble beta, dataDouble_ptr C, int ldc );
 
+void
+data_domatadd_mkl(
+    data_order_t layoutA, data_trans_t transA, data_trans_t transB, 
+    int m, int n,
+    dataDouble alpha, dataDouble_const_ptr dA, int lda,
+    dataDouble beta, dataDouble_const_ptr dB, int ldb,  
+    dataDouble_ptr dC, int ldc );
 
 //======================================
 // sparse operations
