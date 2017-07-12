@@ -1,7 +1,7 @@
 clc; clear all; close all;
 
 tolerance = 1e-3
-maxiter = 10
+maxiter = 2
 
 % m = 1000;
 % n = m;
@@ -24,7 +24,7 @@ maxiter = 10
 %[A, N, cols, entries] = mmread('testing/matrices/Trefethen_20.mtx');
 %[A, N, cols, entries] = mmread('testing/matrices/paper1_matrices/apache2_rcm.mtx');L2D_1024_5pt.mtx
 %[A, N, cols, entries] = mmread('testing/matrices/2cubes_sphere.mtx');
-[A, N, cols, entries] = mmread('testing/matrices/30p30n.mtx');
+[A, N, cols, entries] = mmread('testing/matrices/30p30n-A3.mtx');
 entries
 n = N
 m = n;
@@ -64,3 +64,12 @@ x = A\B;
 x_scaled = Dc*((DrADc)\(Dr*B));
 
 err = norm(x - x_scaled)
+
+DrB = Dr*B;
+
+mmwrite('30p30n-A3_me2_DrADc.mtx',DrADc,'DrADc');
+mmwrite('30p30n-A3_me2_DrRHS.mtx',DrB,'DrB');
+mmwrite('30p30n-A3_me2_Dc.mtx',Dc,'Dc');
+
+
+
