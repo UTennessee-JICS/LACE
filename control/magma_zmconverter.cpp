@@ -1362,6 +1362,16 @@ data_zmconvert(
         B->row[rowlimit] = numblocks;
     }
     
+    // BCSR to BCSCU
+    else if ( ( old_format == Magma_BCSR ) && ( new_format == Magma_BCSCU ) ) {
+        data_d_matrix C = {Magma_BCSR}; 
+        data_zmconvert(A, &C, Magma_BCSR, Magma_BCSRU );
+        data_zmtranspose(C, B);
+        B->storage_type = Magma_BCSCU;
+        B->major = MagmaColMajor;
+        data_zmfree( &C );
+    }
+    
     else {
         printf("error: conversion not supported %d to %d.\n",
           old_format, new_format);

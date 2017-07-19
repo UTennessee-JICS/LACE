@@ -20,10 +20,10 @@ data_inverse(
 {
   int info = 0;
   
-  //DEV_CHECKPT
+  DEV_CHECKPT
   
-  //printf("A:\n");
-  //data_zdisplay_dense( A );
+  printf("A:\n");
+  data_zdisplay_dense( A );
   
   Ainv->num_rows = A->num_rows;
   Ainv->num_cols = A->num_cols;

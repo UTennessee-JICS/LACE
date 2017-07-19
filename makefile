@@ -364,6 +364,7 @@ test_iLU_bcsr: test_iLU_bcsr.cpp
 	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
 	blas/zbcsrmultbcsr.cpp blas/zdomatadd.cpp \
 	test_iLU_bcsr.cpp \
+	src/parilu_v0_0.cpp \
 	src/parlu_v1_0.cpp \
 	src/parilu_v0_3_bcsr.cpp \
 	src/trisolve.cpp \

@@ -390,6 +390,69 @@ data_zilures(
 
 extern "C" 
 int
+data_zilures_bcsr(
+    data_d_matrix A,
+    data_d_matrix L,
+    data_d_matrix U,
+    data_d_matrix *LU,
+    dataType *res,
+    dataType *nonlinres )
+{
+	int info = 0;
+  *res = 0.0;
+  *nonlinres = 0.0;
+  dataType tmp;
+  int i, j, k;
+  dataType one = 1.0;
+  
+  DEV_CHECKPT
+  data_d_matrix Lcsr = {Magma_CSR};
+  data_zmconvert(L, &Lcsr, Magma_BCSR, Magma_CSR);
+  Lcsr.storage_type = Magma_CSR;
+  data_d_matrix Ucsr = {Magma_CSR};
+  data_zmconvert(U, &Ucsr, Magma_BCSR, Magma_CSR);
+  Ucsr.storage_type = Magma_CSR;
+  DEV_CHECKPT
+  
+  //data_zmcopy( A, LU );
+  data_z_spmm( one, Lcsr, Ucsr, LU );
+  
+  // compute Frobenius norm of A-LU
+  for(i=0; i<A.num_rows; i++){
+  	for(j=A.row[i]; j<A.row[i+1]; j++){
+          int lcol = A.col[j];
+          for(k=LU->row[i]; k<LU->row[i+1]; k++){
+              if( LU->col[k] == lcol ){
+                  tmp =  LU->val[k] -  A.val[j];
+                  LU->val[k] = tmp;
+                  (*nonlinres) = (*nonlinres) + tmp*tmp;
+                  break;
+              }
+          }
+      }
+  }
+  
+  for(i=0; i<LU->num_rows; i++){
+      for(j=LU->row[i]; j<LU->row[i+1]; j++){
+          tmp = LU->val[j];
+          (*res) = (*res) + tmp * tmp;
+      }
+  }
+  
+  (*res) =  sqrt((*res));
+  (*nonlinres) =  sqrt((*nonlinres));
+  
+//cleanup:
+  if( info !=0 ){
+    data_zmfree( LU );
+  }
+  data_zmfree( &Lcsr );
+  data_zmfree( &Ucsr );
+  return info;
+}
+
+extern "C" 
+int
 data_maxfabs_csr(
     data_d_matrix A,
     int *imax,

@@ -445,6 +445,15 @@ data_zilures(
     dataType *nonlinres );
 
 int
+data_zilures_bcsr(
+    data_d_matrix A,
+    data_d_matrix L,
+    data_d_matrix U,
+    data_d_matrix *LU,
+    dataType *res,
+    dataType *nonlinres );
+
+int
 data_maxfabs_csr(
     data_d_matrix A,
     int *imax,
