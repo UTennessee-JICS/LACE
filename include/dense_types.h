@@ -36,7 +36,7 @@
     fflush(stdout);}
 #else
   #define DEV_PRINTF(f_, ...) {\
-    (void)0 }
+    (void)0; }
 #endif    
   
 #define MIN(a,b) (((a)<(b))?(a):(b))

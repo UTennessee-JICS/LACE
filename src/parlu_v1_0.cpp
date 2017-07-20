@@ -41,7 +41,7 @@ data_ParLU_v1_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U )
   int num_threads = 0;
   
   data_zfrobenius(*A, &Anorm);
-  printf("%% Anorm = %e\n", Anorm);
+  DEV_PRINTF("%% Anorm = %e\n", Anorm);
   
   dataType wstart = omp_get_wtime();
   while ( step > tol ) {
@@ -77,10 +77,10 @@ data_ParLU_v1_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U )
     }
     step /= Anorm;
     iter++;
-    printf("%% iteration = %d step = %e\n", iter, step);
+    DEV_PRINTF("%% iteration = %d step = %e\n", iter, step);
   }
   dataType wend = omp_get_wtime();
   dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
-  printf("%% ParLU v1.0 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
+  DEV_PRINTF("%% ParLU v1.0 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
     num_threads, iter, wend-wstart, ompwtime );
 }

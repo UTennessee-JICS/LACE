@@ -384,7 +384,7 @@ data_partrsv(
           }
         }
         *iter = *iter + 1;
-        printf("%% iteration = %d step = %e\n", *iter, step);
+        //printf("%% iteration = %d step = %e\n", *iter, step);
       }
     
     }
@@ -422,7 +422,7 @@ data_partrsv(
           }
         }
         *iter = *iter + 1;
-        printf("%% iteration = %d step = %e\n", *iter, step);
+        //printf("%% iteration = %d step = %e\n", *iter, step);
       }
     
     }

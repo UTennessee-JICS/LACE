@@ -23,22 +23,22 @@ data_PariLU_v0_3( data_d_matrix* A,
   // Separate the lower and upper elements into L and U respectively.
   L->diagorder_type = Magma_UNITY;
   data_zmconvert(*A, L, Magma_BCSR, Magma_BCSRL);
-  printf("L BCSR:\n");
-  data_zprint_bcsr( L );
+  //printf("L BCSR:\n");
+  //data_zprint_bcsr( L );
   
   U->diagorder_type = Magma_VALUE;
   data_zmconvert(*A, U, Magma_BCSR, Magma_BCSCU);
-  printf("U BCSR:\n");
-  data_zprint_bcsr( U );
+  //printf("U BCSR:\n");
+  //data_zprint_bcsr( U );
   
   int j = 0;
   DEV_CHECKPT
-  printf("U j=%d (U->row[j+1]-1)=%d\n", j, (U->row[j+1]-1));
-  for ( int kk=0; kk< A->ldblock; kk++) {
-    //sp.val[kk] = U->val[(U->row[j+1]-1)*A->ldblock+kk];
-    printf("%e ", U->val[(U->row[j+1]-1)*A->ldblock+kk] );
-  }
-  printf("\n");
+  //printf("U j=%d (U->row[j+1]-1)=%d\n", j, (U->row[j+1]-1));
+  //for ( int kk=0; kk< A->ldblock; kk++) {
+  //  //sp.val[kk] = U->val[(U->row[j+1]-1)*A->ldblock+kk];
+  //  printf("%e ", U->val[(U->row[j+1]-1)*A->ldblock+kk] );
+  //}
+  //printf("\n");
   
   dataType one = 1.0;
   dataType negone = -1.0;
@@ -181,9 +181,9 @@ data_PariLU_v0_3( data_d_matrix* A,
         if ( i > j ) {     // modify l entry
             //tmp = s / U->val[U->row[j+1]-1];
             //sp.val = &(U->val[(U->row[j+1]-1)*A->ldblock]);
-            DEV_CHECKPT
-            printf("modify l entry\nU k=%d i=%d j=%d (U->row[j+1]-1)=%d\n", k, i, j, (U->row[j+1]-1));
-            printf("\t (U->row[j+1]-1)*A->ldblock=%d\n", (U->row[j+1]-1)*A->ldblock );
+            //DEV_CHECKPT
+            //printf("modify l entry\nU k=%d i=%d j=%d (U->row[j+1]-1)=%d\n", k, i, j, (U->row[j+1]-1));
+            //printf("\t (U->row[j+1]-1)*A->ldblock=%d\n", (U->row[j+1]-1)*A->ldblock );
             for ( int kk=0; kk< A->ldblock; kk++) {
               sp.val[kk] = U->val[(U->row[j+1]-1)*A->ldblock+kk];
               //printf("%e ", U->val[(U->row[j+1]-1)*A->ldblock+kk] );
@@ -201,22 +201,22 @@ data_PariLU_v0_3( data_d_matrix* A,
               //L->val[il-1] = tmp; 
               L->val[((il-1)*A->ldblock)+kk] = tmp.val[kk];
             }
-            printf("\n\tL step=%e\n", step);
+            //printf("\n\tL step=%e\n", step);
         }    
         else {            // modify u entry
             //tmp = s;
-            DEV_CHECKPT
-            printf("modify u entry\nU k=%d i=%d j=%d (U->row[j+1]-1)=%d\n", k, i, j, (U->row[j+1]-1));
-            printf("\t ((iu-1)*A->ldblock)=%d\n", ((iu-1)*A->ldblock) );
+            //DEV_CHECKPT
+            //printf("modify u entry\nU k=%d i=%d j=%d (U->row[j+1]-1)=%d\n", k, i, j, (U->row[j+1]-1));
+            //printf("\t ((iu-1)*A->ldblock)=%d\n", ((iu-1)*A->ldblock) );
             for ( int kk=0; kk< A->ldblock; kk++) {
-              printf("%e ", U->val[((iu-1)*A->ldblock)+kk] );
+              //printf("%e ", U->val[((iu-1)*A->ldblock)+kk] );
               //step += pow( U->val[iu-1] - tmp, 2 );
               //step += pow( U->val[((iu-1)*A->ldblock)+kk] - tmp.val[kk], 2);
               step += pow( U->val[((iu-1)*A->ldblock)+kk] - s.val[kk], 2);
               //U->val[iu-1] = tmp;
               U->val[((iu-1)*A->ldblock)+kk] = s.val[kk];
             }
-            printf("\n\tU step=%e\n", step);
+            //printf("\n\tU step=%e\n", step);
             //printf("\n\t ((iu-1)*A->ldblock)=%d\n", ((iu-1)*A->ldblock) );
             //for ( int kk=0; kk< A->ldblock; kk++) {
             //  printf("%e ", U->val[(U->row[j+1]-1)*A->ldblock+kk] );
@@ -232,7 +232,7 @@ data_PariLU_v0_3( data_d_matrix* A,
     }
     //step *= recipAnorm;
     iter++;
-    printf("%% iteration = %d step = %e\n", iter, step);
+    printf("%% PariLU BCSR iteration = %d step = %e\n", iter, step);
   }
   dataType wend = omp_get_wtime();
   dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
