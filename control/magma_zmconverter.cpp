@@ -151,9 +151,9 @@ data_rowindex(
   for(int i=0; i < rowlimit; i++) {
       for(int j=A->row[i]; j < A->row[i+1]; j++) {
           (*rowidx)[j] = i;
-          printf("%d ", i);
+          DEV_PRINTF("%d ", i);
       }
-      printf("\n");
+      DEV_PRINTF("\n");
   }
   return info;
 }
@@ -1237,8 +1237,11 @@ data_zmconvert(
                 // add option of including diagonal with unit value
                 else if ( A.col[j] == i &&
                                 B->diagorder_type == Magma_UNITY) {
-                    for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks*B->ldblock+k] = one;
+                    //for (int k=0; k< B->ldblock; k++) {
+                    //    B->val[numblocks*B->ldblock+k] = one;
+                    //}
+                    for (int k=0; k<B->blocksize; k++) {
+                        B->val[numblocks*B->ldblock+k*B->blocksize+k] = one;
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
@@ -1320,8 +1323,11 @@ data_zmconvert(
                 }
                 else if ( A.col[j] == i &&
                                 B->diagorder_type == Magma_UNITY) {
-                    for (int k=0; k< B->ldblock; k++) {
-                        B->val[numblocks*B->ldblock+k] = one;
+                    //for (int k=0; k< B->ldblock; k++) {
+                    //    B->val[numblocks*B->ldblock+k] = one;
+                    //}
+                    for (int k=0; k<B->blocksize; k++) {
+                        B->val[numblocks*B->ldblock+k*B->blocksize+k] = one;
                     }
                     B->col[numblocks] = A.col[j];
                     numblocks++;
