@@ -230,7 +230,7 @@ z_transpose_bcsr(
     data_d_matrix A,
     data_d_matrix *B )
 {
-    DEV_CHECKPT
+    
     data_int_t info = 0;
     data_int_t workaround = 0;
     
@@ -257,7 +257,7 @@ z_transpose_bcsr(
     B->col = (int*) malloc( A.nnz*sizeof(int) );
     B->val = (dataType*) malloc( A.nnz*sizeof(dataType) );
     B->storage_type = A.storage_type;
-    DEV_CHECKPT
+    
     // this workaround should resolve the problem with the 1 indexing in case of MKL
     // we check whether first element in A.rowptr is 1
     if( A.row[0] == 1 ){
@@ -296,7 +296,7 @@ z_transpose_bcsr(
     // [ x x 0 0 ]
     // rowptr = [ 0 3 6, 8 ]
     // colind = [ 0 1 3; 0 2 3; 0 1 ]
-    DEV_CHECKPT
+    
     // sum up nnz in each original column
     // colptr = [ 3 2 1 2, X ]
     #pragma omp parallel private (j) 
@@ -306,14 +306,13 @@ z_transpose_bcsr(
         B->row[ j ] = 0;
     }
     }
-    DEV_CHECKPT
-    printf("\nA.num_rows=%d\n", A.num_rows );
+    
+    DEV_PRINTF("\nA.num_rows=%d\n", A.num_rows );
     for( k=0; k < A.numblocks; k++ ) {
-        printf("A.col[k]+1=%d\n", A.col[k]+1);
+        DEV_PRINTF("A.col[k]+1=%d\n", A.col[k]+1);
         B->row[ A.col[k]+1 ]++;
     }
     
-    DEV_CHECKPT
     // running sum to convert to new colptr
     // colptr = [ 0 3 5 6, 8 ]
     total = 0;
@@ -330,7 +329,6 @@ z_transpose_bcsr(
         assert( total == A.numblocks );
     }
     
-    DEV_CHECKPT
     // copy row indices and values
     // this increments colptr until it effectively shifts left one
     // colptr = [ 3 5 6 8, 8 ]
@@ -340,10 +338,15 @@ z_transpose_bcsr(
             j = A.col[k];
             B->col[ B->row[ j ] ] = i;
             //B->val[ B->row[ j ] ] = A.val[k];
-            for (int ii=0; ii < B->blocksize; ii++) {
-                for (int jj=0; jj < B->blocksize; jj++) {
-                    B->val[k*B->ldblock+ii*B->blocksize+jj] = A.val[k*B->ldblock+jj*B->blocksize+ii];
-                }
+            // transpose dense block
+            //for (int ii=0; ii < B->blocksize; ii++) {
+            //    for (int jj=0; jj < B->blocksize; jj++) {
+            //        B->val[B->row[j]*B->ldblock+ii*B->blocksize+jj] = A.val[k*B->ldblock+jj*B->blocksize+ii];
+            //    }
+            //}
+            // do not tanspose dense block
+            for ( int kk=0; kk< B->ldblock; kk++) {
+              B->val[B->row[j]*B->ldblock+kk] = A.val[k*B->ldblock+kk];
             }
             B->row[ j ]++;
         }
@@ -380,7 +383,7 @@ z_transpose_bcsr(
         }
         }
     } 
-    DEV_CHECKPT
+    
     
 //cleanup:
     return info;
