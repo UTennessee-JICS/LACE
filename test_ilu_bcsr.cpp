@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
   
   // for PariLU0
   //dataType user_precond_reduction = 1.0e-15;
-  dataType user_precond_reduction = 1.0e-10;
+  dataType user_precond_reduction = 1.0e-1;
   data_d_preconditioner_log parilu_log;
   
   if (argc < 3) {
@@ -256,7 +256,7 @@ int main(int argc, char* argv[])
   //U = {Magma_BCSCU};
   //U.diagorder_type = Magma_VALUE;
   //data_zmconvert(A, &U, Magma_CSR, Magma_CSRU);
-  user_precond_reduction = 1.0e-10;
+  user_precond_reduction = 1.0e-4;
   data_PariLU_v0_3( &A_BCSR, &L, &U, user_precond_reduction, &parilu_log );
   DEV_CHECKPT
   // Check ||A-LU||_Frobenius
@@ -270,23 +270,32 @@ int main(int argc, char* argv[])
   DEV_CHECKPT
   printf("PariLUv0_3_csrilu0_res = %e\n", Ares);
   printf("PariLUv0_3_csrilu0_nonlinres = %e\n", Anonlinres);
-  //data_zmfree( &L );
-  //data_zmfree( &U );
-  //data_zmfree( &LU );
   fflush(stdout); 
   
   data_zmfree( &LU );
-	
-  //testing::InitGoogleTest(&argc, argv);
-  //return RUN_ALL_TESTS();
   
+  
+  strcpy( output_L, output_basename );
+  strcat( output_L, "_Lbcsr.mtx" );
+  strcpy( output_U, output_basename );
+  strcat( output_U, "_Ubcsr.mtx" );
+  data_zwrite_csr_mtx( L, L.major, output_L );
+  data_zwrite_csr_mtx( U, U.major, output_U );
+	
   
   data_zmfree( &Asparse );
   data_zmfree( &A );
   data_zmfree( &A_BCSR );
+  data_zmfree( &L );
+  data_zmfree( &U );
   data_zmfree( &Amkl );
   data_zmfree( &Lmkl );
   data_zmfree( &Umkl );
+  
+  
+  //testing::InitGoogleTest(&argc, argv);
+  //return RUN_ALL_TESTS();
+  
   
   printf("done\n");
   fflush(stdout); 
