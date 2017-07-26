@@ -386,6 +386,47 @@ test_solve_pariLU0_partrsv_MKL_FGMRES: test_solve_pariLU0_partrsv_MKL_FGMRES.cpp
 	test_solve_pariLU0_partrsv_MKL_FGMRES.cpp \
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@		
+
+test_solve_GMRES_basic: test_solve_GMRES_basic.cpp
+	$(CC) $(CFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+	src/parilu_v0_3.cpp \
+	src/trisolve.cpp \
+	src/gmres_basic.cpp \
+	test_solve_GMRES_basic.cpp \
+	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+	-o $@			
+
+	
+test_solve_GMRES_basic_kelley: test_solve_GMRES_basic.cpp
+	$(CC) $(CFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+	src/parilu_v0_3.cpp \
+	src/trisolve.cpp \
+	src/gmres_basic_kelley.cpp \
+	test_solve_GMRES_basic.cpp \
+	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+	-o $@			
+	
+test_malloc: test_malloc.cpp
+	$(CC) $(CFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	control/magma_zfree.cpp \
+	test_malloc.cpp \
+	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+	-o $@			
 	
 libgtest.a: gtest-all.o
 	ar -rv libgtest.a gtest-all.o

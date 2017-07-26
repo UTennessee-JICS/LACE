@@ -143,6 +143,13 @@ data_zwrite_dense(
 // control
 //======================================
 
+data_int_t
+data_zvinit(
+    data_d_matrix *x,
+    data_int_t num_rows,
+    data_int_t num_cols,
+    dataType values );
+
 int
 data_z_csr_compressor(
     dataType ** val,
@@ -389,6 +396,12 @@ data_zmcopy(
 // norms
 //======================================
 
+dataType
+data_dnrm2(
+    data_int_t n,
+    dataType* x,
+    data_int_t incx );
+
 int
 data_zfrobenius_csr(
     data_d_matrix A,
@@ -483,6 +496,13 @@ data_zdot_mkl(
     dataType* dy, int incy );
 
 void
+data_zaxpy(
+    data_int_t n,
+    dataType alpha,
+    dataType_const_ptr dx, data_int_t incx,
+    dataType_ptr       dy, data_int_t incy );
+
+void
 data_dgemv_mkl(
     data_order_t layoutA, data_trans_t transA, int m, int n, 
     dataDouble alpha,
@@ -509,6 +529,14 @@ data_domatadd_mkl(
 //======================================
 // sparse operations
 //======================================
+
+int
+data_z_spmv(
+    dataType alpha,
+    data_d_matrix* A,
+    data_d_matrix* x,
+    dataType beta,
+    data_d_matrix* y );
 
 int
 data_z_spmm(
@@ -884,6 +912,17 @@ int
 data_inverse_bcsr( 
   data_d_matrix* A, 
   data_d_matrix* Ainv );
+
+//======================================
+// Linear solvers
+//======================================
+
+int
+data_gmres_basic(
+    data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
+    data_d_gmres_param *gmres_par,
+    data_d_gmres_log *gmres_log );
+
 
 #ifdef __cplusplus
 }

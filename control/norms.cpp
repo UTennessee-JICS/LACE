@@ -2,6 +2,17 @@
 #include <stdio.h>
 #include "../include/sparse.h"
 
+extern "C" 
+dataType
+data_dnrm2(
+    data_int_t n,
+    dataType* x,
+    data_int_t incx )
+{
+    return cblas_dnrm2( n, x, incx);
+}
+
+
 
 extern "C" 
 int

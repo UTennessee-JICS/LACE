@@ -143,9 +143,16 @@ typedef struct data_z_gmres_log
     data_int_t             search_directions;	
     dataType               solve_time;	
     dataType               initial_residual;
+    dataType               final_residual;
     dataType               scaled_residual;	
     dataType               original_residual;  
 } data_d_gmres_log;
+
+typedef struct data_z_gmres_param
+{
+    data_int_t             search_max;	               // max sear directions
+    dataType               rtol;	         // relative residual reduction factor
+} data_d_gmres_param;
 
 
 #ifdef __cplusplus
