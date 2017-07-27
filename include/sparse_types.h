@@ -152,6 +152,9 @@ typedef struct data_z_gmres_param
 {
     data_int_t             search_max;	               // max sear directions
     dataType               rtol;	         // relative residual reduction factor
+    data_int_t             reorth;         // 0 -- Brown/Hindmarsh condition (default)
+                                           // 1 -- Never reorthogonalize (not recommended)
+                                           // 2 -- Always reorthogonalize (not cheap!)
 } data_d_gmres_param;
 
 

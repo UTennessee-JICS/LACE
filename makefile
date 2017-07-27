@@ -404,7 +404,7 @@ test_solve_GMRES_basic: test_solve_GMRES_basic.cpp
 	-o $@			
 
 	
-test_solve_GMRES_basic_kelley: test_solve_GMRES_basic.cpp
+test_solve_GMRES_reorth: test_solve_GMRES_reorth.cpp
 	$(CC) $(CFLAGS) \
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
 	control/constants.cpp control/magma_zmio.cpp control/init.cpp \
@@ -415,8 +415,8 @@ test_solve_GMRES_basic_kelley: test_solve_GMRES_basic.cpp
 	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
 	src/parilu_v0_3.cpp \
 	src/trisolve.cpp \
-	src/gmres_basic_kelley.cpp \
-	test_solve_GMRES_basic.cpp \
+	src/gmres_reorth.cpp \
+	test_solve_GMRES_reorth.cpp \
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@			
 	
