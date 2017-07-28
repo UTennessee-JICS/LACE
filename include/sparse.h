@@ -936,6 +936,13 @@ data_gmres_precond(
     data_d_gmres_param *gmres_par,
     data_d_gmres_log *gmres_log );
 
+int
+data_fgmres(
+    data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
+    data_d_matrix *L, data_d_matrix *U,
+    data_d_gmres_param *gmres_par,
+    data_d_gmres_log *gmres_log );
+
 #ifdef __cplusplus
 }
 #endif
