@@ -264,7 +264,7 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
     dataType tmp = 0.0;
     const dataType zero = dataType(0.0);
     
-    while (step > tol) {
+    while (step > tol && isfinite(step) ) {
         
       step = zero;
       #pragma omp parallel
@@ -282,7 +282,7 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
         }
       }
       *iter = *iter + 1;
-      printf("%% iteration = %d step = %e\n", *iter, step);
+      printf("%% L iteration = %d step = %e\n", *iter, step);
     }
   
   }
@@ -304,7 +304,7 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
     dataType tmp = 0.0;
     const dataType zero = dataType(0.0);
     
-    while (step > tol) {
+    while (step > tol && isfinite(step) ) {
         
       step = zero;
       #pragma omp parallel
@@ -322,7 +322,7 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
         }
       }
       *iter = *iter + 1;
-      printf("%% iteration = %d step = %e\n", *iter, step);
+      printf("%% U iteration = %d step = %e\n", *iter, step);
     }
   
   }

@@ -116,7 +116,7 @@ data_fgmres(
     data_zvinit( &Minvvj, n, search_max, zero );
     
     // Partrsv
-    dataType ptrsv_tol = 1.0; //1.0e-15;
+    dataType ptrsv_tol = 1.0e-10;
     int ptrsv_iter = 0;
     
     // alocate solution and residual vectors 
@@ -193,29 +193,37 @@ data_fgmres(
       data_zvinit( &tmp, n, 1, zero );
       //data_zmfree( &Minvvj );
       //data_zvinit( &Minvvj, n, 1, zero );
+      //for ( int i=0; i<Minvvj.ld; i++ ) {
+      //  Minvvj.val[idx(i,search,krylov.ld)] = 0.0;
+      //}
       
       for ( int i=0; i<krylov.ld; i++ ) {
         printf("\tkrylov.val[idx(%d,%d,%d)] = %e\n", i, search, krylov.ld, krylov.val[idx(i,search,krylov.ld)]);
       }
       
       // Apply preconditioner to krylov.val[idx(A->col[j],search,krylov.ld)]
-      cvar1='L';
-		  cvar='N';
-		  cvar2='U';
-		  mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
-		    &(krylov.val[idx(0,search,krylov.ld)]), tmp.val );
-		  cvar1='U';
-		  cvar='N';
-		  cvar2='N';
-		  mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja, 
-		    tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]) );
-      //data_parcsrtrsv( MagmaLower, Magma_CSRL, Magma_UNITY,
-      //  L->num_rows, L->val, L->row, L->col, &(krylov.val[idx(0,search,krylov.ld)]), tmp.val, 
-      //  ptrsv_tol, &ptrsv_iter );
-      //
+      //cvar1='L';
+		  //cvar='N';
+		  //cvar2='U';
+		  //mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
+		  //  &(krylov.val[idx(0,search,krylov.ld)]), tmp.val );
+		  //cvar1='U';
+		  //cvar='N';
+		  //cvar2='N';
+		  //mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja, 
+		  //  tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]) );
+      
+		  //data_parcsrtrsv( MagmaLower, Magma_CSRL, Magma_UNITY,
+      data_parcsrtrsv( MagmaLower, L->storage_type, L->diagorder_type,
+        L->num_rows, L->val, L->row, L->col, 
+        &(krylov.val[idx(0,search,krylov.ld)]), tmp.val, 
+        ptrsv_tol, &ptrsv_iter );
+      
       //data_parcsrtrsv( MagmaUpper, Magma_CSRU, Magma_VALUE,
-      //  U->num_rows, U->val, U->row, U->col, tmp.val, Minvvj.val, 
-      //  ptrsv_tol, &ptrsv_iter );
+      data_parcsrtrsv( MagmaUpper, U->storage_type, U->diagorder_type,
+        U->num_rows, U->val, U->row, U->col, 
+        tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]), 
+        ptrsv_tol, &ptrsv_iter );
       
       for ( int i=0; i<Minvvj.ld; i++ ) {
         printf("Minvvj.val[idx(%d,%d,%d)] = %e\n", 

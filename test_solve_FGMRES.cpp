@@ -94,9 +94,20 @@ int main(int argc, char* argv[])
   dataType user_precond_reduction = 1.0e-15;
   data_d_preconditioner_log parilu_log;
   
+  // PariLU is efficient when L is CSRL and U is CSCU
+  // data_PariLU_v0_3 is hard coded to expect L is CSRL and U is CSCU
   data_PariLU_v0_3( &Asparse, &L, &U, user_precond_reduction, &parilu_log );
   
-  data_fgmres( &Asparse, &rhs_vector, &x, &L, &U, &gmres_param, &gmres_log );
+  //data_zprint_csr( L );
+  //data_zprint_csr( U );
+  // data_parcsrtrsv requires L to be CSRL and U to be CSRU !!!! 
+  data_d_matrix Ucsr = {Magma_CSRU};
+  CHECK( data_zmconvert( U, &Ucsr, Magma_CSC, Magma_CSR ) );
+  Ucsr.storage_type = Magma_CSRU;
+  Ucsr.fill_mode = MagmaUpper;
+  //data_zprint_csr( Ucsr );
+  
+  data_fgmres( &Asparse, &rhs_vector, &x, &L, &Ucsr, &gmres_param, &gmres_log );
   
   for (int i=0; i<Asparse.num_rows; i++) {
     printf("x.val[%d] = %.16e\n", i, x.val[i]);
@@ -123,5 +134,6 @@ int main(int argc, char* argv[])
   
   data_zmfree( &L );
   data_zmfree( &U );
+  data_zmfree( &Ucsr );
 	return 0;
 }
