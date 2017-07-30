@@ -1,7 +1,7 @@
 clc; clear all; close all;
 
 %log_test_solve_FGMRES_ani5_crop_omp8
-%log_test_solve_FGMRES_30p30n_omp8
+%log_test_solve_FGMRES_30p30n_ones_omp8
 log_test_solve_FGMRES_30p30n_rhs_omp8
 
 figure(1)
