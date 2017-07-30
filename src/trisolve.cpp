@@ -282,8 +282,9 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
         }
       }
       *iter = *iter + 1;
-      printf("%% L iteration = %d step = %e\n", *iter, step);
+      PARTRSVDBG("%% L iteration = %d step = %e\n", *iter, step);
     }
+    printf("ParCSRTRSV L iteration = %d step = %e\n", *iter, step);
   
   }
   else if ( storage == Magma_CSRL 
@@ -322,8 +323,9 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
         }
       }
       *iter = *iter + 1;
-      printf("%% U iteration = %d step = %e\n", *iter, step);
+      PARTRSVDBG("%% U iteration = %d step = %e\n", *iter, step);
     }
+    printf("ParCSRTRSV U iteration = %d step = %e\n", *iter, step);
   
   }
   else if ( storage == Magma_CSRU 

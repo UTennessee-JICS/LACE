@@ -1218,13 +1218,13 @@ data_zwrite_dense_mtx(
     }
     
     fprintf( fp, "%%%%MatrixMarket matrix array real general\n" );
-    if (major == MagmaRowMajor )
+    //if (major == MagmaRowMajor )
       fprintf( fp, "%d %d\n", int(n_row), int(n_col));
-    else 
-      fprintf( fp, "%d %d\n", int(n_col), int(n_row));
+    //else 
+    //  fprintf( fp, "%d %d\n", int(n_col), int(n_row));
          
     for(int i=0; i < n_col*n_row; i++) {
-      fprintf( fp, "%.6e\n", ((*val)[ i ]));
+      fprintf( fp, "%.16e\n", ((*val)[ i ]));
     }
     
     if (fclose(fp) != 0)

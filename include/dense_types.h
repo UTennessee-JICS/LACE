@@ -38,6 +38,24 @@
   #define DEV_PRINTF(f_, ...) {\
     (void)0; }
 #endif    
+
+#ifdef DEBUG_PARTRSV
+  #define PARTRSVDBG(f_, ...) {\
+    printf((f_), __VA_ARGS__);\
+    fflush(stdout);}
+#else
+  #define PARTRSVDBG(f_, ...) {\
+    (void)0; }
+#endif 
+
+#ifdef DEBUG_GMRES
+  #define GMRESDBG(f_, ...) {\
+    printf((f_), __VA_ARGS__);\
+    fflush(stdout);}
+#else
+  #define GMRESDBG(f_, ...) {\
+    (void)0; }
+#endif    
   
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))

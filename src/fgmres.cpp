@@ -69,7 +69,9 @@ data_fgmres(
     data_d_gmres_param *gmres_par,
     data_d_gmres_log *gmres_log )
 {
-    printf("data_gmres_basic begin\n");
+  
+    printf("data_fgmres begin\n");
+    dataType wstart = omp_get_wtime();
     dataType zero = 0.0;
     dataType one = 1.0;
     dataType negone = -1.0;
@@ -116,7 +118,7 @@ data_fgmres(
     data_zvinit( &Minvvj, n, search_max, zero );
     
     // Partrsv
-    dataType ptrsv_tol = 1.0e-10;
+    dataType ptrsv_tol = 1.0; //1.0e-10;
     int ptrsv_iter = 0;
     
     // alocate solution and residual vectors 
@@ -165,7 +167,10 @@ data_fgmres(
     data_z_spmv( negone, A, &x, zero, &r );
     data_zaxpy( n, one, b->val, 1, r.val, 1);
     rnorm2 = data_dnrm2( n, r.val, 1 );
-    printf("rnorm2 = %e rtol = %e\n", rnorm2, rtol);
+    printf("rnorm2 = %e tol = %e rtol = %e\n", rnorm2, rtol, rtol*rnorm2 );
+    if ( gmres_par->tol_type == 1 ) {
+      rtol = rtol*rnorm2;
+    }
     if (rnorm2 < rtol ) {
       info = 0;
       return info;
@@ -198,7 +203,7 @@ data_fgmres(
       //}
       
       for ( int i=0; i<krylov.ld; i++ ) {
-        printf("\tkrylov.val[idx(%d,%d,%d)] = %e\n", i, search, krylov.ld, krylov.val[idx(i,search,krylov.ld)]);
+        GMRESDBG("\tkrylov.val[idx(%d,%d,%d)] = %e\n", i, search, krylov.ld, krylov.val[idx(i,search,krylov.ld)]);
       }
       
       // Apply preconditioner to krylov.val[idx(A->col[j],search,krylov.ld)]
@@ -226,7 +231,7 @@ data_fgmres(
         ptrsv_tol, &ptrsv_iter );
       
       for ( int i=0; i<Minvvj.ld; i++ ) {
-        printf("Minvvj.val[idx(%d,%d,%d)] = %e\n", 
+        GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n", 
           i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
       }
       
@@ -245,11 +250,11 @@ data_fgmres(
       normav = data_dnrm2( n, u.val, 1 );
       
       for ( int i=0; i<u.ld; i++ ) {
-        printf("u.val[%d] = %e\n", i, u.val[i]);
+        GMRESDBG("u.val[%d] = %e\n", i, u.val[i]);
       }
       for ( int j=0; j <= search; j++ ) {
         for ( int i=0; i<krylov.ld; i++ ) {
-          printf("krylov.val[idx(%d,%d,%d)] = %e\n", i, j, krylov.ld, krylov.val[idx(i,j,krylov.ld)]);
+          GMRESDBG("krylov.val[idx(%d,%d,%d)] = %e\n", i, j, krylov.ld, krylov.val[idx(i,j,krylov.ld)]);
         }
       }
       
@@ -266,14 +271,14 @@ data_fgmres(
         for ( int i=0; i<n; i++ ) {
           u.val[i] = u.val[i] 
             - h.val[idx(j,search,h.ld)]*krylov.val[idx(i,j,krylov.ld)];
-          printf("\tu.val[%d] = %e\n", i, u.val[i]);  
+          GMRESDBG("\tu.val[%d] = %e\n", i, u.val[i]);  
         }
       }
       h.val[idx((search+1),search,h.ld)] = data_dnrm2( n, u.val, 1 );
       normav2 = h.val[idx((search+1),search,h.ld)];
       
-      printf("h.val[idx(search,search,h.ld)] =%e\n", h.val[idx(search,search,h.ld)]);
-      printf("h.val[idx((search+1),search,h.ld)] =%e\n", h.val[idx((search+1),search,h.ld)]);  
+      GMRESDBG("h.val[idx(search,search,h.ld)] =%e\n", h.val[idx(search,search,h.ld)]);
+      GMRESDBG("h.val[idx((search+1),search,h.ld)] =%e\n", h.val[idx((search+1),search,h.ld)]);  
       
       // Reorthogonalize?
       hr = (normav + 0.001*normav2) - normav;
@@ -297,8 +302,8 @@ data_fgmres(
          for ( int i=0; i<n; i++ ) {
           krylov.val[idx(i,(search+1),krylov.ld)] = 
             u.val[i]/h.val[idx((search+1),search,h.ld)];
-          printf("--\tu.val[%d] = %e\n", i, u.val[i]);
-          printf("--\tkrylov.val[idx(%d,%d,%d)] = %e\n", i,(search+1),krylov.ld, krylov.val[idx(i,(search+1),krylov.ld)]);
+          GMRESDBG("--\tu.val[%d] = %e\n", i, u.val[i]);
+          GMRESDBG("--\tkrylov.val[idx(%d,%d,%d)] = %e\n", i,(search+1),krylov.ld, krylov.val[idx(i,(search+1),krylov.ld)]);
         }
       }
       else {
@@ -319,7 +324,7 @@ data_fgmres(
       gamma = sqrt( 
         h.val[idx(search,search,h.ld)]*h.val[idx(search,search,h.ld)] +
         h.val[idx((search+1),search,h.ld)]*h.val[idx((search+1),search,h.ld)] );
-      printf("gamma = %e\n", gamma);
+      GMRESDBG("gamma = %e\n", gamma);
       if ( gamma > 0.0 ) {
         givens_cos.val[search] = h.val[idx(search,search,h.ld)]/gamma;
         givens_sin.val[search] = -h.val[idx((search+1),search,h.ld)]/gamma;
@@ -336,25 +341,25 @@ data_fgmres(
       }
       for ( int j=0; j <search_max; j++ ) {
         for ( int i=0; i<h.ld; i++ ) {
-          printf("h.val[idx(%d,%d,%d)] = %e\n", i, j, h.ld, h.val[idx(i,j,h.ld)]);
+          GMRESDBG("h.val[idx(%d,%d,%d)] = %e\n", i, j, h.ld, h.val[idx(i,j,h.ld)]);
         }
-        printf("\n");
+        GMRESDBG("\n");
       }
       for ( int i=0; i<search_max; i++ ) {
-        printf("c.val[%d] = %e\n", i, givens_cos.val[i]);
+        GMRESDBG("c.val[%d] = %e\n", i, givens_cos.val[i]);
       }
       for ( int i=0; i<search_max; i++ ) {
-        printf("s.val[%d] = %e\n", i, givens_sin.val[i]);
+        GMRESDBG("s.val[%d] = %e\n", i, givens_sin.val[i]);
       }
       for ( int i=0; i<search_max+1; i++ ) {
-        printf("g.val[%d] = %e\n", i, givens.val[i]);
+        GMRESDBG("g.val[%d] = %e\n", i, givens.val[i]);
       }
       
-      printf("=======search %d fabs(givens.val[(search+1)]) = %e\n", search, fabs(givens.val[(search+1)]));  
+      printf("======= FGMRES search %d fabs(givens.val[(%d+1)]) = %.16e =======\n", search, search, fabs(givens.val[(search+1)]));  
       // update the solution
       // solve the least squares problem
       if ( fabs(givens.val[(search+1)]) < rtol  || (search == (search_max-1)) ) {
-        printf(" !!!!!!! update the solution !!!!!!!\n");
+        GMRESDBG(" !!!!!!! update the solution !!!!!!!\n");
         for ( int i = 0; i <= search; i++ ) {
           alpha.val[i] = givens.val[i]/h.val[idx(i,i,h.ld)];
         }
@@ -376,21 +381,24 @@ data_fgmres(
         for (int i = 0; i < n; i++ ) {
           x.val[i] = x.val[i] + z.val[i];
         }
+        
+        gmres_log->search_directions = search+1;
+        dataType wend = omp_get_wtime();
+        gmres_log->solve_time = (wend-wstart);
+        gmres_log->final_residual = fabs(givens.val[(search+1)]);
+        
         break;
       }
         
     }
     
     for ( int i=0; i<Minvvj.ld; i++ ) {
-      printf("Minvvj.val[idx(%d,%d,%d)] = %e\n", 
+      GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n", 
         i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
     }
     
     data_zmconvert( x, x0, Magma_DENSE, Magma_DENSE );
     
-    gmres_log->search_directions = search;
-    gmres_log->solve_time = 0.0;
-    gmres_log->final_residual = fabs(givens.val[(search+1)]);
     
     if (gmres_log->final_residual > rtol) {
       info = 0;
