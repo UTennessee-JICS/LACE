@@ -130,11 +130,14 @@ typedef struct data_z_preconditioner
 typedef struct data_z_preconditioner_log
 {
     data_int_t             sweeps;	
+    dataType               tol;
+    dataType               A_Frobenius;
     dataType               precond_generation_time;
     dataType               initial_residual;
     dataType               initial_nonlinear_residual;
     dataType               residual;	
-    dataType               nonlinear_residual;  
+    dataType               nonlinear_residual;
+    data_int_t             omp_num_threads;	  
 } data_d_preconditioner_log;
 
 

@@ -90,7 +90,7 @@ data_zmlumerge(
         
     }
     else {
-        printf("warning: %s , within %s ; matrix in wrong formats L = %d, U = %d.\n",
+        printf("%% warning: %s , within %s ; matrix in wrong formats L = %d, U = %d.\n",
           __FILE__, __FUNCTION__, L.storage_type, U.storage_type ); 
         data_d_matrix LL = {Magma_CSR};
         data_d_matrix UU = {Magma_CSR};

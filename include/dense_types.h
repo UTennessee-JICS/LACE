@@ -39,6 +39,15 @@
     (void)0; }
 #endif    
 
+#ifdef DEBUG_PARILU
+  #define PARILUDBG(f_, ...) {\
+    printf((f_), __VA_ARGS__);\
+    fflush(stdout);}
+#else
+  #define PARILUDBG(f_, ...) {\
+    (void)0; }
+#endif 
+
 #ifdef DEBUG_PARTRSV
   #define PARTRSVDBG(f_, ...) {\
     printf((f_), __VA_ARGS__);\

@@ -36,8 +36,8 @@ data_PariLU_v0_3( data_d_matrix* A,
   data_d_matrix LU = {Magma_CSR};
   data_zmconvert(*A, &LU, Magma_CSR, Magma_CSR);
   data_zilures(*A, *L, *U, &LU, &Ares, &Anonlinres);
-  printf("PariLUv0_2_csrilu0_init_res = %e\n", Ares);
-  printf("PariLUv0_2_csrilu0_init_nonlinres = %e\n", Anonlinres);
+  PARILUDBG("PariLUv0_3_csrilu0_init_res = %e\n", Ares);
+  PARILUDBG("PariLUv0_3_csrilu0_init_nonlinres = %e\n", Anonlinres);
   
   // ParLU element wise
   int i, j;
@@ -46,7 +46,7 @@ data_PariLU_v0_3( data_d_matrix* A,
   int iter = 0;
   dataType tol = 1.0e-1;
   tol = reduction*Ares;
-  printf("tol = %e\n", tol);
+  PARILUDBG("PariLU_v0_3_tol = %e\n", tol);
   int num_threads = 0;
   
   dataType s = 0.0;
@@ -57,7 +57,7 @@ data_PariLU_v0_3( data_d_matrix* A,
   dataType recipAnorm = 0.0;
   
   data_zfrobenius(*A, &Anorm);
-  printf("Anorm = %e\n", Anorm);
+  PARILUDBG("PariLUv0_3_Anorm = %e\n", Anorm);
   recipAnorm = 1.0/Anorm;
   
   dataType wstart = omp_get_wtime();
@@ -106,7 +106,7 @@ data_PariLU_v0_3( data_d_matrix* A,
     }
     step *= recipAnorm;
     iter++;
-    printf("%% iteration = %d step = %e\n", iter, step);
+    PARILUDBG("%% PariLUv0_3_iteration = %d step = %e\n", iter, step);
   }
   dataType wend = omp_get_wtime();
   dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
@@ -116,16 +116,19 @@ data_PariLU_v0_3( data_d_matrix* A,
     num_threads = omp_get_num_threads();
   }
   
-  printf("%% PariLU v0.3 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
+  PARILUDBG("%% PariLU v0.3 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
     num_threads, iter, wend-wstart, ompwtime );
-  printf("PariLUv0_3_OpenMP = %d \nPariLUv0_3_iter = %d \nPariLUv0_3_wall = %e \nPariLUv0_3_avgWall = %e \n", 
+  PARILUDBG("PariLUv0_3_OpenMP = %d \nPariLUv0_3_iter = %d \nPariLUv0_3_wall = %e \nPariLUv0_3_avgWall = %e \n", 
     num_threads, iter, wend-wstart, ompwtime );
   //data_zmfree( &Atmp );
   data_zmfree( &LU );
   
   log->sweeps = iter;
+  log->tol = tol;
+  log->A_Frobenius = Anorm;
   log->precond_generation_time = wend-wstart;
   log->initial_residual = Ares;
   log->initial_nonlinear_residual = Anonlinres;
+  log->omp_num_threads = num_threads;
   
 }

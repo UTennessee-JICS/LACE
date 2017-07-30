@@ -70,7 +70,7 @@ data_fgmres(
     data_d_gmres_log *gmres_log )
 {
   
-    printf("data_fgmres begin\n");
+    printf("%% data_fgmres begin\n");
     dataType wstart = omp_get_wtime();
     dataType zero = 0.0;
     dataType one = 1.0;
@@ -98,18 +98,19 @@ data_fgmres(
     int* ja;
     LACE_CALLOC( ia, (LU.num_rows+1) );
     LACE_CALLOC( ja, LU.nnz );
-    //#pragma omp parallel 
+    
+    #pragma omp parallel 
     {
-      //#pragma omp for nowait
+      #pragma omp for nowait
       for (int i=0; i<LU.num_rows+1; i++) {
       	ia[i] = LU.row[i] + 1;	
       }
-      //#pragma omp for nowait
+      #pragma omp for nowait
       for (int i=0; i<LU.nnz; i++) {
       	ja[i] = LU.col[i] + 1;
       }
     }
-    DEV_CHECKPT
+    
     data_d_matrix tmp={Magma_DENSE};
     data_zvinit( &tmp, n, 1, zero );
     
@@ -167,7 +168,7 @@ data_fgmres(
     data_z_spmv( negone, A, &x, zero, &r );
     data_zaxpy( n, one, b->val, 1, r.val, 1);
     rnorm2 = data_dnrm2( n, r.val, 1 );
-    printf("rnorm2 = %e tol = %e rtol = %e\n", rnorm2, rtol, rtol*rnorm2 );
+    printf("rnorm2 = %e; tol = %e; rtol = %e;\n", rnorm2, rtol, rtol*rnorm2 );
     if ( gmres_par->tol_type == 1 ) {
       rtol = rtol*rnorm2;
     }
@@ -223,12 +224,14 @@ data_fgmres(
         L->num_rows, L->val, L->row, L->col, 
         &(krylov.val[idx(0,search,krylov.ld)]), tmp.val, 
         ptrsv_tol, &ptrsv_iter );
+      printf("ParCSRTRSV_L(%d) = %d;\n", search+1, ptrsv_iter);
       
       //data_parcsrtrsv( MagmaUpper, Magma_CSRU, Magma_VALUE,
       data_parcsrtrsv( MagmaUpper, U->storage_type, U->diagorder_type,
         U->num_rows, U->val, U->row, U->col, 
         tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]), 
         ptrsv_tol, &ptrsv_iter );
+      printf("ParCSRTRSV_U(%d) = %d;\n", search+1, ptrsv_iter);
       
       for ( int i=0; i<Minvvj.ld; i++ ) {
         GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n", 
@@ -307,7 +310,7 @@ data_fgmres(
         }
       }
       else {
-        printf("\t******* happy breakdown **********\n"); 
+        printf("%%\t******* happy breakdown **********\n"); 
       }
       
       // Givens rotations
@@ -355,7 +358,8 @@ data_fgmres(
         GMRESDBG("g.val[%d] = %e\n", i, givens.val[i]);
       }
       
-      printf("======= FGMRES search %d fabs(givens.val[(%d+1)]) = %.16e =======\n", search, search, fabs(givens.val[(search+1)]));  
+      //printf("%%======= FGMRES search %d fabs(givens.val[(%d+1)]) = %.16e =======\n", search, search, fabs(givens.val[(search+1)]));  
+      printf("FGMRES_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));  
       // update the solution
       // solve the least squares problem
       if ( fabs(givens.val[(search+1)]) < rtol  || (search == (search_max-1)) ) {
