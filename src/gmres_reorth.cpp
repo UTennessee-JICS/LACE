@@ -27,11 +27,11 @@
     ---------
 
     @param[in]
-    A           data_d_matrix
+    A           data_d_matrix*
                 descriptor for matrix A
 
     @param[in]
-    b           data_d_matrix
+    b           data_d_matrix*
                 RHS b vector
 
     @param[in,out]
@@ -60,7 +60,9 @@ data_gmres_reorth(
     data_d_gmres_param *gmres_par,
     data_d_gmres_log *gmres_log )
 {
-    printf("data_gmres_basic begin\n");
+  
+    printf("%% data_gmres_reorth begin\n");
+    dataType wstart = omp_get_wtime();
     dataType zero = 0.0;
     dataType one = 1.0;
     dataType negone = -1.0;
@@ -123,7 +125,10 @@ data_gmres_reorth(
     data_z_spmv( negone, A, &x, zero, &r );
     data_zaxpy( n, one, b->val, 1, r.val, 1);
     rnorm2 = data_dnrm2( n, r.val, 1 );
-    printf("rnorm2 = %e rtol = %e\n", rnorm2, rtol);
+    printf("rnorm2 = %e; tol = %e; rtol = %e;\n", rnorm2, rtol, rtol*rnorm2 );
+    if ( gmres_par->tol_type == 1 ) {
+      rtol = rtol*rnorm2;
+    }
     if (rnorm2 < rtol ) {
       info = 0;
       return info;
@@ -131,7 +136,7 @@ data_gmres_reorth(
     
     // fill first column of Kylov subspace for Arnoldi iteration
     for ( int i=0; i<n; i++ ) {
-      krylov.val[i] = r.val[i]/rnorm2;
+      krylov.val[idx(i,0,krylov.ld)] = r.val[i]/rnorm2;
     }
     givens.val[0] = rnorm2;
     
@@ -149,7 +154,7 @@ data_gmres_reorth(
       data_zvinit( &u, n, 1, zero );
       
       for ( int i=0; i<krylov.ld; i++ ) {
-        printf("\tkrylov.val[idx(%d,%d,%d)] = %e\n", i, search, krylov.ld, krylov.val[idx(i,search,krylov.ld)]);
+        GMRESDBG("\tkrylov.val[idx(%d,%d,%d)] = %e\n", i, search, krylov.ld, krylov.val[idx(i,search,krylov.ld)]);
       }
       
       //mkl_dcsrmv( "N", &A->num_rows, &A->num_cols,
@@ -165,19 +170,16 @@ data_gmres_reorth(
       normav = data_dnrm2( n, u.val, 1 );
       
       for ( int i=0; i<u.ld; i++ ) {
-        printf("u.val[%d] = %e\n", i, u.val[i]);
+        GMRESDBG("u.val[%d] = %e\n", i, u.val[i]);
       }
       for ( int j=0; j <= search; j++ ) {
         for ( int i=0; i<krylov.ld; i++ ) {
-          printf("krylov.val[idx(%d,%d,%d)] = %e\n", i, j, krylov.ld, krylov.val[idx(i,j,krylov.ld)]);
+          GMRESDBG("krylov.val[idx(%d,%d,%d)] = %e\n", i, j, krylov.ld, krylov.val[idx(i,j,krylov.ld)]);
         }
       }
       
       // Modified Gram-Schmidt
       for ( int j=0; j <= search; j++ ) {
-        //h.val[idx(j,search,h.ld)] =  
-        //  data_zdot_mkl( n, u.val, 1, 
-        //    &(krylov.val[idx(0,j,krylov.ld)]), 1 );
         h.val[idx(j,search,h.ld)] = 0.0;
         for ( int i=0; i<n; i++ ) {
           h.val[idx(j,search,h.ld)] = h.val[idx(j,search,h.ld)] +
@@ -186,14 +188,14 @@ data_gmres_reorth(
         for ( int i=0; i<n; i++ ) {
           u.val[i] = u.val[i] 
             - h.val[idx(j,search,h.ld)]*krylov.val[idx(i,j,krylov.ld)];
-          printf("\tu.val[%d] = %e\n", i, u.val[i]);  
+          GMRESDBG("\tu.val[%d] = %e\n", i, u.val[i]);  
         }
       }
       h.val[idx((search+1),search,h.ld)] = data_dnrm2( n, u.val, 1 );
       normav2 = h.val[idx((search+1),search,h.ld)];
       
-      printf("h.val[idx(search,search,h.ld)] =%e\n", h.val[idx(search,search,h.ld)]);
-      printf("h.val[idx((search+1),search,h.ld)] =%e\n", h.val[idx((search+1),search,h.ld)]);  
+      GMRESDBG("h.val[idx(search,search,h.ld)] =%e\n", h.val[idx(search,search,h.ld)]);
+      GMRESDBG("h.val[idx((search+1),search,h.ld)] =%e\n", h.val[idx((search+1),search,h.ld)]);  
       
       // Reorthogonalize?
       hr = (normav + 0.001*normav2) - normav;
@@ -217,12 +219,12 @@ data_gmres_reorth(
          for ( int i=0; i<n; i++ ) {
           krylov.val[idx(i,(search+1),krylov.ld)] = 
             u.val[i]/h.val[idx((search+1),search,h.ld)];
-          printf("--\tu.val[%d] = %e\n", i, u.val[i]);
-          printf("--\tkrylov.val[idx(%d,%d,%d)] = %e\n", i,(search+1),krylov.ld, krylov.val[idx(i,(search+1),krylov.ld)]);
+          GMRESDBG("--\tu.val[%d] = %e\n", i, u.val[i]);
+          GMRESDBG("--\tkrylov.val[idx(%d,%d,%d)] = %e\n", i,(search+1),krylov.ld, krylov.val[idx(i,(search+1),krylov.ld)]);
         }
       }
       else {
-        printf("\t******* happy breakdown **********\n"); 
+        printf("%% \t******* happy breakdown **********\n"); 
       }
       
       // Givens rotations
@@ -239,11 +241,10 @@ data_gmres_reorth(
       gamma = sqrt( 
         h.val[idx(search,search,h.ld)]*h.val[idx(search,search,h.ld)] +
         h.val[idx((search+1),search,h.ld)]*h.val[idx((search+1),search,h.ld)] );
-      printf("gamma = %e\n", gamma);
+      GMRESDBG("gamma = %e\n", gamma);
       if ( gamma > 0.0 ) {
         givens_cos.val[search] = h.val[idx(search,search,h.ld)]/gamma;
         givens_sin.val[search] = -h.val[idx((search+1),search,h.ld)]/gamma;
-        //h.val[idx(search,search,h.ld)] = gamma;
         h.val[idx(search,search,h.ld)] = 
           givens_cos.val[search]*h.val[idx(search,search,h.ld)] -
           givens_sin.val[search]*h.val[idx((search+1),search,h.ld)];
@@ -256,24 +257,26 @@ data_gmres_reorth(
       }
       for ( int j=0; j <search_max; j++ ) {
         for ( int i=0; i<h.ld; i++ ) {
-          printf("h.val[idx(%d,%d,%d)] = %e\n", i, j, h.ld, h.val[idx(i,j,h.ld)]);
+          GMRESDBG("h.val[idx(%d,%d,%d)] = %e\n", i, j, h.ld, h.val[idx(i,j,h.ld)]);
         }
-        printf("\n");
+        GMRESDBG("\n");
       }
       for ( int i=0; i<search_max; i++ ) {
-        printf("c.val[%d] = %e\n", i, givens_cos.val[i]);
+        GMRESDBG("c.val[%d] = %e\n", i, givens_cos.val[i]);
       }
       for ( int i=0; i<search_max; i++ ) {
-        printf("s.val[%d] = %e\n", i, givens_sin.val[i]);
+        GMRESDBG("s.val[%d] = %e\n", i, givens_sin.val[i]);
       }
       for ( int i=0; i<search_max+1; i++ ) {
-        printf("g.val[%d] = %e\n", i, givens.val[i]);
+        GMRESDBG("g.val[%d] = %e\n", i, givens.val[i]);
       }
       
-      printf("=======search %d fabs(givens.val[(search+1)]) = %e\n", search, fabs(givens.val[(search+1)]));  
+      //printf("=======search %d fabs(givens.val[(search+1)]) = %e\n", search, fabs(givens.val[(search+1)]));  
+      printf("GMRES_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));  
       // update the solution
+      // solve the least squares problem
       if ( fabs(givens.val[(search+1)]) < rtol  || (search == (search_max-1)) ) {
-        printf(" !!!!!!! update the solution !!!!!!!\n");
+        GMRESDBG(" !!!!!!! update the solution !!!!!!!\n");
         for ( int i = 0; i <= search; i++ ) {
           alpha.val[i] = givens.val[i]/h.val[idx(i,i,h.ld)];
         }
@@ -283,25 +286,29 @@ data_gmres_reorth(
              - h.val[idx(i,j,h.ld)]*alpha.val[j]/h.val[idx(i,i,h.ld)];
           }
         } 
+        
+        // use preconditioned vectors to form the update (GEMV)
         for (int i = 0; i < n; i++ ) { 
           for (int j = 0; j <= search; j++ ) {
             z.val[i] = z.val[i] + krylov.val[idx(i,j,krylov.ld)]*alpha.val[j]; 
           }
         }
+      
         for (int i = 0; i < n; i++ ) {
           x.val[i] = x.val[i] + z.val[i];
         }
+        
+        gmres_log->search_directions = search+1;
+        dataType wend = omp_get_wtime();
+        gmres_log->solve_time = (wend-wstart);
+        gmres_log->final_residual = fabs(givens.val[(search+1)]);
+        
         break;
       }
         
     }
     
-    
     data_zmconvert( x, x0, Magma_DENSE, Magma_DENSE );
-    
-    gmres_log->search_directions = search;
-    gmres_log->solve_time = 0.0;
-    gmres_log->final_residual = fabs(givens.val[(search+1)]);
     
     if (gmres_log->final_residual > rtol) {
       info = 0;
@@ -316,7 +323,7 @@ data_gmres_reorth(
     data_zmfree( &givens_cos );
     data_zmfree( &givens_sin );
     data_zmfree( &alpha );
-    
+    data_zmfree( &z );
     
     return info;
 } 

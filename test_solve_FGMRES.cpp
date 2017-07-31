@@ -81,8 +81,8 @@ int main(int argc, char* argv[])
 	
 	// Set type of tolerance for stopping citeria for FGMRES
   if ( argc >= 5 ) {
-    gmres_param.tol_type = atof( argv[4] );
-    printf("gmres_param_tol_type = %e\n", gmres_param.tol_type);
+    gmres_param.tol_type = atoi( argv[4] );
+    printf("gmres_param_tol_type = %d\n", gmres_param.tol_type);
   }
   
   // Set tolerance for stopping citeria for FGMRES
@@ -113,8 +113,6 @@ int main(int argc, char* argv[])
   // generate preconditioner
   data_d_matrix L = {Magma_CSRL};
   data_d_matrix U = {Magma_CSCU};
-  //dataType user_precond_reduction = 1.0e-15;
-  //dataType user_precond_reduction = 1.5e+5;
   data_d_preconditioner_log parilu_log;
   
   // PariLU is efficient when L is CSRL and U is CSCU

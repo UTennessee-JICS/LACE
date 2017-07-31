@@ -197,11 +197,6 @@ data_fgmres(
       data_zvinit( &u, n, 1, zero );
       data_zmfree( &tmp );
       data_zvinit( &tmp, n, 1, zero );
-      //data_zmfree( &Minvvj );
-      //data_zvinit( &Minvvj, n, 1, zero );
-      //for ( int i=0; i<Minvvj.ld; i++ ) {
-      //  Minvvj.val[idx(i,search,krylov.ld)] = 0.0;
-      //}
       
       for ( int i=0; i<krylov.ld; i++ ) {
         GMRESDBG("\tkrylov.val[idx(%d,%d,%d)] = %e\n", i, search, krylov.ld, krylov.val[idx(i,search,krylov.ld)]);
@@ -219,14 +214,12 @@ data_fgmres(
 		  //mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja, 
 		  //  tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]) );
       
-		  //data_parcsrtrsv( MagmaLower, Magma_CSRL, Magma_UNITY,
-      data_parcsrtrsv( MagmaLower, L->storage_type, L->diagorder_type,
+		  data_parcsrtrsv( MagmaLower, L->storage_type, L->diagorder_type,
         L->num_rows, L->val, L->row, L->col, 
         &(krylov.val[idx(0,search,krylov.ld)]), tmp.val, 
         ptrsv_tol, &ptrsv_iter );
       printf("ParCSRTRSV_L(%d) = %d;\n", search+1, ptrsv_iter);
       
-      //data_parcsrtrsv( MagmaUpper, Magma_CSRU, Magma_VALUE,
       data_parcsrtrsv( MagmaUpper, U->storage_type, U->diagorder_type,
         U->num_rows, U->val, U->row, U->col, 
         tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]), 
@@ -246,7 +239,6 @@ data_fgmres(
       
       for ( int i=0; i<n; i++ ) {
         for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {
-          //u.val[i] = u.val[i] + A->val[j]*krylov.val[idx(A->col[j],search,krylov.ld)]; 
           u.val[i] = u.val[i] + A->val[j]*Minvvj.val[idx(A->col[j],search,krylov.ld)]; 
         }
       }
@@ -263,9 +255,6 @@ data_fgmres(
       
       // Modified Gram-Schmidt
       for ( int j=0; j <= search; j++ ) {
-        //h.val[idx(j,search,h.ld)] =  
-        //  data_zdot_mkl( n, u.val, 1, 
-        //    &(krylov.val[idx(0,j,krylov.ld)]), 1 );
         h.val[idx(j,search,h.ld)] = 0.0;
         for ( int i=0; i<n; i++ ) {
           h.val[idx(j,search,h.ld)] = h.val[idx(j,search,h.ld)] +
@@ -331,7 +320,6 @@ data_fgmres(
       if ( gamma > 0.0 ) {
         givens_cos.val[search] = h.val[idx(search,search,h.ld)]/gamma;
         givens_sin.val[search] = -h.val[idx((search+1),search,h.ld)]/gamma;
-        //h.val[idx(search,search,h.ld)] = gamma;
         h.val[idx(search,search,h.ld)] = 
           givens_cos.val[search]*h.val[idx(search,search,h.ld)] -
           givens_sin.val[search]*h.val[idx((search+1),search,h.ld)];
