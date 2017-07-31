@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
     printf("Usage %s <matrix> <rhs vector> <output directory> "
             "[GMRES_tolerance_type] [GMRES_tolerance] "
             "[max_search_dir] [reorth] "
-            "[PariLU tolerance]\n", argv[0]);
+            "[Preconditioner selection] [PariLU tolerance]\n", argv[0]);
     return 1;
   }
   else {
@@ -103,38 +103,90 @@ int main(int argc, char* argv[])
     printf("gmres_param_reorth = %d\n", gmres_param.reorth);
   }
   
+  // Set Preconditioner 
+  data_int_t user_precond_selection = 0;
+  if ( argc >= 9 ) {
+    user_precond_selection = atof( argv[8] );
+    printf("user_precond_selection = %e\n", user_precond_selection);
+  }
+  
   // Set PariLU tolerance 
   dataType user_precond_reduction = 1.0e-15;
-  if ( argc >= 9 ) {
-    user_precond_reduction = atof( argv[8] );
+  if ( argc >= 10 ) {
+    user_precond_reduction = atof( argv[9] );
     printf("user_precond_reduction = %e\n", user_precond_reduction);
   }
   
   // generate preconditioner
   data_d_matrix L = {Magma_CSRL};
+  L.diagorder_type = Magma_UNITY;
   data_d_matrix U = {Magma_CSCU};
+  U.diagorder_type = Magma_VALUE;
+  data_d_matrix LU = {Magma_CSR};
+  LU.diagorder_type = Magma_VALUE;
+  data_d_matrix Ucsr = {Magma_CSRU};
+  U.diagorder_type = Magma_VALUE;
   data_d_preconditioner_log parilu_log;
   
-  // PariLU is efficient when L is CSRL and U is CSCU
-  // data_PariLU_v0_3 is hard coded to expect L is CSRL and U is CSCU
-  data_PariLU_v0_3( &Asparse, &L, &U, user_precond_reduction, &parilu_log );
-  printf("PariLU_v0_3_sweeps = %d\n", parilu_log.sweeps );
-  printf("PariLU_v0_3_tol = %e\n", parilu_log.tol );
-  printf("PariLU_v0_3_A_Frobenius = %e\n", parilu_log.A_Frobenius );
-  printf("PariLU_v0_3_generation_time = %e\n", parilu_log.precond_generation_time );
-  printf("PariLU_v0_3_initial_residual = %e\n", parilu_log.initial_residual );
-  printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
-  printf("PariLU_v0_3_omp_num_threads = %d\n", parilu_log.omp_num_threads );
   
+  if ( user_precond_selection == 0 ) {
+    MKL_INT ipar[128];
+    double dpar[128];
+    ipar[1] = 6;
+    ipar[5] = 1;
+	  ipar[30]=1;
+	  dpar[30]=1.E-20;
+	  dpar[31]=1.E-16;
+	  int ierr=0;
+    
+	  int* ia;
+    int* ja;
+    dataType* A;
+    ia = (int*) calloc( (Asparse.num_rows+1), sizeof(int) );
+    ja = (int*) calloc( Asparse.nnz, sizeof(int) );
+    
+    #pragma omp parallel 
+    {
+      #pragma omp for nowait
+      for (int i=0; i<Asparse.num_rows+1; i++) {
+      	ia[i] = Asparse.row[i] + 1;	
+      }
+      #pragma omp for nowait
+      for (int i=0; i<Asparse.nnz; i++) {
+      	ja[i] = Asparse.col[i] + 1;
+      }
+    }
+    
+    CHECK( data_zmconvert( Asparse, &LU, Magma_CSR, Magma_CSR ) );
+	  
+    dcsrilu0(&Asparse.num_rows, Asparse.val, ia, ja, LU.val, ipar, dpar, &ierr);
+    
+    CHECK( data_zmconvert( LU, &L, Magma_CSR, Magma_CSRL ) );
+    CHECK( data_zmconvert( LU, &Ucsr, Magma_CSR, Magma_CSRU ) );
+    
+    free( ia );
+    free( ja );  
+  }
+  else {
+    // PariLU is efficient when L is CSRL and U is CSCU
+    // data_PariLU_v0_3 is hard coded to expect L is CSRL and U is CSCU
+    data_PariLU_v0_3( &Asparse, &L, &U, user_precond_reduction, &parilu_log );
+    printf("PariLU_v0_3_sweeps = %d\n", parilu_log.sweeps );
+    printf("PariLU_v0_3_tol = %e\n", parilu_log.tol );
+    printf("PariLU_v0_3_A_Frobenius = %e\n", parilu_log.A_Frobenius );
+    printf("PariLU_v0_3_generation_time = %e\n", parilu_log.precond_generation_time );
+    printf("PariLU_v0_3_initial_residual = %e\n", parilu_log.initial_residual );
+    printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
+    printf("PariLU_v0_3_omp_num_threads = %d\n", parilu_log.omp_num_threads );
   
-  //data_zprint_csr( L );
-  //data_zprint_csr( U );
-  // data_parcsrtrsv requires L to be CSRL and U to be CSRU !!!! 
-  data_d_matrix Ucsr = {Magma_CSRU};
-  CHECK( data_zmconvert( U, &Ucsr, Magma_CSC, Magma_CSR ) );
-  Ucsr.storage_type = Magma_CSRU;
-  Ucsr.fill_mode = MagmaUpper;
-  //data_zprint_csr( Ucsr );
+    //data_zprint_csr( L );
+    //data_zprint_csr( U );
+    // data_parcsrtrsv requires L to be CSRL and U to be CSRU !!!! 
+    CHECK( data_zmconvert( U, &Ucsr, Magma_CSC, Magma_CSR ) );
+    Ucsr.storage_type = Magma_CSRU;
+    Ucsr.fill_mode = MagmaUpper;
+    //data_zprint_csr( Ucsr );
+  }
   
   data_gmres_precond( &Asparse, &rhs_vector, &x, &L, &Ucsr, &gmres_param, &gmres_log );
   

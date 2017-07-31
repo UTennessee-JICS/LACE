@@ -93,6 +93,7 @@ data_gmres_precond(
     char cvar, cvar1, cvar2;
     data_d_matrix LU = {Magma_CSR};
     data_zmlumerge( *L, *U, &LU );
+    DEV_CHECKPT;
     int* ia;
     int* ja;
     LACE_CALLOC( ia, (LU.num_rows+1) );
@@ -329,7 +330,7 @@ data_gmres_precond(
       }
       
       //printf("======= GMRES search %d fabs(givens.val[(%d+1)]) = %.16e =======\n", search, search, fabs(givens.val[(search+1)]));  
-      printf("GMRES_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));  
+      printf("PGMRES_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));  
       // update the solution
       // solve the least squares problem
       if ( fabs(givens.val[(search+1)]) < rtol  || (search == (search_max-1)) ) {
