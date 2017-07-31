@@ -272,7 +272,7 @@ data_gmres_reorth(
       }
       
       //printf("=======search %d fabs(givens.val[(search+1)]) = %e\n", search, fabs(givens.val[(search+1)]));  
-      printf("GMRES_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));  
+      printf("GMRES_reorth_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));  
       // update the solution
       // solve the least squares problem
       if ( fabs(givens.val[(search+1)]) < rtol  || (search == (search_max-1)) ) {
