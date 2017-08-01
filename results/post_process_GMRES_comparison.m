@@ -1,18 +1,19 @@
 clc; clear all; close all;
 
-%log_test_solve_FGMRES_ani5_crop_omp8
-%log_test_solve_FGMRES_30p30n_ones_omp8
-log_test_solve_FGMRES_30p30n_rhs_omp8
-%log_test_solve_GMRES_precond_30p30n_rhs_omp8
-log_test_solve_GMRES_precond_MKL_30p30n_rhs_omp8
-% ./test_solve_pariLU0_MKL_FGMRES testing/matrices/30p30n.mtx testing/matrices/30p30n-b.mtx out_test NONE 0 3.55064e-05 2000 2000 1 > results/log_test_solve_MKL_FGMRES_MKL_30p30n_rhs_omp8_2.m
-log_test_solve_MKL_FGMRES_MKL_30p30n_rhs_omp8_2
+log_test_solve_PariLU_MKL_FGMRES_Parcsrtrsv_30p30n_30p30nb_omp_
+log_test_solve_MKLiLU_MKL_FGMRES_Parcsrtrsv_30p30n_30p30nb_omp_
+log_test_solve_PariLU_MKL_FGMRES_MKLcsrtrsv_30p30n_30p30nb_omp_
+log_test_solve_MKLiLU_MKL_FGMRES_MKLcsrtrsv_30p30n_30p30nb_omp_
+log_test_solve_FGMRES_PariLU_MKLtrsv_30p30n_30p30nb_omp_
+log_test_solve_FGMRES_PariLU_Parcsrtrsv_30p30n_30p30nb_omp_
 
 figure(1)
-%semilogy(GMRES_search)
-semilogy(MKL_FGMRES_search)
+semilogy(MKL_FGMRES_mkltrsv_search)
 hold all
-semilogy(PGMRES_search)
+semilogy(MKL_FGMRES_partrsv_search)
+semilogy(MKL_FGMRES_parilu_mkltrsv_search)
+semilogy(MKL_FGMRES_parilu_partrsv_search)
+semilogy(FGMRES_mkltrsv_search)
 semilogy(FGMRES_search)
 xlabel('Search Directions')
 ylabel('L2 Residual Norm')
@@ -20,16 +21,22 @@ ylabel('L2 Residual Norm')
 str = sprintf('Convergence history comparison for\n %s solved with GMRES variants (rtol=%.3e)', matrix, gmres_param_rtol );
 title(str,'Interpreter','none')
 %legend('MKL\_csriLU0+MKL\_FGMRES\_search','MKL\_csriLU0+PGMRES','PariLU+ParCSRTRSV+FGMRES','Location','southoutside','Orientation','horizontal')
-legend('MKL\_csriLU0+MKL\_CSRTRSV+MKL\_FGMRES\_search','MKL\_csriLU0+MKL\_CSRTRSV+PGMRES','PariLU+ParCSRTRSV+FGMRES','Location','northeast')
-x = size(MKL_FGMRES_search,2);
-y = MKL_FGMRES_search(x);
+legend('MKL\_csriLU0+MKL\_CSRTRSV+MKL\_FGMRES',...
+    'MKL\_csriLU0+ParCSRTRSV+MKL\_FGMRES',...
+    'PariLU+MKL\_CSRTRSV+MKL\_FGMRES',...
+    'PariLU+ParCSRTRSV+MKL\_FGMRES',...
+    'PariLU+MKL\_CSRTRSV+FGMRES',...
+    'PariLU+ParCSRTRSV+FGMRES',...
+    'Location','northeast')
+x = size(MKL_FGMRES_mkltrsv_search,2);
+y = MKL_FGMRES_mkltrsv_search(x);
 label1 = sprintf('%d, %e \\rightarrow', x, y);
 text(x, y, label1, 'HorizontalAlignment','right');
 x = size(FGMRES_search,2);
 y = FGMRES_search(x);
 label1 = sprintf('%d, %e \\rightarrow', x, y);
 text(x, y, label1, 'HorizontalAlignment','right');
-str = sprintf('%s_MKL_PGMRES_FGMRES_convergence_hist', matrix);
+str = sprintf('%s_compare_GMRES_convergence_hist', matrix);
 print(str,'-dpng')
 
 % figure(2)
