@@ -105,13 +105,16 @@ int main(int argc, char* argv[])
     char *ext;
     ext = strrchr( sparse_basename, '.');
     strncpy( sparse_name, sparse_basename, int(ext - sparse_basename) );
-    printf("File %s basename %s name %s \n", 
+    printf("%% File %s basename %s name %s \n", 
       sparse_filename, sparse_basename, sparse_name );
-    printf("rhs vector name is %s \n", rhs_filename ); 
-    printf("Output directory is %s\n", output_dir );
+    printf("matrix = '%s'\n", sparse_name );
+    printf("%% rhs vector name is %s \n", rhs_filename ); 
+    printf("%% Output directory is %s\n", output_dir );
     strcpy( output_basename, output_dir );
+    strcat( output_basename, "/" );
     strcat( output_basename, sparse_name );
-    printf("Output file base name is %s\n", output_basename );
+    strcat( output_basename, "_solution.mtx" );
+    printf("%% Output file base name is %s\n", output_basename );
   }
 	data_d_matrix Asparse = {Magma_CSR};
   CHECK( data_z_csr_mtx( &Asparse, sparse_filename ) );
@@ -125,7 +128,7 @@ int main(int argc, char* argv[])
 	
 	// Setup rhs
 	if ( strcmp( rhs_filename, "ONES" ) == 0 ) {
-	  printf("creating a vector of %d ones for the rhs.\n", Asparse.num_rows);
+	  printf("%% creating a vector of %d ones for the rhs.\n", Asparse.num_rows);
 	  rhs_vector.num_rows = Asparse.num_rows;
     rhs_vector.num_cols = 1;
     rhs_vector.ld = 1;
@@ -152,27 +155,27 @@ int main(int argc, char* argv[])
   // Optionally Scale matrix 
   if ( argc >= 5 ) {
     if ( strcmp( argv[4], "UNITROW" ) == 0 ) {
-      printf("rescaling UNITROW ");
+      printf("%% rescaling UNITROW ");
       scaling = Magma_UNITROW;
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITROW );
       //data_zwrite_csr( &Asparse );
-      printf("done.\n");
+      printf("%% done.\n");
     }
     else if ( strcmp( argv[4], "UNITDIAG" ) == 0 ) {
-      printf("rescaling UNITDIAG ");
+      printf("%% rescaling UNITDIAG ");
       scaling = Magma_UNITDIAG;
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITDIAG );
       //data_zwrite_csr( &Asparse );
-      printf("done.\n");
+      printf("%% done.\n");
     }
     else if ( strcmp( argv[4], "UNITROWCOL" ) == 0 ) {
-      printf("rescaling UNITROWCOL\n");
+      printf("%% rescaling UNITROWCOL\n");
       scaling = Magma_UNITROWCOL;
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITROWCOL );
       //data_zwrite_csr( &Asparse );
     }
     else if ( strcmp( argv[4], "UNITDIAGCOL" ) == 0 ) {
-      printf("rescaling UNITDIAGCOL\n");
+      printf("%% rescaling UNITDIAGCOL\n");
       scaling = Magma_UNITDIAGCOL;
       data_zmscale_matrix_rhs( &Asparse, &rhs_vector, &scaling_factors, Magma_UNITDIAGCOL );
       //data_zwrite_csr( &Asparse );
@@ -209,7 +212,7 @@ int main(int argc, char* argv[])
     user_precond_reduction = atof( argv[10] );
   }
   
-  printf("diagonal scaling = %s : %d\n", argv[4], scaling );
+  printf("%% diagonal_scaling = %s %% %d\n", argv[4], scaling );
   printf("user_gmres_tol_type = %d\n", user_gmres_tol_type);
   printf("user_gmres_tol = %e\n", user_gmres_tol);
   printf("user_restart = %d\n", user_restart);
@@ -305,10 +308,10 @@ int main(int argc, char* argv[])
 	double dvar_scaled = FLT_MAX;
 	char cvar, cvar1, cvar2;
 
-	printf("--------------------------------------------------------\n");
-	printf("The FULLY ADVANCED example RCI FGMRES with ILU0 preconditioner\n");
-	printf("to solve the non-degenerate algebraic system of linear equations\n");
-	printf("--------------------------------------------------------\n\n");
+	printf("%% --------------------------------------------------------\n");
+	printf("%% The FULLY ADVANCED example RCI FGMRES with ILU0 preconditioner\n");
+	printf("%% to solve the non-degenerate algebraic system of linear equations\n");
+	printf("%% --------------------------------------------------------\n\n");
 /*---------------------------------------------------------------------------
    Initialize variables and the right hand side through matrix-vector product
   ---------------------------------------------------------------------------*/
@@ -501,7 +504,7 @@ int main(int argc, char* argv[])
   
 	if (ierr!=0)
 	{
-	  printf("Preconditioner dcsrilu0 has returned the ERROR code %d", ierr);
+	  printf("%% Preconditioner dcsrilu0 has returned the ERROR code %d", ierr);
 	  goto FAILED1;
 	}
 
@@ -536,8 +539,8 @@ int main(int argc, char* argv[])
 	ipar[14]=user_restart;
 	dpar[0]=user_gmres_tol;
 	
-	printf("ipar[4]=%d\n", ipar[4]);
-	printf("ipar[14]=%d\n", ipar[14]);
+	printf("%% ipar[4]=%d\n", ipar[4]);
+	printf("%% ipar[14]=%d\n", ipar[14]);
 	
 
 	/*---------------------------------------------------------------------------
@@ -574,63 +577,63 @@ int main(int argc, char* argv[])
 	/*---------------------------------------------------------------------------
 	   Print the info about the RCI FGMRES method
 	  ---------------------------------------------------------------------------*/
-	printf("Some info about the current run of RCI FGMRES method:\n\n");
+	printf("%% Some info about the current run of RCI FGMRES method:\n\n");
 	if (ipar[7])
 	{
-		printf("As ipar[7]=%d, the automatic test for the maximal number of iterations will be\n", ipar[7]);
-		printf("performed\n");
+		printf("%% As ipar[7]=%d, the automatic test for the maximal number of iterations will be\n", ipar[7]);
+		printf("%% performed\n");
 	}
 	else
 	{
-		printf("As ipar[7]=%d, the automatic test for the maximal number of iterations will be\n", ipar[7]);
-		printf("skipped\n");
+		printf("%% As ipar[7]=%d, the automatic test for the maximal number of iterations will be\n", ipar[7]);
+		printf("%% skipped\n");
 	}
-	printf("+++\n");
+	printf("%% +++\n");
 	if (ipar[8])
 	{
-		printf("As ipar[8]=%d, the automatic residual test will be performed\n", ipar[8]);
+		printf("%% As ipar[8]=%d, the automatic residual test will be performed\n", ipar[8]);
 	}
 	else
 	{
-		printf("As ipar[8]=%d, the automatic residual test will be skipped\n", ipar[8]);
+		printf("%% As ipar[8]=%d, the automatic residual test will be skipped\n", ipar[8]);
 	}
-	printf("+++\n");
+	printf("%% +++\n");
 	if (ipar[9])
 	{
-		printf("As ipar[9]=%d the user-defined stopping test will be requested via\n", ipar[9]);
-		printf("RCI_request=2\n");
+		printf("%% As ipar[9]=%d the user-defined stopping test will be requested via\n", ipar[9]);
+		printf("%% RCI_request=2\n");
 	}
 	else
 	{
-		printf("As ipar[9]=%d, the user-defined stopping test will not be requested, thus,\n", ipar[9]);
-		printf("RCI_request will not take the value 2\n");
+		printf("%% As ipar[9]=%d, the user-defined stopping test will not be requested, thus,\n", ipar[9]);
+		printf("%% RCI_request will not take the value 2\n");
 	}
-	printf("+++\n");
+	printf("%% +++\n");
 	if (ipar[10])
 	{
-		printf("As ipar[10]=%d, the Preconditioned FGMRES iterations will be performed, thus,\n", ipar[10]);
-		printf("the preconditioner action will be requested via RCI_request=3\n");
+		printf("%% As ipar[10]=%d, the Preconditioned FGMRES iterations will be performed, thus,\n", ipar[10]);
+		printf("%% the preconditioner action will be requested via RCI_request=3\n");
 	}
 	else
 	{
-		printf("As ipar[10]=%d, the Preconditioned FGMRES iterations will not be performed,\n", ipar[10]);
-		printf("thus, RCI_request will not take the value 3\n");
+		printf("%% As ipar[10]=%d, the Preconditioned FGMRES iterations will not be performed,\n", ipar[10]);
+		printf("%% thus, RCI_request will not take the value 3\n");
 	}
-	printf("+++\n");
+	printf("%% +++\n");
 	if (ipar[11])
 	{
-		printf("As ipar[11]=%d, the automatic test for the norm of the next generated vector is\n", ipar[11]);
-		printf("not equal to zero up to rounding and computational errors will be performed,\n");
-		printf("thus, RCI_request will not take the value 4\n");
+		printf("%% As ipar[11]=%d, the automatic test for the norm of the next generated vector is\n", ipar[11]);
+		printf("%% not equal to zero up to rounding and computational errors will be performed,\n");
+		printf("%% thus, RCI_request will not take the value 4\n");
 	}
 	else
 	{
-		printf("As ipar[11]=%d, the automatic test for the norm of the next generated vector is\n", ipar[11]);
-		printf("not equal to zero up to rounding and computational errors will be skipped,\n");
-		printf("thus, the user-defined test will be requested via RCI_request=4\n");
+		printf("%% As ipar[11]=%d, the automatic test for the norm of the next generated vector is\n", ipar[11]);
+		printf("%% not equal to zero up to rounding and computational errors will be skipped,\n");
+		printf("%% thus, the user-defined test will be requested via RCI_request=4\n");
 	}
-	printf("+++\n\n");
-	printf("\n\niter\tdpar[4]/dpar[2]\tdpar[6]\n");
+	printf("%% +++\n\n");
+	printf("\n\n%% iter\tdpar[4]/dpar[2]\tdpar[6]\n");
 	/*---------------------------------------------------------------------------
 	   Compute the solution by RCI (P)FGMRES solver with preconditioning
 	   Reverse Communication starts here
@@ -776,9 +779,10 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 	  //printf("itercount = %d dpar[4]/dpar[2] = %e dpar[6] = %e\n", 
 	  //  itercount, dpar[4]/dpar[2], dpar[6] );
 	  
-	  printf("%d\t%e\t%e\n", 
-	    itercount, dpar[4]/dpar[2], dpar[6] );
-		if (dpar[6]<1.0E-14) goto COMPLETE;
+	  //printf("%% %d\t%e\t%e\n", 
+	  //  itercount, dpar[4]/dpar[2], dpar[6] );
+	  printf("MKL_FGMRES_search(%d) = %.16e;\n", itercount+1, dpar[4]);  
+    if (dpar[6]<1.0E-14) goto COMPLETE;
 		else goto ONE;
 	}
 	/*---------------------------------------------------------------------------
@@ -787,7 +791,7 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 	  ---------------------------------------------------------------------------*/
 	else
 	{
-	  printf("RCI_request = %d\n", RCI_request);
+	  printf("%% RCI_request = %d\n", RCI_request);
 		goto FAILED;
 	}
 	/*---------------------------------------------------------------------------
@@ -804,7 +808,7 @@ COMPLETE:   ipar[12]=0;
 	/*---------------------------------------------------------------------------
 	   Print solution vector: computed_solution[N] and the number of iterations: itercount
 	  ---------------------------------------------------------------------------*/
-	printf("The system has been solved \n");
+	printf("%% The system has been solved \n");
 
 	//printf("\nThe following solution has been obtained: \n");
 	
@@ -819,7 +823,7 @@ COMPLETE:   ipar[12]=0;
     //}
     if ( scaling == Magma_UNITROWCOL 
           || scaling == Magma_UNITDIAGCOL ) {
-      printf("rescaling computed solution %s\n", argv[4]);
+      printf("%% rescaling computed solution %s\n", argv[4]);
       #pragma omp parallel 
       {
         #pragma omp for nowait
@@ -854,19 +858,19 @@ COMPLETE:   ipar[12]=0;
 	//{
 	//	printf("expected_solution[%d]=%e\n",i,expected_solution[i]);
 	//}
-	printf("\nNumber of iterations: %d\n" ,itercount);
-	printf("\nfinal residual nrm2: %e\n" ,final_residual_nrm2);
-	printf("\ndvar: %e\n" ,dvar);
-	printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
-	printf("Euclidean norm of initial residual dpar[2] = %e\n", dpar[2] );
-	printf("Euclidean norm of current residual dpar[4] = %e\n", dpar[4] );
-	printf("dpar[4]/dpar[2] = %e\n", dpar[4]/dpar[2] );
-	printf("Euclidean norm of generated vector dpar[6] = %e\n", dpar[6] );
+	printf("\n%% Number of iterations: %d\n" ,itercount);
+	printf("\n%% final residual nrm2: %e\n" ,final_residual_nrm2);
+	printf("\n%% dvar: %e\n" ,dvar);
+	printf("%% RCI_request = %d line = %d\n", RCI_request, __LINE__);
+	printf("%% Euclidean norm of initial residual dpar[2] = %e\n", dpar[2] );
+	printf("%% Euclidean norm of current residual dpar[4] = %e\n", dpar[4] );
+	printf("%% dpar[4]/dpar[2] = %e\n", dpar[4]/dpar[2] );
+	printf("%% Euclidean norm of generated vector dpar[6] = %e\n", dpar[6] );
 	//printf("\nsoution error_nrm2: %e\n" ,solution_error_nrm2);
-	printf("\npreconditioner fabs(ref_norm2-nrm2) = %e\n", fabs(ref_norm2-nrm2) );
+	printf("\n%% preconditioner fabs(ref_norm2-nrm2) = %e\n", fabs(ref_norm2-nrm2) );
 	printf("\n");
-	printf("csrilu0_wall = %e\n", ompwcsrilu0time);
-	printf("fgmres_wall = %e\n", ompwfgmrestime);
+	printf("%% csrilu0_wall = %e\n", ompwcsrilu0time);
+	printf("%% fgmres_wall = %e\n", ompwfgmrestime);
 
 	
 	cvar='N';
@@ -875,11 +879,11 @@ COMPLETE:   ipar[12]=0;
 	i=1;
 	daxpy(&ivar, &dvar, rhs_org.val, &i, residual, &i);
 	final_residual_nrm2 = dnrm2(&ivar,residual,&i);
-	printf("\nfinal residual nrm2 from original system: %e\n" ,final_residual_nrm2);
+	printf("\n%% final residual nrm2 from original system: %e\n" ,final_residual_nrm2);
 	
 	gmres_log.original_residual = final_residual_nrm2;
 	
-	printf("\n\n%%scaling\tuser_gmres_tol_type\tuser_gmres_tol\t");
+	printf("\n\n%%s caling\tuser_gmres_tol_type\tuser_gmres_tol\t");
 	printf("user_restart\tuser_maxiter\t");
 	printf("user_precond_choice\tuser_precond_reduction\n");
 	
@@ -903,11 +907,11 @@ COMPLETE:   ipar[12]=0;
 	  gmres_log.original_residual );
 	
 	
-	printf("\n\n%d\t%d\t%e\t%d\t%d\t%d\t%e\n",
+	printf("\n\n%% %d\t%d\t%e\t%d\t%d\t%d\t%e\n",
 	  scaling, user_gmres_tol_type, user_gmres_tol, user_restart, user_maxiter,
 	  user_precond_choice, user_precond_reduction );
 	
-	printf("%d\t%e\t%e\t%e\t%e\t%e\t",
+	printf("%% %d\t%e\t%e\t%e\t%e\t%e\t",
 	  parilu_log.sweeps, parilu_log.precond_generation_time, 
 	  parilu_log.initial_residual, parilu_log.initial_nonlinear_residual,
 	  parilu_log.residual, parilu_log.nonlinear_residual );
@@ -945,10 +949,10 @@ COMPLETE:   ipar[12]=0;
 	//if(itercount==ref_nit && fabs(ref_norm2-nrm2)<1.e-6) {
 	//if(final_residual_nrm2<1.e-6 && solution_error_nrm2<1.e-6 && fabs(ref_norm2-nrm2)<1.e-6) {
 	if(final_residual_nrm2<1.e-6 && fabs(ref_norm2-nrm2)<1.e-6) {
-	  printf("--------------------------------------------------------\n");
-	  printf("C example of FGMRES with ILU0 preconditioner \n");
-	  printf("has successfully PASSED all stages of computations\n");
-	  printf("--------------------------------------------------------\n");
+	  printf("%% --------------------------------------------------------\n");
+	  printf("%% C example of FGMRES with ILU0 preconditioner \n");
+	  printf("%% has successfully PASSED all stages of computations\n");
+	  printf("%% --------------------------------------------------------\n");
     free( ia );
 	  free( ja );
 	  free( A );
@@ -972,14 +976,14 @@ COMPLETE:   ipar[12]=0;
 	}
 	else
 	{
-	  printf("Probably, the preconditioner was computed incorrectly:\n");
-	  printf("Either the preconditioner norm %e differs from the expected norm %e\n",nrm2,ref_norm2);
+	  printf("%% Probably, the preconditioner was computed incorrectly:\n");
+	  printf("%% Either the preconditioner norm %e differs from the expected norm %e\n",nrm2,ref_norm2);
 	  printf("and/or the final_residual_nrm2 %e is greater than %e\n",final_residual_nrm2,1.e-6);
 	  //printf("and/or the solution_error_nrm2 %e is greater than %e\n",solution_error_nrm2,1.e-6);
 	  //printf("and/or the number of iterations %d differs from the expected number %d\n",itercount,ref_nit);
-	  printf("-------------------------------------------------------------------\n");
-	  printf("Unfortunately, FGMRES+ILU0 C example has FAILED\n");
-	  printf("-------------------------------------------------------------------\n");
+	  printf("%% -------------------------------------------------------------------\n");
+	  printf("%% Unfortunately, FGMRES+ILU0 C example has FAILED\n");
+	  printf("%% -------------------------------------------------------------------\n");
     free( ia );
 	  free( ja );
 	  free( A );
@@ -1005,16 +1009,16 @@ FAILED:
   wfgmresend = omp_get_wtime();
   ompwfgmrestime = (dataType) (wfgmresend-wfgmresstart);
 	final_residual_nrm2 = dnrm2(&ivar, residual, &incx );
-	printf("The solver has returned the ERROR code %d \n", RCI_request);
-	printf("\nNumber of iterations: %d\n" ,itercount);
-	printf("\nfinal residual nrm2: %e\n" ,final_residual_nrm2);
-	printf("\ndvar: %e\n" ,dvar);
-	printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
-	printf("Euclidean norm of initial residual dpar[2] = %e\n", dpar[2] );
-	printf("Euclidean norm of current residual dpar[4] = %e\n", dpar[4] );
-	printf("dpar[4]/dpar[2] = %e\n", dpar[4]/dpar[2] );
-	printf("Euclidean norm of generated vector dpar[6] = %e\n", dpar[6] );
-	printf("\npreconditioner fabs(ref_norm2-nrm2) = %e\n", fabs(ref_norm2-nrm2) );
+	printf("%% The solver has returned the ERROR code %d \n", RCI_request);
+	printf("\n%% Number of iterations: %d\n" ,itercount);
+	printf("\n%% final residual nrm2: %e\n" ,final_residual_nrm2);
+	printf("\n%% dvar: %e\n" ,dvar);
+	printf("%% RCI_request = %d line = %d\n", RCI_request, __LINE__);
+	printf("%% Euclidean norm of initial residual dpar[2] = %e\n", dpar[2] );
+	printf("%% Euclidean norm of current residual dpar[4] = %e\n", dpar[4] );
+	printf("%% dpar[4]/dpar[2] = %e\n", dpar[4]/dpar[2] );
+	printf("%% Euclidean norm of generated vector dpar[6] = %e\n", dpar[6] );
+	printf("\n%% preconditioner fabs(ref_norm2-nrm2) = %e\n", fabs(ref_norm2-nrm2) );
 	printf("\n");
 	printf("csrilu0_wall = %e\n", ompwcsrilu0time);
 	printf("fgmres_wall = %e\n", ompwfgmrestime);
