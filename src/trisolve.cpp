@@ -265,7 +265,7 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
     dataType tmp = 0.0;
     const dataType zero = dataType(0.0);
     
-    while (step > tol && isfinite(step) ) {
+    while (step > tol && std::isfinite(step) ) {
         
       step = zero;
       #pragma omp parallel
@@ -306,7 +306,7 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
     dataType tmp = 0.0;
     const dataType zero = dataType(0.0);
     
-    while (step > tol && isfinite(step) ) {
+    while (step > tol && std::isfinite(step) ) {
         
       step = zero;
       #pragma omp parallel
