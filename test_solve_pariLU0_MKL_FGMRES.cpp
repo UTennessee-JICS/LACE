@@ -247,6 +247,10 @@ int main(int argc, char* argv[])
   data_d_matrix L = {Magma_CSRL};
   data_d_matrix U = {Magma_CSCU};
   data_d_matrix LU = {Magma_CSR};
+  L.diagorder_type = Magma_UNITY;
+  L.fill_mode = MagmaLower;
+  U.diagorder_type = Magma_VALUE;
+  U.fill_mode = MagmaUpper;
   //dataType user_precond_reduction = 1.0e-15;
 	
 /*---------------------------------------------------------------------------
@@ -781,7 +785,12 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
 	  
 	  //printf("%% %d\t%e\t%e\n", 
 	  //  itercount, dpar[4]/dpar[2], dpar[6] );
-	  printf("MKL_FGMRES_search(%d) = %.16e;\n", itercount+1, dpar[4]);  
+	  if ( user_precond_choice == 0 ) {
+	    printf("MKL_FGMRES_parilu_mkltrsv_search(%d) = %.16e;\n", itercount+1, dpar[4]);  
+    }
+	  else {
+	    printf("MKL_FGMRES_mkltrsv_search(%d) = %.16e;\n", itercount+1, dpar[4]);  
+    }
     if (dpar[6]<1.0E-14) goto COMPLETE;
 		else goto ONE;
 	}
@@ -883,7 +892,7 @@ COMPLETE:   ipar[12]=0;
 	
 	gmres_log.original_residual = final_residual_nrm2;
 	
-	printf("\n\n%%s caling\tuser_gmres_tol_type\tuser_gmres_tol\t");
+	printf("\n\n%% scaling\tuser_gmres_tol_type\tuser_gmres_tol\t");
 	printf("user_restart\tuser_maxiter\t");
 	printf("user_precond_choice\tuser_precond_reduction\n");
 	

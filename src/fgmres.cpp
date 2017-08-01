@@ -350,7 +350,12 @@ data_fgmres(
       }
       
       //printf("%%======= FGMRES search %d fabs(givens.val[(%d+1)]) = %.16e =======\n", search, search, fabs(givens.val[(search+1)]));  
-      printf("FGMRES_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));  
+      if ( gmres_par->user_csrtrsv_choice == 0 ) {
+        printf("FGMRES_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));  
+      }
+      else {
+        printf("FGMRES_partrsv_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));  
+      }
       // update the solution
       // solve the least squares problem
       if ( fabs(givens.val[(search+1)]) < rtol  || (search == (search_max-1)) ) {
