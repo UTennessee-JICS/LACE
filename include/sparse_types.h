@@ -159,6 +159,8 @@ typedef struct data_z_gmres_param
     data_int_t             reorth;         // 0 -- Brown/Hindmarsh condition (default)
                                            // 1 -- Never reorthogonalize (not recommended)
                                            // 2 -- Always reorthogonalize (not cheap!)
+    data_int_t             user_csrtrsv_choice; // 0 -- MKL CSRTRSV
+                                                // 1 -- ParCSRTRSV
 } data_d_gmres_param;
 
 

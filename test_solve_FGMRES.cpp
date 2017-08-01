@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
     printf("Usage %s <matrix> <rhs vector> <output directory> "
             "[GMRES_tolerance_type] [GMRES_tolerance] "
             "[max_search_dir] [reorth] "
-            "[PariLU tolerance]\n", argv[0]);
+            "[PariLU tolerance] [TRSV_type]\n", argv[0]);
     return 1;
   }
   else {
@@ -108,6 +108,13 @@ int main(int argc, char* argv[])
   if ( argc >= 9 ) {
     user_precond_reduction = atof( argv[8] );
     printf("user_precond_reduction = %e\n", user_precond_reduction);
+  }
+  
+  // Set ParCSRTRSV  
+  gmres_param.user_csrtrsv_choice = 1;
+  if ( argc >= 10 ) {
+    gmres_param.user_csrtrsv_choice = atoi( argv[9] );
+    printf("user_csrtrsv_choice = %d\n", gmres_param.user_csrtrsv_choice);
   }
   
   // generate preconditioner
