@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <algorithm>
 #include <ctime> 
+#include <math.h>
 
 extern "C" 
 int
