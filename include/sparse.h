@@ -479,6 +479,12 @@ data_norm_diff_vec(
   data_d_matrix* B,
   dataType* norm ); 
 
+int
+data_infinity_norm(
+  data_d_matrix *A,
+  int *imax,
+  dataType *max );
+
 //======================================
 // dense operations
 //======================================
@@ -919,6 +925,12 @@ data_inverse_bcsr(
 
 int
 data_gmres_basic(
+    data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
+    data_d_gmres_param *gmres_par,
+    data_d_gmres_log *gmres_log );
+
+int
+data_gmres_basic_orthog(
     data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
     data_d_gmres_param *gmres_par,
     data_d_gmres_log *gmres_log );
