@@ -462,6 +462,32 @@ data_zilures_bcsr(
   return info;
 }
 
+
+extern "C" 
+int
+data_infinity_norm(
+  data_d_matrix *A,
+  int *imax,
+  dataType *max )
+{
+  int i,j;
+  *max = 0.0;
+  dataType tmp = 0.0;
+  
+  for (i=0; i<A->num_rows; i++) {
+    tmp = 0.0;
+    for (j=0; j<A->num_cols; j++) {
+      tmp += fabs( A->val[i*A->ld+j] );
+    }
+    if ( (*max) < tmp ) {
+      (*max) = tmp;
+      (*imax) = i;
+    }
+  }
+  
+  return DEV_SUCCESS;
+}
+
 extern "C" 
 int
 data_maxfabs_csr(
