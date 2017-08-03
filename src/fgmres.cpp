@@ -302,6 +302,17 @@ data_fgmres(
         printf("%%\t******* happy breakdown **********\n"); 
       }
       
+      // Monitor Orthogonality Error of Krylov search Space
+      dataType ortherr = 0.0;
+      int imax = 0;
+      data_orthogonality_error( &krylov, &ortherr, &imax, search );
+      if ( gmres_par->user_csrtrsv_choice == 0 ) {
+        printf("FGMRES_mkltrsv_ortherr(%d) = %.16e;\n", search+1, ortherr); 
+      }
+      else {
+        printf("FGMRES_partrsv_ortherr(%d) = %.16e;\n", search+1, ortherr); 
+      }
+      
       // Givens rotations
       for ( int j = 0; j<search; j++ ) {
         delta = h.val[idx(j,search,h.ld)];

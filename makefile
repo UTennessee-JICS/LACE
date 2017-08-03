@@ -446,6 +446,7 @@ test_solve_FGMRES: test_solve_FGMRES.cpp
 	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
 	src/parilu_v0_3.cpp \
 	src/trisolve.cpp \
+	src/orthogonality_error.cpp \
 	src/fgmres.cpp \
 	test_solve_FGMRES.cpp \
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
