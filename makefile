@@ -462,6 +462,7 @@ test_solve_GMRES_basic_orthog: test_solve_GMRES_basic_orthog.cpp
 	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
 	src/parilu_v0_3.cpp \
 	src/trisolve.cpp \
+	src/orthogonality_error.cpp \
 	src/gmres_basic_orthog.cpp \
 	test_solve_GMRES_basic_orthog.cpp \
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \

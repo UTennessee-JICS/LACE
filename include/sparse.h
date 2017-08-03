@@ -955,6 +955,16 @@ data_fgmres(
     data_d_gmres_param *gmres_par,
     data_d_gmres_log *gmres_log );
 
+//======================================
+// Error assesments
+//======================================
+
+void
+data_orthogonality_error( data_d_matrix* krylov,  
+  dataType* ortherr,
+  int* imax,
+  int search ); 
+
 #ifdef __cplusplus
 }
 #endif

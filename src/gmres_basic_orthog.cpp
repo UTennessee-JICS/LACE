@@ -47,10 +47,7 @@
                 preconditioner
 
     @ingroup datasparse_linsolvers
-    ********************************************************************/
-
-#define idx(i,j,n)  ((i)+(j)*(n))
-  
+    ********************************************************************/  
     
     
 extern "C" 
@@ -205,21 +202,26 @@ data_gmres_basic_orthog(
       }
       
       // Monitor Orthogonality Error of Krylov search Space
-      data_d_matrix eye={Magma_DENSE};
-      data_zvinit( &eye, (search+1), (search+1), zero );
-      for (int e=0; e<eye.ld; e++) {
-        eye.val[idx(e,e,eye.ld)] = 1.0; 
-      }
-      data_dgemm_mkl( krylov.major, MagmaTrans, MagmaNoTrans,
-        (search+1), (search+1), (search+1),
-        one, krylov.val, krylov.ld,
-        krylov.val, krylov.ld,
-        negone, eye.val, eye.ld );
+      //data_d_matrix eye={Magma_DENSE};
+      //data_zvinit( &eye, (search+1), (search+1), zero );
+      //for (int e=0; e<eye.ld; e++) {
+      //  eye.val[idx(e,e,eye.ld)] = 1.0; 
+      //}
+      //data_dgemm_mkl( krylov.major, MagmaTrans, MagmaNoTrans,
+      //  (search+1), (search+1), (search+1),
+      //  one, krylov.val, krylov.ld,
+      //  krylov.val, krylov.ld,
+      //  negone, eye.val, eye.ld );
+      //dataType ortherr = 0.0;
+      //int imax = 0;
+      //data_infinity_norm( &eye, &imax, &ortherr );
+      //printf("GMRES_basic_ortherr(%d) = %.16e;\n", search+1, ortherr);  
+      //data_zmfree( &eye );
+      
       dataType ortherr = 0.0;
       int imax = 0;
-      data_infinity_norm( &eye, &imax, &ortherr );
+      data_orthogonality_error( &krylov, &ortherr, &imax, search );
       printf("GMRES_basic_ortherr(%d) = %.16e;\n", search+1, ortherr);  
-      data_zmfree( &eye );
       
       // Givens rotations
       for ( int j = 0; j<search; j++ ) {

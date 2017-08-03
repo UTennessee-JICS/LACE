@@ -65,6 +65,8 @@
   #define GMRESDBG(f_, ...) {\
     (void)0; }
 #endif    
+
+#define idx(i,j,n)  ((i)+(j)*(n))
   
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
