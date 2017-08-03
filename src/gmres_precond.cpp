@@ -57,8 +57,6 @@
     @ingroup datasparse_linsolvers
     ********************************************************************/
 
-#define idx(i,j,n)  ((i)+(j)*(n))
-  
     
     
 extern "C" 
