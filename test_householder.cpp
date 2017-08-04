@@ -14,6 +14,7 @@
 
 #define size 128
 
+
 //+++++++
 #define EXPECT_ITERABLE_DOUBLE_EQ( TYPE, ref, target) \
 { \
@@ -39,6 +40,16 @@ EXPECT_TRUE( tarIter == _target.end() ) \
        #target ; \
 }
 //+++++++
+
+#define MY_EXPECT_ARRAY_DOUBLE_EQ( length, ref, target) \
+{ \
+  unsigned int i = 0; \
+  for(i=0; i<length; i++) { \
+    if (ref[i] - target[i] > 2.0e-14) \
+      printf("Arrays ref[%d] = %.16e  target[%d] = %.16e" \
+        " differ\n", i, ref[i], i, target[i] );  \
+  } \
+}
 
 //+++++++
 #define EXPECT_ARRAY_DOUBLE_EQ( length, ref, target) \
@@ -124,10 +135,16 @@ int main(int argc, char* argv[])
   
   printf("Adense\n");
   data_zdisplay_dense( &Adense );
+  data_d_matrix U_check = {Magma_DENSE};
+  CHECK( data_z_dense_mtx( &U_check, MagmaColMajor, "magic7_Householder_U.mtx" ) );
   printf("U\n");
   data_zdisplay_dense( &U );
+  MY_EXPECT_ARRAY_DOUBLE_EQ( U.nnz, U_check.val, U.val );
+  data_d_matrix R_check = {Magma_DENSE};
+  CHECK( data_z_dense_mtx( &R_check, MagmaColMajor, "magic7_Householder_R.mtx" ) );
   printf("R\n");
   data_zdisplay_dense( &R );
+  MY_EXPECT_ARRAY_DOUBLE_EQ( R.nnz, R_check.val, R.val );
   
   data_zmfree( &Adense );
 	data_zmfree( &U );
