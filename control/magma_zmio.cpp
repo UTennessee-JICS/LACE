@@ -1252,7 +1252,7 @@ data_z_dense_mtx(
   A->true_nnz = A->nnz;
   if (major == MagmaRowMajor)
     A->ld = A->num_cols;
-  else if (major == MagmaRowMajor)
+  else if (major == MagmaColMajor)
     A->ld = A->num_rows;
   
   return info;

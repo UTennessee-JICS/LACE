@@ -956,6 +956,28 @@ data_fgmres(
     data_d_gmres_log *gmres_log );
 
 //======================================
+// Orthogonalizations
+//======================================
+
+void
+data_housegen( int n,
+  dataType* X,  
+  dataType* u,
+  dataType* nu ); 
+
+void
+data_hqrd( data_d_matrix* X,  
+  data_d_matrix* U,
+  data_d_matrix* R );
+
+void
+data_modified_gram_schmidt( int search,
+  data_d_matrix* krylov,  
+  data_d_matrix* h,
+  data_d_matrix* u );
+
+
+//======================================
 // Error assesments
 //======================================
 

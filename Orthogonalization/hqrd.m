@@ -13,6 +13,6 @@ function [U,R] = hqrd(X)
         [U(k:n,k),R(k,k)] = housegen(X(k:n,k));
         v = U(k:n,k)'*X(k:n,k+1:p);
         X(k:n,k+1:p) = X(k:n,k+1:p) - U(k:n,k)*v;
-        R(k,k+1:p) = X(k,k+1:p);
+        R(k,k+1:p) = X(k,k+1:p)
     end
 end
