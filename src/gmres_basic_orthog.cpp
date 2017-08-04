@@ -169,37 +169,39 @@ data_gmres_basic_orthog(
         }
       }
       
+      //// Modified Gram-Schmidt
+      //for ( int j=0; j <= search; j++ ) {
+      //  h.val[idx(j,search,h.ld)] = 0.0;
+      //  for ( int i=0; i<n; i++ ) {
+      //    h.val[idx(j,search,h.ld)] = h.val[idx(j,search,h.ld)] +
+      //      krylov.val[idx(i,j,krylov.ld)]*u.val[i];
+      //  }
+      //  for ( int i=0; i<n; i++ ) {
+      //    u.val[i] = u.val[i] 
+      //      - h.val[idx(j,search,h.ld)]*krylov.val[idx(i,j,krylov.ld)];
+      //    GMRESDBG("\tu.val[%d] = %e\n", i, u.val[i]);  
+      //  }
+      //}
+      //h.val[idx((search+1),search,h.ld)] = data_dnrm2( n, u.val, 1 );
+      //
+      //GMRESDBG("h.val[idx(search,search,h.ld)] =%e\n", h.val[idx(search,search,h.ld)]);
+      //GMRESDBG("h.val[idx((search+1),search,h.ld)] =%e\n", h.val[idx((search+1),search,h.ld)]);  
+      //
+      //
+      //// Watch out for happy breakdown
+      //if ( fabs(h.val[idx((search+1),search,h.ld)]) > 0 ) {
+      //   for ( int i=0; i<n; i++ ) {
+      //    krylov.val[idx(i,(search+1),krylov.ld)] = 
+      //      u.val[i]/h.val[idx((search+1),search,h.ld)];
+      //    GMRESDBG("--\tu.val[%d] = %e\n", i, u.val[i]);
+      //    GMRESDBG("--\tkrylov.val[idx(%d,%d,%d)] = %e\n", i,(search+1),krylov.ld, krylov.val[idx(i,(search+1),krylov.ld)]);
+      //  }
+      //}
+      //else {
+      //  printf("%%\t******* happy breakdown **********\n"); 
+      //}
       // Modified Gram-Schmidt
-      for ( int j=0; j <= search; j++ ) {
-        h.val[idx(j,search,h.ld)] = 0.0;
-        for ( int i=0; i<n; i++ ) {
-          h.val[idx(j,search,h.ld)] = h.val[idx(j,search,h.ld)] +
-            krylov.val[idx(i,j,krylov.ld)]*u.val[i];
-        }
-        for ( int i=0; i<n; i++ ) {
-          u.val[i] = u.val[i] 
-            - h.val[idx(j,search,h.ld)]*krylov.val[idx(i,j,krylov.ld)];
-          GMRESDBG("\tu.val[%d] = %e\n", i, u.val[i]);  
-        }
-      }
-      h.val[idx((search+1),search,h.ld)] = data_dnrm2( n, u.val, 1 );
-      
-      GMRESDBG("h.val[idx(search,search,h.ld)] =%e\n", h.val[idx(search,search,h.ld)]);
-      GMRESDBG("h.val[idx((search+1),search,h.ld)] =%e\n", h.val[idx((search+1),search,h.ld)]);  
-      
-      
-      // Watch out for happy breakdown
-      if ( fabs(h.val[idx((search+1),search,h.ld)]) > 0 ) {
-         for ( int i=0; i<n; i++ ) {
-          krylov.val[idx(i,(search+1),krylov.ld)] = 
-            u.val[i]/h.val[idx((search+1),search,h.ld)];
-          GMRESDBG("--\tu.val[%d] = %e\n", i, u.val[i]);
-          GMRESDBG("--\tkrylov.val[idx(%d,%d,%d)] = %e\n", i,(search+1),krylov.ld, krylov.val[idx(i,(search+1),krylov.ld)]);
-        }
-      }
-      else {
-        printf("%%\t******* happy breakdown **********\n"); 
-      }
+      data_modified_gram_schmidt( search, &krylov, &h, &u );
       
       // Monitor Orthogonality Error of Krylov search Space
       //data_d_matrix eye={Magma_DENSE};
@@ -218,6 +220,7 @@ data_gmres_basic_orthog(
       //printf("GMRES_basic_ortherr(%d) = %.16e;\n", search+1, ortherr);  
       //data_zmfree( &eye );
       
+      // Monitor Orthogonality Error of Krylov search Space
       dataType ortherr = 0.0;
       int imax = 0;
       data_orthogonality_error( &krylov, &ortherr, &imax, search );
