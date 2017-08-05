@@ -15,6 +15,7 @@
 \usepackage{subcaption}
 \usepackage{multirow}
 \usepackage{rotating}
+\usepackage{pdflscape}
 
 \title{Linear Algebra for Computational Engineering}
 \date{}
@@ -59,23 +60,28 @@ As an example of a specific implementation, a more detailed view of the Generali
 %\vspace{-10pt}
 %\label{fig:LACE}
 %\end{figure}
-
-\begin{sidewaysfigure}[ht]\centering
-  \includegraphics[width=\columnwidth]{../images/LACE_1b.png}
+\begin{landscape}
+\begin{figure}[ht]\centering
+%\begin{sidewaysfigure}[ht]\centering
+  \includegraphics[width=\columnwidth]{../images/LACE_1c.png}
   \caption{Outline of significant features of LACE that have been realized or are planned for future release.}
   \vspace{-10pt}
   \label{fig:LACE}
-\end{sidewaysfigure}
-
+\end{figure}
+%\end{sidewaysfigure}
+\end{landscape}
 %\FloatBarrier
 %\section{(P/F)GMRES}
-
-\begin{sidewaysfigure}[ht]\centering
+\begin{landscape}
+\begin{figure}[ht]\centering
+%\begin{sidewaysfigure}[ht]\centering
   \includegraphics[width=\columnwidth]{../images/GMRES_1b.png}
   \caption{Outline of Generalized Minimal Residual Method implementation within LACE.}
   \vspace{-10pt}
   \label{fig:LACE_GMRES}
-\end{sidewaysfigure}
+\end{figure}
+%\end{sidewaysfigure}
+\end{landscape}
 
 \FloatBarrier
 \section{Test Problem}
