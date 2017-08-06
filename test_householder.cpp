@@ -146,9 +146,66 @@ int main(int argc, char* argv[])
   data_zdisplay_dense( &R );
   MY_EXPECT_ARRAY_DOUBLE_EQ( R.nnz, R_check.val, R.val );
   
+  
+  data_d_matrix Q = {Magma_DENSE};
+  data_zvinit( &Q, R.num_rows, R.num_cols, zero );
+  //CHECK( data_zmconvert( R, &QR, Magma_DENSE, Magma_DENSE ) );
+  data_d_matrix identity = {Magma_DENSE};
+  data_zvinit( &identity, R.num_rows, R.num_cols, zero );
+  for (int e=0; e<identity.ld; e++) {
+    identity.val[idx(e,e,identity.ld)] = 1.0; 
+  }
+  //data_d_matrix E = {Magma_DENSE};
+  CHECK( data_zmconvert( identity, &Q, Magma_DENSE, Magma_DENSE ) );
+  //dataType* uk;
+  //LACE_CALLOC(uk, R.num_rows);
+  data_d_matrix tmp = {Magma_DENSE}; 
+  //data_zvinit( &tmp, R.num_rows, R.num_cols, zero );
+  CHECK( data_zmconvert( Q, &tmp, Magma_DENSE, Magma_DENSE ) );
+  
+  printf("Q\n");
+  data_zdisplay_dense( &Q );
+  
+  for (int k=U.num_cols-1; k>=0; k--) {
+    //data_dgemm_mkl( MagmaColMajor, Magma );
+    printf("___K=%d\n", k);
+    data_housegen_matrix( U.num_rows,
+      &(U.val[idx(0,k,U.ld)]),
+      U.ld,
+      tmp.val,
+      tmp.ld,
+      Q.val,
+      Q.ld );
+    free( tmp.val );
+    CHECK( data_zmconvert( Q, &tmp, Magma_DENSE, Magma_DENSE ) );
+    
+    printf("Z\n");
+    data_zdisplay_dense( &Q );
+  }
+  
+  printf("Q\n");
+  data_zdisplay_dense( &Q );
+  
+  printf("U\n");
+  data_zdisplay_dense( &U );
+  
+  data_d_matrix QR = {Magma_DENSE}; 
+  data_zvinit( &QR, R.num_rows, R.num_cols, zero );
+  
+  data_dgemm_mkl( MagmaColMajor, MagmaNoTrans, MagmaNoTrans,
+    R.num_rows, R.num_rows, R.num_rows,
+    one, Q.val, Q.ld, 
+    R.val, R.ld, 
+    zero, QR.val, QR.ld );
+  
+  printf("QR\n");
+  data_zdisplay_dense( &QR );
+  
   data_zmfree( &Adense );
 	data_zmfree( &U );
   data_zmfree( &R );
+  data_zmfree( &Q );
+  data_zmfree( &QR );
   
   free( v );
   

@@ -482,7 +482,6 @@ test_householder: test_householder.cpp
 	src/parilu_v0_3.cpp \
 	src/trisolve.cpp \
 	src/orthogonality_error.cpp \
-	src/gmres_basic_orthog.cpp \
 	src/householder.cpp \
 	test_householder.cpp \
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \

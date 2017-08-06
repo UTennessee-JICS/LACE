@@ -158,3 +158,44 @@ data_hqrd( data_d_matrix* X,
   }
   
 }
+
+extern "C"
+void
+data_housegen_matrix( int n,
+  dataType* u,
+  int uld,
+  dataType* x,
+  int xld,
+  dataType* H,
+  int Hld )
+{
+  dataType negone = -1.0;
+  dataType zero = 0.0;
+  dataType one = 1.0;
+  dataType* tmp;
+  LACE_CALLOC( tmp, n );
+  dataType tmp2;
+  //  H = @(u,x) x - u*(u'*x);
+  
+  // u'*x
+  for (int i=0; i<n; i++) {
+    for (int j=0; j<n; j++) {
+      tmp[i] = tmp[i] + u[j]*x[idx(j,i,xld)];
+    }
+  }
+  
+  for (int i=0; i<n; i++) {
+    printf("u[%d] = %e tmp[%d] = %e\n", i, u[i], i, tmp[i]);
+  } 
+  
+  // x - u*(u'*x)
+  printf("temp2=\n");
+  for (int i=0; i<n; i++) {
+    for (int j=0; j<n; j++) {
+      H[idx(i,j,Hld)] = x[idx(i,j,xld)] - u[i]*tmp[j];
+      printf("%e  ", u[i]*tmp[j]);
+    }
+    printf("\n");
+  }
+  
+}
