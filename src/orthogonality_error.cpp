@@ -15,7 +15,7 @@
     Purpose
     -------
 
-    Assess the orthogonality of the (search+1)x(search+1) portion of a matrix.
+    Assess the orthogonality of the upper-left search x search portion of a matrix.
     
 
     Arguments
@@ -54,13 +54,13 @@ data_orthogonality_error( data_d_matrix* krylov,
   dataType negone = -1.0;
      
   data_d_matrix eye={Magma_DENSE};
-  data_zvinit( &eye, (search+1), (search+1), zero );
+  data_zvinit( &eye, search, search, zero );
   for (int e=0; e<eye.ld; e++) {
     eye.val[idx(e,e,eye.ld)] = 1.0; 
   }
   
   data_dgemm_mkl( krylov->major, MagmaTrans, MagmaNoTrans,
-    (search+1), (search+1), (search+1),
+    search, search, search,
     one, krylov->val, krylov->ld,
     krylov->val, krylov->ld,
     negone, eye.val, eye.ld );

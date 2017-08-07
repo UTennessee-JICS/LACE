@@ -305,7 +305,7 @@ data_fgmres(
       // Monitor Orthogonality Error of Krylov search Space
       dataType ortherr = 0.0;
       int imax = 0;
-      data_orthogonality_error( &krylov, &ortherr, &imax, search );
+      data_orthogonality_error( &krylov, &ortherr, &imax, (search+1) );
       if ( gmres_par->user_csrtrsv_choice == 0 ) {
         printf("FGMRES_mkltrsv_ortherr(%d) = %.16e;\n", search+1, ortherr); 
       }

@@ -203,7 +203,7 @@ int main(int argc, char* argv[])
   printf( "qr_infinityNorm = %e\n", qr_infinityNorm );
   
   printf( "Q.num_cols = %d Q.ld = %d\n", Q.num_cols, Q.ld );
-  data_orthogonality_error( &Q, &ortherr, &imax, (Q.num_cols-1) ); 
+  data_orthogonality_error( &Q, &ortherr, &imax, Q.num_cols ); 
   printf( "ortherr = %e\n", ortherr );
   
   data_zmfree( &Adense );
