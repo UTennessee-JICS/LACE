@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/**
+/*******************************************************************************
     Purpose
     -------
 
@@ -41,7 +41,7 @@
                 norm of X
 
     @ingroup datasparse_orthogonality
-    ********************************************************************/
+*******************************************************************************/
 
 
 extern "C" 
@@ -54,7 +54,6 @@ data_housegen( int n,
   
   dataType eps = nextafter(0.0,1.0);
     
-  //LACE_CALLOC( u, n );
   for (int i=0; i<n; i++) {
     u[i] = X[i];
   }
@@ -82,7 +81,7 @@ data_housegen( int n,
 }
 
 
-/**
+/*******************************************************************************
     Purpose
     -------
 
@@ -113,7 +112,7 @@ data_housegen( int n,
                 norm of X
 
     @ingroup datasparse_orthogonality
-    ********************************************************************/
+*******************************************************************************/
 
 
 extern "C" 
@@ -122,8 +121,10 @@ data_hqrd( data_d_matrix* X,
   data_d_matrix* U,
   data_d_matrix* R ) 
 {
-  printf("data_hqrd begin\n X\n");
-  data_zdisplay_dense( X );
+  ORTHOGDBG("data_hqrd begin\n X\n");
+  #ifdef DEBUG_ORTHOG
+    data_zdisplay_dense( X );
+  #endif
   
   int length = 0;
   int n = X->num_rows;
@@ -136,22 +137,20 @@ data_hqrd( data_d_matrix* X,
     for ( int j=k+1; j<p; j++ ) {
       dataType colsum = 0.0;
       for ( int i=k; i<n; i++ ) {
-        printf("U[%d,%d] = %e X[%d,%d] = %e\n", i, k, U->val[idx(i,k,U->ld)], i, j, X->val[idx(i,j,X->ld)] );
+        ORTHOGDBG("U[%d,%d] = %e X[%d,%d] = %e\n", i, k, U->val[idx(i,k,U->ld)], i, j, X->val[idx(i,j,X->ld)] );
         colsum = colsum + U->val[idx(i,k,U->ld)] * X->val[idx(i,j,X->ld)];
       }
       v[j] = colsum;
-      printf("k=%d v[%d] = %e\n", k, j, v[j] );
+      ORTHOGDBG("k=%d v[%d] = %e\n", k, j, v[j] );
     }
     for ( int i=k; i<n; i++ ) {
       length = n - k;
       for ( int j=k+1; j<p; j++ ) {
         X->val[idx(i,j,X->ld)] = X->val[idx(i,j,X->ld)] - U->val[idx(i,k,U->ld)] * v[j];
-        //R->val[idx(i,j,X->ld)] = X->val[idx(i,j,X->ld)];
       }
     }
     for ( int j=k+1; j<p; j++ ) {
-      printf("R[%d,%d] = %e\n", k, j, R->val[idx(k,j,X->ld)] );
-      //X->val[idx(i,j,X->ld)] = X->val[idx(i,j,X->ld)] - U->val[idx(i,k,U->ld)] * v[j];
+      ORTHOGDBG("R[%d,%d] = %e\n", k, j, R->val[idx(k,j,X->ld)] );
       R->val[idx(k,j,X->ld)] = X->val[idx(k,j,X->ld)];
     }
     
@@ -159,9 +158,51 @@ data_hqrd( data_d_matrix* X,
   
 }
 
+
+/*******************************************************************************
+    Purpose
+    -------
+    
+    Apply one Householder reflection.
+    
+
+    Arguments
+    ---------
+
+    @param[in]
+    n           int
+                number of rows elements in X
+                
+    @param[in]
+    u           dataType *
+                vector containing reflection
+                
+    @param[in]
+    uld         int
+                leading dimension of the matrix U containing u
+
+    @param[in]
+    x           dataType *
+                vector to be reflected
+
+    @param[in]
+    xld         int
+                leading dimension of the matrix X containing x
+                
+    @param[out]
+    H           dataType *
+                reflected matrix
+                
+    @param[in]
+    Hld         int
+                leading dimension of the matrix H
+
+    @ingroup datasparse_orthogonality
+*******************************************************************************/
+
 extern "C"
 void
-data_housegen_matrix( int n,
+data_house_apply_single( int n,
   dataType* u,
   int uld,
   dataType* x,
@@ -184,18 +225,90 @@ data_housegen_matrix( int n,
     }
   }
   
-  for (int i=0; i<n; i++) {
-    printf("u[%d] = %e tmp[%d] = %e\n", i, u[i], i, tmp[i]);
-  } 
+  #ifdef DEBUG_ORTHOG
+    for (int i=0; i<n; i++) {
+      printf("u[%d] = %e tmp[%d] = %e\n", i, u[i], i, tmp[i]);
+    } 
+  #endif
   
   // x - u*(u'*x)
-  printf("temp2=\n");
+  ORTHOGDBG("temp2=\n");
   for (int i=0; i<n; i++) {
     for (int j=0; j<n; j++) {
       H[idx(i,j,Hld)] = x[idx(i,j,xld)] - u[i]*tmp[j];
-      printf("%e  ", u[i]*tmp[j]);
+      ORTHOGDBG("%e  ", u[i]*tmp[j]);
     }
-    printf("\n");
+    ORTHOGDBG("\n");
   }
   
+}
+
+/*******************************************************************************
+    Purpose
+    -------
+    
+    Apply Householder reflections.
+    Z = data_house_apply(U,X), with U from house_qr
+    computes Q*X without actually computing Q.
+    
+    Q = data_house_apply(U,I), where I is an identity matrix.
+
+    Arguments
+    ---------
+
+    @param[in]
+    X           dataType *
+                vector to be reflected
+
+    @param[in]
+    u           dataType *
+                reflected vector
+
+    @param[in]
+    nu          dataType *
+                norm of X
+
+    @ingroup datasparse_orthogonality
+*******************************************************************************/
+
+extern "C"
+void
+data_house_apply( data_d_matrix* U,
+  data_d_matrix* X,
+  data_d_matrix* Z )
+{
+  data_d_matrix tmp = {Magma_DENSE}; 
+  CHECK( data_zmconvert( *X, &tmp, Magma_DENSE, Magma_DENSE ) );
+  CHECK( data_zmconvert( *X, Z, Magma_DENSE, Magma_DENSE ) );
+  
+  
+  ORTHOGDBG("Z\n");
+  #ifdef DEBUG_ORTHOG
+    data_zdisplay_dense( Z );
+  #endif 
+  
+  for (int k=U->num_cols-1; k>=0; k--) {
+    ORTHOGDBG("___K=%d\n", k);
+    data_house_apply_single( U->num_rows,
+      &(U->val[idx(0,k,U->ld)]),
+      U->ld,
+      tmp.val,
+      tmp.ld,
+      Z->val,
+      Z->ld );
+    
+    //****
+    // TODO: use pointer swapping between tmp.val and Z->val instead of 
+    // free and copy.
+    //****
+    free( tmp.val );
+    CHECK( data_zmconvert( *Z, &tmp, Magma_DENSE, Magma_DENSE ) );
+    
+    ORTHOGDBG("Z\n");
+    #ifdef DEBUG_ORTHOG
+      data_zdisplay_dense( Z );
+    #endif 
+  }
+  
+  data_zmfree( &tmp );
 }

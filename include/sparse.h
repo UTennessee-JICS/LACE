@@ -971,13 +971,18 @@ data_hqrd( data_d_matrix* X,
   data_d_matrix* R );
 
 void
-data_housegen_matrix( int n,
+data_house_apply_single( int n,
   dataType* u,
   int uld,
   dataType* x,
   int xld,
   dataType* H,
   int Hld );
+
+void
+data_house_apply( data_d_matrix* U,
+  data_d_matrix* X,
+  data_d_matrix* Z );
 
 void
 data_modified_gram_schmidt( int search,

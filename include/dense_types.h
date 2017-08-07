@@ -66,6 +66,15 @@
     (void)0; }
 #endif    
 
+#ifdef DEBUG_ORTHOG
+  #define ORTHOGDBG(f_, ...) {\
+    printf((f_), __VA_ARGS__);\
+    fflush(stdout);}
+#else
+  #define ORTHOGDBG(f_, ...) {\
+    (void)0; }
+#endif
+
 #define idx(i,j,n)  ((i)+(j)*(n))
   
 #define MIN(a,b) (((a)<(b))?(a):(b))

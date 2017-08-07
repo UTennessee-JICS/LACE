@@ -45,7 +45,7 @@ EXPECT_TRUE( tarIter == _target.end() ) \
 { \
   unsigned int i = 0; \
   for(i=0; i<length; i++) { \
-    if (ref[i] - target[i] > 2.0e-14) \
+    if (ref[i] - target[i] > 1.0e-13) \
       printf("Arrays ref[%d] = %.16e  target[%d] = %.16e" \
         " differ\n", i, ref[i], i, target[i] );  \
   } \
@@ -149,39 +149,13 @@ int main(int argc, char* argv[])
   
   data_d_matrix Q = {Magma_DENSE};
   data_zvinit( &Q, R.num_rows, R.num_cols, zero );
-  //CHECK( data_zmconvert( R, &QR, Magma_DENSE, Magma_DENSE ) );
   data_d_matrix identity = {Magma_DENSE};
   data_zvinit( &identity, R.num_rows, R.num_cols, zero );
   for (int e=0; e<identity.ld; e++) {
     identity.val[idx(e,e,identity.ld)] = 1.0; 
   }
-  //data_d_matrix E = {Magma_DENSE};
-  CHECK( data_zmconvert( identity, &Q, Magma_DENSE, Magma_DENSE ) );
-  //dataType* uk;
-  //LACE_CALLOC(uk, R.num_rows);
-  data_d_matrix tmp = {Magma_DENSE}; 
-  //data_zvinit( &tmp, R.num_rows, R.num_cols, zero );
-  CHECK( data_zmconvert( Q, &tmp, Magma_DENSE, Magma_DENSE ) );
   
-  printf("Q\n");
-  data_zdisplay_dense( &Q );
-  
-  for (int k=U.num_cols-1; k>=0; k--) {
-    //data_dgemm_mkl( MagmaColMajor, Magma );
-    printf("___K=%d\n", k);
-    data_housegen_matrix( U.num_rows,
-      &(U.val[idx(0,k,U.ld)]),
-      U.ld,
-      tmp.val,
-      tmp.ld,
-      Q.val,
-      Q.ld );
-    free( tmp.val );
-    CHECK( data_zmconvert( Q, &tmp, Magma_DENSE, Magma_DENSE ) );
-    
-    printf("Z\n");
-    data_zdisplay_dense( &Q );
-  }
+  data_house_apply( &U, &identity, &Q );
   
   printf("Q\n");
   data_zdisplay_dense( &Q );
@@ -200,12 +174,17 @@ int main(int argc, char* argv[])
   
   printf("QR\n");
   data_zdisplay_dense( &QR );
+  data_d_matrix A_check = {Magma_DENSE};
+  CHECK( data_z_dense_mtx( &A_check, MagmaColMajor, sparse_filename ) );
+	
+  MY_EXPECT_ARRAY_DOUBLE_EQ( A_check.nnz, A_check.val, QR.val );
   
   data_zmfree( &Adense );
 	data_zmfree( &U );
   data_zmfree( &R );
   data_zmfree( &Q );
   data_zmfree( &QR );
+  data_zmfree( &A_check );
   
   free( v );
   
