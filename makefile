@@ -479,6 +479,7 @@ test_householder: test_householder.cpp
 	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
 	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
 	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+	blas/zdomatadd.cpp \
 	src/parilu_v0_3.cpp \
 	src/trisolve.cpp \
 	src/orthogonality_error.cpp \

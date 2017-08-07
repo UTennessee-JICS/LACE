@@ -179,12 +179,40 @@ int main(int argc, char* argv[])
 	
   MY_EXPECT_ARRAY_DOUBLE_EQ( A_check.nnz, A_check.val, QR.val );
   
+  dataType org_infinityNorm = 0.0;
+  dataType qr_infinityNorm = 0.0;
+  dataType ortherr = 0.0;
+  int imax = -1;
+  
+  data_d_matrix diff = {Magma_DENSE};
+  data_zvinit( &diff, A_check.num_rows, A_check.num_cols, zero );
+  printf( "A_check.major = %d\n", A_check.major );
+  data_domatadd( one, &A_check, MagmaNoTrans,
+    negone, &QR, MagmaNoTrans,
+    &diff );
+  
+  printf("A-QR\n");
+  data_zdisplay_dense( &diff );
+  
+  data_infinity_norm( &A_check, &imax, &org_infinityNorm ); 
+  printf( "org_infinityNorm = %e\n", org_infinityNorm);
+  
+  data_infinity_norm( &diff, &imax, &qr_infinityNorm ); 
+  printf( "qr_infinityNorm = %e\n", qr_infinityNorm );
+  qr_infinityNorm = qr_infinityNorm/org_infinityNorm;
+  printf( "qr_infinityNorm = %e\n", qr_infinityNorm );
+  
+  printf( "Q.num_cols = %d Q.ld = %d\n", Q.num_cols, Q.ld );
+  data_orthogonality_error( &Q, &ortherr, &imax, (Q.num_cols-1) ); 
+  printf( "ortherr = %e\n", ortherr );
+  
   data_zmfree( &Adense );
 	data_zmfree( &U );
   data_zmfree( &R );
   data_zmfree( &Q );
   data_zmfree( &QR );
   data_zmfree( &A_check );
+  data_zmfree( &diff );
   
   free( v );
   
