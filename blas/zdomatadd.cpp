@@ -116,3 +116,15 @@ data_domatadd_mkl(
     mkl_domatadd(cblas_order_const(layoutA), cblas_trans_const(transA), cblas_trans_const(transB),
                 m, n, alpha, dA, lda, beta, dB, ldb, dC, ldc);
 }
+
+
+extern "C" 
+void
+data_domatadd(
+    dataDouble alpha, data_d_matrix* A, data_trans_t transA,
+    dataDouble beta, data_d_matrix* B, data_trans_t transB,
+    data_d_matrix* C )
+{ 
+    mkl_domatadd(cblas_order_const(A->major), cblas_trans_const(transA), cblas_trans_const(transB),
+                A->num_rows, A->num_cols, alpha, A->val, A->ld, beta, B->val, B->ld, C->val, C->ld);
+}

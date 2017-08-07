@@ -532,6 +532,12 @@ data_domatadd_mkl(
     dataDouble beta, dataDouble_const_ptr dB, int ldb,  
     dataDouble_ptr dC, int ldc );
 
+void
+data_domatadd(
+    dataDouble alpha, data_d_matrix* A, data_trans_t transA,
+    dataDouble beta, data_d_matrix* B, data_trans_t transB,
+    data_d_matrix* C );
+
 //======================================
 // sparse operations
 //======================================
