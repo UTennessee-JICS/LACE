@@ -1254,6 +1254,7 @@ data_z_dense_mtx(
     A->ld = A->num_cols;
   else if (major == MagmaColMajor)
     A->ld = A->num_rows;
+  A->major = major;
   
   return info;
 }
