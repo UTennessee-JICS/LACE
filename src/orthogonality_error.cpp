@@ -59,11 +59,15 @@ data_orthogonality_error( data_d_matrix* krylov,
     eye.val[idx(e,e,eye.ld)] = 1.0; 
   }
   
-  data_dgemm_mkl( krylov->major, MagmaTrans, MagmaNoTrans,
-    search, search, search,
-    one, krylov->val, krylov->ld,
-    krylov->val, krylov->ld,
-    negone, eye.val, eye.ld );
+  for (int i=0; i<eye.num_rows; i++) {
+    for (int j=0; j<eye.num_cols; j++) {
+      dataType sum = 0.0;
+      for ( int k=0; k<krylov->num_rows; k++ ) {
+        sum += krylov->val[idx(k,i,krylov->ld)] * krylov->val[idx(k,j,krylov->ld)];
+      }
+      eye.val[idx(i,j,eye.ld)] -= sum;   
+    } 
+  }
   
   data_infinity_norm( &eye, imax, ortherr ); 
   
