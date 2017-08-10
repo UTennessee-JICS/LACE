@@ -115,7 +115,7 @@ while((rho > errtol) && (k < kmax))
 %
 %   Assess orthogonality error
 %
-    ortherr_mgs = [ortherr_mgs, norm(v(1:k+1,1:k+1)'*v(1:k+1,1:k+1)-I(1:k+1,1:k+1),inf)];    
+    ortherr_mgs = [ortherr_mgs, norm(v(:,1:k+1)'*v(:,1:k+1)-I(1:k+1,1:k+1),inf)];    
     
 %
 %   Form and store the information for the new Givens rotation
