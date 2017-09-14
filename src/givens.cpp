@@ -49,7 +49,8 @@ givens_rotation( dataType a,
   dataType *c,
   dataType *s)
 {
-  if (b < tol) {
+  if (fabs(b) <= tol) {
+    GMRESDBG("fabs(b)=%e < tol=%e\n", fabs(b), tol);
     (*c) = 1.0;
     (*s) = 0.0;
   }

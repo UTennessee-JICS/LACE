@@ -11,8 +11,6 @@
 #include "mkl_spblas.h"
 #include "mkl_rci.h"
 
-#define DEBUG_GMRES
-
 int main(int argc, char* argv[])
 {
 

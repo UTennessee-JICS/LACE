@@ -1049,7 +1049,7 @@ sgn(T v) {
 template <class T>
 inline T
 mysgn(T v) {
-    return T(v >= T(0));
+    return T(v >= T(0)) - T(v < T(0));
 }
 
 #undef PRECISION_z

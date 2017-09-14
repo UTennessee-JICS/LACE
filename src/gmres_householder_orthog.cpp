@@ -153,7 +153,7 @@ data_gmres_householder_orthog(
       q.val[i] = -r.val[i]/dd;
     }
     for ( int i=0; i<n; ++i ) {
-      GMRESDBG("\q.val[%d] = %e\n", i, q.val[i]);
+      GMRESDBG("q.val[%d] = %e\n", i, q.val[i]);
     }
     //givens.val[0] = rnorm2;
     givens.val[0] = -dd;
@@ -200,9 +200,16 @@ data_gmres_householder_orthog(
       if ( search < n ) {
         dataType snrm2 = data_dnrm2( (n-search), &(krylov.val[idx(search1,search1,krylov.ld)]), 1 );
         dd = mysgn(krylov.val[idx(search1,search1,krylov.ld)])*snrm2;
+        GMRESDBG("dd = %e  %d\n", dd, __LINE__);
         krylov.val[idx(search1,search1,krylov.ld)] = krylov.val[idx(search1,search1,krylov.ld)] + dd;
-        for ( int i=search1; i<krylov.ld; ++i ) {
+        snrm2 = data_dnrm2( (n-search), &(krylov.val[idx(search1,search1,krylov.ld)]), 1 );
+        for ( int i=search1; i<n; ++i ) {
           krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]/snrm2;
+        }
+        for ( int j=0; j <= search1; ++j ) {
+          for ( int i=0; i<n; ++i ) {
+            GMRESDBG("krylov.val[idx(%d,%d,%d)] = %e\n", i, j, krylov.ld, krylov.val[idx(i,j,krylov.ld)]);
+          }
         }
 
         data_zmfree( &q );
@@ -210,15 +217,24 @@ data_gmres_householder_orthog(
         q.val[search1] = 1.0;
         for (int j=search1; j>=0; --j) {
           dataType sum = 0.0;
-          for ( int i=j; i<krylov.ld; ++i ) {
+          for ( int i=j; i<n; ++i ) {
             sum = sum + krylov.val[idx(i,j,krylov.ld)]*q.val[i];
           }
-          for ( int jj=j; jj <= search; ++jj ) {
+          for ( int jj=j; jj < n; ++jj ) {
             q.val[jj] = q.val[jj] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
           }
         }
       }
-      krylov.val[idx(search,search1,krylov.ld)] = krylov.val[idx(search,search1,krylov.ld)] + 1.0;
+      //krylov.val[idx(search,search1,krylov.ld)] = krylov.val[idx(search,search1,krylov.ld)] + 1.0;
+
+      for ( int i=0; i<n; ++i ) {
+        GMRESDBG("q.val[%d] = %e\n", i, q.val[i]);
+      }
+      for ( int j=0; j <= search1; ++j ) {
+        for ( int i=0; i<n; ++i ) {
+          GMRESDBG("krylov.val[idx(%d,%d,%d)] = %e\n", i, j, krylov.ld, krylov.val[idx(i,j,krylov.ld)]);
+        }
+      }
 
       // Monitor Orthogonality Error of Krylov search Space
       dataType ortherr = 0.0;
@@ -233,11 +249,24 @@ data_gmres_householder_orthog(
         krylov.val[idx(j+1,search1,krylov.ld)] = -givens_sin.val[j]*krylov.val[idx(j,search1,krylov.ld)]
           + givens_cos.val[j]*krylov.val[idx(j+1,search1,krylov.ld)];
         krylov.val[idx(j,search1,krylov.ld)] = temp;
+        GMRESDBG("\n\tApply Givens rotations search = %d temp = %e\n", j, temp);
+      }
+      for ( int j=0; j <= search1; ++j ) {
+        for ( int i=0; i<n; ++i ) {
+          GMRESDBG("krylov.val[idx(%d,%d,%d)] = %e\n", i, j, krylov.ld, krylov.val[idx(i,j,krylov.ld)]);
+        }
       }
 
       if ( search < n ) {
+        GMRESDBG("%e %e %e %e %e\n", krylov.val[idx(search,search1,krylov.ld)], -dd, eps, givens_cos.val[search], givens_sin.val[search] )
         // form search-th rotation matrix
         givens_rotation(krylov.val[idx(search,search1,krylov.ld)], -dd, eps, &givens_cos.val[search], &givens_sin.val[search] );
+        for ( int i=0; i<n; ++i ) {
+          GMRESDBG("givens_cos.val[%d] = %e\n", i, givens_cos.val[i]);
+        }
+        for ( int i=0; i<n; ++i ) {
+          GMRESDBG("givens_sin.val[%d] = %e\n", i, givens_sin.val[i]);
+        }
         krylov.val[idx(search,search1,krylov.ld)] = givens_cos.val[search]*krylov.val[idx(search,search1,krylov.ld)]
           - givens_sin.val[search]*dd;
         // approximate residual norm
@@ -245,37 +274,50 @@ data_gmres_householder_orthog(
         givens.val[search] = givens_cos.val[search]*givens.val[search];
         residual = fabs(givens.val[search1])/rnorm2;
       }
+      for ( int i=0; i<givens.ld; ++i ) {
+        GMRESDBG("givens.val[%d] = %e\n", i, givens.val[i]);
+      }
 
       printf("GMRES_householder_search(%d) = %.16e;\n", search1, residual );
       // update the solution
       // solve the least squares problem
-      if ( residual < rtol  || (search == (search_max-1)) ) {
+      if ( (residual < rtol)  || (search == (search_max-1)) ) {
         GMRESDBG(" !!!!!!! update the solution %d!!!!!!!\n",0);
         for ( int i = 0; i <= search; ++i ) {
-          alpha.val[i] = givens.val[i]/krylov.val[idx(i,i,krylov.ld)];
+          alpha.val[i] = givens.val[i]/krylov.val[idx(i,i+1,krylov.ld)];
         }
-        for ( int j = search; j > 0; j-- ) {
-          for (int i = j-1; i > -1; i-- ) {
+        for ( int j = search; j > 0; --j ) {
+          for (int i = j-1; i >= 0; --i ) {
             alpha.val[i] = alpha.val[i]
-             - krylov.val[idx(i,j,krylov.ld)]*alpha.val[j]/krylov.val[idx(i,i,krylov.ld)];
+             - krylov.val[idx(i,j+1,krylov.ld)]*alpha.val[j]/krylov.val[idx(i,i+1,krylov.ld)];
           }
         }
-
-        // use preconditioned vectors to form the update (GEMV)
-        for (int i = 0; i < n; ++i ) {
-          for (int j = 0; j <= search; ++j ) {
-            z.val[i] = z.val[i] + krylov.val[idx(i,j,krylov.ld)]*alpha.val[j];
-          }
+        for ( int i=0; i<n; ++i ) {
+          GMRESDBG("alpha.val[%d] = %e\n", i, alpha.val[i]);
         }
 
         for (int i = 0; i < n; ++i ) {
-          x.val[i] = x.val[i] + z.val[i];
+          x.val[i] = alpha.val[i];
+        }
+
+
+        for (int j = search; j >= 0; --j ) {
+          dataType sum = 0.0;
+          for ( int i = j; i < n; ++i ) {
+            sum = sum + krylov.val[idx(i,j,krylov.ld)]*x.val[i];
+          }
+          for ( int i = j; i < n; ++i ) {
+            x.val[i] = x.val[i] - 2.0*sum*krylov.val[idx(i,j,krylov.ld)];
+          }
+        }
+        for ( int i=0; i<n; ++i ) {
+          GMRESDBG("x.val[%d] = %e\n", i, x.val[i]);
         }
 
         gmres_log->search_directions = search+1;
         dataType wend = omp_get_wtime();
         gmres_log->solve_time = (wend-wstart);
-        gmres_log->final_residual = fabs(givens.val[(search+1)]);
+        gmres_log->final_residual = residual;
 
         break;
       }
