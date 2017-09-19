@@ -30,10 +30,47 @@ public:
 template <class T>
 class Matrix {
 public:
-  Matrix() : numLayouts(1), entry(1) {};
+  Matrix() : numLayouts(1), entry(1), matrixNumRows(0), matrixNumCols(0) {};
   ~Matrix() {};
 
   dim_t numLayouts;
   std::vector< StorageLayout<T> > entry;
+
+
+  dim_t matrixNumRows;
+  dim_t matrixNumCols;
+
+  dim_t calcNumRows() {
+    matrixNumRows = 0;
+    for(typename std::vector< StorageLayout<T> >::iterator it = entry.begin(); it != entry.end(); ++it) {
+      matrixNumRows += it->numRows;
+    }
+    return matrixNumRows;
+  }
+
+  dim_t calcNumCols() {
+    matrixNumCols = 0;
+    for(typename std::vector< StorageLayout<T> >::iterator it = entry.begin(); it != entry.end(); ++it) {
+      matrixNumCols += it->numCols;
+    }
+    return matrixNumCols;
+  }
+
+  void calcDimensions() {
+    matrixNumRows = 0;
+    matrixNumCols = 0;
+    for(typename std::vector< StorageLayout<T> >::iterator it = entry.begin(); it != entry.end(); ++it) {
+      matrixNumRows += it->numRows;
+      matrixNumCols += it->numCols;
+    }
+  }
+
+  dim_t numRows() {
+    return matrixNumRows;
+  }
+
+  dim_t numCols() {
+    return matrixNumCols;
+  }
 
 };
