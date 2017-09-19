@@ -16,7 +16,8 @@ TEST(Matrix, defaultConstructor)
 {
   const Matrix<double> sampleMatrix;
 
-  EXPECT_EQ(0, sampleMatrix.entry.size());
+  EXPECT_EQ(1, sampleMatrix.numLayouts);
+  EXPECT_EQ(1, sampleMatrix.entry.size());
 }
 
 int main(int argc, char* argv[])

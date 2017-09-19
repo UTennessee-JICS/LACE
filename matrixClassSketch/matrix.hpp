@@ -14,22 +14,26 @@ enum class storageBluePrint_t : int {
 template <class T>
 class StorageLayout {
 public:
-  StorageLayout() : bluePrint(storageBluePrint_t::dense), numRows(0), numCols(0), nnz(0) {};
+  StorageLayout() : bluePrint(storageBluePrint_t::dense),
+                    numRows(0), numCols(0), nnz(0), val(NULL), subentry(0) {};
   ~StorageLayout() {};
 
   storageBluePrint_t bluePrint;
   dim_t numRows;
   dim_t numCols;
-  int nnz;
+  dim_t nnz;
   T*    val;
+
+  std::vector< StorageLayout<T> > subentry;
 };
 
 template <class T>
 class Matrix {
 public:
-  Matrix() : entry(0) {};
+  Matrix() : numLayouts(1), entry(1) {};
   ~Matrix() {};
 
+  dim_t numLayouts;
   std::vector< StorageLayout<T> > entry;
 
 };
