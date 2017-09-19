@@ -12,6 +12,13 @@ TEST(StorageLayout, defaultConstructor)
   EXPECT_EQ(0, sampleLayout.numCols);
 }
 
+TEST(Matrix, defaultConstructor)
+{
+  const Matrix<double> sampleMatrix;
+
+  EXPECT_EQ(0, sampleMatrix.entry.size());
+}
+
 int main(int argc, char* argv[])
 {
   testing::InitGoogleTest(&argc, argv);
