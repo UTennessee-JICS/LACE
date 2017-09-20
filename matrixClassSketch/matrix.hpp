@@ -74,3 +74,45 @@ public:
   }
 
 };
+
+
+template <class T>
+class Matrix0 {
+public:
+  Matrix0() : numLayouts(1), matrixNumRows(0), matrixNumCols(0), matrixNNZ(0), entry(NULL) {};
+  ~Matrix0() {};
+
+  dim_t numLayouts;
+  dim_t matrixNumRows;
+  dim_t matrixNumCols;
+  dim_t matrixNNZ;
+
+  T* entry;
+
+  void setup(int rows, int cols) {
+    matrixNumRows = rows;
+    matrixNumCols = cols;
+    matrixNNZ = rows*cols;
+    entry = (T*) calloc( matrixNNZ, sizeof(*entry) );
+  }
+
+};
+
+
+template <class T>
+class CSRMatrix {
+public:
+  CSRMatrix() : numLayouts(1), matrixNumRows(0), matrixNumCols(0), row(NULL), col(NULL), entry(NULL) {};
+  ~CSRMatrix() {};
+
+  dim_t numLayouts;
+  dim_t matrixNumRows;
+  dim_t matrixNumCols;
+  dim_t matrixNNZ;
+
+  dim_t* row;
+  dim_t* col;
+
+  T* entry;
+
+};
