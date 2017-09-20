@@ -94,7 +94,7 @@ public:
 
   T* entry;
 
-  void setup(int rows, int cols, int rStride, int cStride ) {
+  void setup(dim_t rows, dim_t cols, dim_t rStride, dim_t cStride ) {
     matrixNumRows = rows;
     matrixNumCols = cols;
     matrixNNZ = rows*cols;
@@ -126,6 +126,8 @@ public:
   CSRMatrix() : numLayouts(1), matrixNumRows(0), matrixNumCols(0),
     row(nullptr), col(nullptr), rowStride(1), columnStride(1), entry(nullptr) {};
   ~CSRMatrix() {
+    delete [] row;
+    delete [] col;
     delete [] entry;
   };
 
@@ -141,10 +143,14 @@ public:
 
   T* entry;
 
-  void setup(int rows, int cols, int nnz) {
+  void setup(dim_t rows, dim_t cols, dim_t nnz) {
     matrixNumRows = rows;
     matrixNumCols = cols;
     matrixNNZ = nnz;
+    rowStride = cols;
+    columnStride = dim_t(1);
+    row = new dim_t[matrixNumRows+1]();
+    col = new dim_t[matrixNNZ]();
     entry = new T[matrixNNZ]();
   }
 

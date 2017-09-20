@@ -72,8 +72,6 @@ TEST(CSRMatrix, defaultConstructorMatrix0Double)
   EXPECT_EQ(NULL, sampleMatrix.col );
   EXPECT_EQ(NULL, sampleMatrix.entry );
 
-  //sampleMatrix.entry = (Matrix0<double>*) calloc( 1, sizeof(*sampleMatrix.entry) );
-  //sampleMatrix.entry[0] = Matrix0<double>;
   sampleMatrix.setup(3,4,3);
   sampleMatrix.entry[0].setup(2,3,3,1);
   sampleMatrix.entry[1].setup(4,3,3,1);
