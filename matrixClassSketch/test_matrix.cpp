@@ -49,9 +49,9 @@ TEST(Matrix0, defaultConstructor)
 }
 
 
-TEST(CSRMatrix, defaultConstructor)
+TEST(CSMatrix, defaultConstructor)
 {
-  CSRMatrix<double> sampleMatrix;
+  CSMatrix<double> sampleMatrix;
 
   EXPECT_EQ(1, sampleMatrix.numLayouts);
   EXPECT_EQ(0, sampleMatrix.matrixNumRows);
@@ -61,9 +61,9 @@ TEST(CSRMatrix, defaultConstructor)
   EXPECT_EQ(NULL, sampleMatrix.entry );
 }
 
-TEST(CSRMatrix, defaultConstructorMatrix0Double)
+TEST(CSMatrix, defaultConstructorMatrix0Double)
 {
-  CSRMatrix< Matrix0<double> > sampleMatrix;
+  CSMatrix< Matrix0<double> > sampleMatrix;
 
   EXPECT_EQ(1, sampleMatrix.numLayouts);
   EXPECT_EQ(0, sampleMatrix.matrixNumRows);

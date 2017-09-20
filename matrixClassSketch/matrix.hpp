@@ -121,11 +121,11 @@ public:
 
 
 template <class T>
-class CSRMatrix {
+class CSMatrix {
 public:
-  CSRMatrix() : numLayouts(1), matrixNumRows(0), matrixNumCols(0),
+  CSMatrix() : numLayouts(1), matrixNumRows(0), matrixNumCols(0),
     row(nullptr), col(nullptr), rowStride(1), columnStride(1), entry(nullptr) {};
-  ~CSRMatrix() {
+  ~CSMatrix() {
     delete [] row;
     delete [] col;
     delete [] entry;
