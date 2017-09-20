@@ -72,11 +72,19 @@ TEST(CSRMatrix, defaultConstructorMatrix0Double)
   EXPECT_EQ(NULL, sampleMatrix.col );
   EXPECT_EQ(NULL, sampleMatrix.entry );
 
-  sampleMatrix.entry = (Matrix0<double>*) calloc( 1, sizeof(*sampleMatrix.entry) );
-  sampleMatrix.entry[0].setup(2,3);
-
-  EXPECT_EQ(2, sampleMatrix.entry[0].matrixNumRows);
-  EXPECT_EQ(3, sampleMatrix.entry[0].matrixNumCols);
+  //sampleMatrix.entry = (Matrix0<double>*) calloc( 1, sizeof(*sampleMatrix.entry) );
+  //sampleMatrix.entry[0] = Matrix0<double>;
+  sampleMatrix.setup(3,4,3);
+  // sampleMatrix.entry[0].setup(2,3);
+  // sampleMatrix.entry[1].setup(4,3);
+  // sampleMatrix.entry[2].setup(5,5);
+  //
+  // EXPECT_EQ(2, sampleMatrix.entry[0].matrixNumRows);
+  // EXPECT_EQ(3, sampleMatrix.entry[0].matrixNumCols);
+  // EXPECT_EQ(4, sampleMatrix.entry[1].matrixNumRows);
+  // EXPECT_EQ(3, sampleMatrix.entry[1].matrixNumCols);
+  // EXPECT_EQ(5, sampleMatrix.entry[2].matrixNumRows);
+  // EXPECT_EQ(5, sampleMatrix.entry[2].matrixNumCols);
 
 }
 

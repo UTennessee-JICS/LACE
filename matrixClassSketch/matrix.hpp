@@ -80,7 +80,9 @@ template <class T>
 class Matrix0 {
 public:
   Matrix0() : numLayouts(1), matrixNumRows(0), matrixNumCols(0), matrixNNZ(0), entry(NULL) {};
-  ~Matrix0() {};
+  ~Matrix0() {
+    delete [] entry;
+  };
 
   dim_t numLayouts;
   dim_t matrixNumRows;
@@ -93,7 +95,7 @@ public:
     matrixNumRows = rows;
     matrixNumCols = cols;
     matrixNNZ = rows*cols;
-    entry = (T*) calloc( matrixNNZ, sizeof(*entry) );
+    entry = new T[matrixNNZ];
   }
 
 };
@@ -103,7 +105,9 @@ template <class T>
 class CSRMatrix {
 public:
   CSRMatrix() : numLayouts(1), matrixNumRows(0), matrixNumCols(0), row(NULL), col(NULL), entry(NULL) {};
-  ~CSRMatrix() {};
+  ~CSRMatrix() {
+    delete [] entry;
+  };
 
   dim_t numLayouts;
   dim_t matrixNumRows;
@@ -114,5 +118,12 @@ public:
   dim_t* col;
 
   T* entry;
+
+  void setup(int rows, int cols, int nnz) {
+    matrixNumRows = rows;
+    matrixNumCols = cols;
+    matrixNNZ = nnz;
+    entry = new T[matrixNNZ];
+  }
 
 };
