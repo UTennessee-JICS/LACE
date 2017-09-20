@@ -15,7 +15,7 @@ template <class T>
 class StorageLayout {
 public:
   StorageLayout() : bluePrint(storageBluePrint_t::dense),
-                    numRows(0), numCols(0), nnz(0), val(NULL), subentry(0) {};
+                    numRows(0), numCols(0), nnz(0), val(nullptr), subentry(0) {};
   ~StorageLayout() {};
 
   storageBluePrint_t bluePrint;
@@ -79,7 +79,8 @@ public:
 template <class T>
 class Matrix0 {
 public:
-  Matrix0() : numLayouts(1), matrixNumRows(0), matrixNumCols(0), matrixNNZ(0), entry(NULL) {};
+  Matrix0() : numLayouts(1), matrixNumRows(0), matrixNumCols(0), matrixNNZ(0),
+    rowStride(1), columnStride(1), entry(nullptr) {};
   ~Matrix0() {
     delete [] entry;
   };
@@ -88,14 +89,32 @@ public:
   dim_t matrixNumRows;
   dim_t matrixNumCols;
   dim_t matrixNNZ;
+  dim_t rowStride;
+  dim_t columnStride;
 
   T* entry;
 
-  void setup(int rows, int cols) {
+  void setup(int rows, int cols, int rStride, int cStride ) {
     matrixNumRows = rows;
     matrixNumCols = cols;
     matrixNNZ = rows*cols;
-    entry = new T[matrixNNZ];
+    rowStride = rStride;
+    columnStride = cStride;
+    entry = new T[matrixNNZ]();
+  }
+
+  T val( int i, int j ) {
+    return entry[i*rowStride + j*columnStride];
+  }
+
+  void print() {
+    for ( int i=0; i<matrixNumRows; ++i ) {
+      for ( int j=0; j<matrixNumCols; ++j ) {
+        std::cout << val(i,j) << " ";
+      }
+      std::cout << '\n';
+    }
+
   }
 
 };
@@ -104,7 +123,8 @@ public:
 template <class T>
 class CSRMatrix {
 public:
-  CSRMatrix() : numLayouts(1), matrixNumRows(0), matrixNumCols(0), row(NULL), col(NULL), entry(NULL) {};
+  CSRMatrix() : numLayouts(1), matrixNumRows(0), matrixNumCols(0),
+    row(nullptr), col(nullptr), rowStride(1), columnStride(1), entry(nullptr) {};
   ~CSRMatrix() {
     delete [] entry;
   };
@@ -113,6 +133,8 @@ public:
   dim_t matrixNumRows;
   dim_t matrixNumCols;
   dim_t matrixNNZ;
+  dim_t rowStride;
+  dim_t columnStride;
 
   dim_t* row;
   dim_t* col;
@@ -123,7 +145,7 @@ public:
     matrixNumRows = rows;
     matrixNumCols = cols;
     matrixNNZ = nnz;
-    entry = new T[matrixNNZ];
+    entry = new T[matrixNNZ]();
   }
 
 };

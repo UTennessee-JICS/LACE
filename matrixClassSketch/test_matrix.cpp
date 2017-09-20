@@ -75,16 +75,21 @@ TEST(CSRMatrix, defaultConstructorMatrix0Double)
   //sampleMatrix.entry = (Matrix0<double>*) calloc( 1, sizeof(*sampleMatrix.entry) );
   //sampleMatrix.entry[0] = Matrix0<double>;
   sampleMatrix.setup(3,4,3);
-  // sampleMatrix.entry[0].setup(2,3);
-  // sampleMatrix.entry[1].setup(4,3);
-  // sampleMatrix.entry[2].setup(5,5);
-  //
-  // EXPECT_EQ(2, sampleMatrix.entry[0].matrixNumRows);
-  // EXPECT_EQ(3, sampleMatrix.entry[0].matrixNumCols);
-  // EXPECT_EQ(4, sampleMatrix.entry[1].matrixNumRows);
-  // EXPECT_EQ(3, sampleMatrix.entry[1].matrixNumCols);
-  // EXPECT_EQ(5, sampleMatrix.entry[2].matrixNumRows);
-  // EXPECT_EQ(5, sampleMatrix.entry[2].matrixNumCols);
+  sampleMatrix.entry[0].setup(2,3,3,1);
+  sampleMatrix.entry[1].setup(4,3,3,1);
+  sampleMatrix.entry[2].setup(5,5,5,1);
+
+  EXPECT_EQ(2, sampleMatrix.entry[0].matrixNumRows);
+  EXPECT_EQ(3, sampleMatrix.entry[0].matrixNumCols);
+  EXPECT_EQ(4, sampleMatrix.entry[1].matrixNumRows);
+  EXPECT_EQ(3, sampleMatrix.entry[1].matrixNumCols);
+  EXPECT_EQ(5, sampleMatrix.entry[2].matrixNumRows);
+  EXPECT_EQ(5, sampleMatrix.entry[2].matrixNumCols);
+
+  for ( int b=0; b<sampleMatrix.matrixNNZ; ++b ) {
+    std::cout << "block " << b << ":\n";
+    sampleMatrix.entry[b].print();
+  }
 
 }
 
