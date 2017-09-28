@@ -20,3 +20,41 @@ function [u,nu] = housegen(x)
     end
     u = u/sqrt(abs(u(1)));
 end
+
+function u = house_gen(x)
+    % u = house_gen(x)
+    % Generate Householder reflection.
+    % u = house_gen(x) returns u with norm(u) = sqrt(2), and
+    % H(u,x) = x - u*(u'*x) = -+ norm(x)*e_1.
+    
+    % Modify the sign function so that sign(0) = 1.
+    sig = @(u) sign(u) + (u==0);
+    
+    nu = norm(x);
+    if nu ~= 0
+        u = x/nu;
+        u(1) = u(1) + sig(u(1));
+        u = u/sqrt(abs(u(1)));
+    else
+        u = x;
+        u(1) = sqrt(2);
+    end
+end
+
+function w = house_reflect(r,j)
+    % w = house_reflect(r)
+    % Generate Householder reflection, w, for the vector r.
+    % w = house_gen(r) returns u with norm(w) = 1, and
+    % P(w,r) = r - 2*w*(w'*r) = -+ norm(r)*e_1.
+    
+    nu = norm(r);
+    beta = sign(r(j))*nu;
+    eta = r;
+    for i = 1:j-1
+      eta(i) = 0;      
+    end
+    eta(j) = beta + r(j);
+    nu = norm(eta);
+    w = eta/nu;
+    
+end
