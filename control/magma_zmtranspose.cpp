@@ -389,7 +389,8 @@ z_transpose_bcsr(
     return info;
 }
 
-extern "C" int
+extern "C" 
+int
 z_transpose_dense(
     data_d_matrix A,
     data_d_matrix *B )
@@ -398,12 +399,13 @@ z_transpose_dense(
     
     B->storage_type = A.storage_type;
     B->fill_mode    = A.fill_mode;
-    B->num_rows     = A.num_rows;
-    B->num_cols     = A.num_cols;
+    B->num_rows     = A.num_cols;
+    B->num_cols     = A.num_rows;
     B->nnz          = A.nnz;
     B->true_nnz     = A.true_nnz;
-    B->pad_rows     = A.pad_rows;
-    B->pad_cols     = A.pad_cols;
+    B->pad_rows     = A.pad_cols;
+    B->pad_cols     = A.pad_rows;
+    //B->ld           = A.ld;
     
     if ( B->val != NULL )
       free( B->val );
@@ -412,11 +414,11 @@ z_transpose_dense(
     //else
     //  B->val = (dataType*) malloc( A.num_rows*A.num_cols*sizeof(dataType) );
     
-    int rowlimit = A.num_rows;
-    int collimit = A.num_rows;
+    int rowlimit = B->num_rows;
+    int collimit = B->num_cols;
     if (A.pad_rows > 0 && A.pad_cols > 0) {
-       rowlimit = A.pad_rows;
-       collimit = A.pad_rows;
+       rowlimit = B->pad_rows;
+       collimit = B->pad_cols;
     }
     B->val = (dataType*) malloc( rowlimit*collimit*sizeof(dataType) );
     
@@ -440,7 +442,8 @@ z_transpose_dense(
       //    }
       //  }
       //}
-      B->major = MagmaColMajor;
+      B->major = MagmaRowMajor;
+      B->ld = rowlimit;
     }
     else if (A.major == MagmaColMajor) {
       for ( int j = 0; j < collimit; j++ ) {
@@ -462,7 +465,9 @@ z_transpose_dense(
       //    }
       //  }
       //}
-      B->major = MagmaRowMajor;
+      B->major = MagmaColMajor;
+      B->ld = collimit;
+      //printf("%s line %d\n", __FILE__, __LINE__);
     }
 
     //cleanup:
