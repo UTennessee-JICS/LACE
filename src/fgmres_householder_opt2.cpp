@@ -294,7 +294,7 @@ data_fgmres_householder(
       for ( int j=0; j <= search; ++j ) {
         dataType sum = 0.0;
         #pragma omp parallel
-        #pragma omp for reduction(+:sum)
+        #pragma omp for reduction(+:sum) nowait
         for ( int i=j; i<n; ++i ) {
           sum = sum + krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
         }
@@ -333,7 +333,7 @@ data_fgmres_householder(
         for (int j=search1; j>=0; --j) {
           dataType sum = 0.0;
           #pragma omp parallel
-          #pragma omp for reduction(+:sum)
+          #pragma omp for reduction(+:sum) nowait
           for ( int i=j; i<n; ++i ) {
             sum = sum + krylov.val[idx(i,j,krylov.ld)]*q.val[i];
           }
