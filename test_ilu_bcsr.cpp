@@ -245,6 +245,7 @@ int main(int argc, char* argv[])
   data_d_matrix A_BCSR = {Magma_BCSR};
   A_BCSR.blocksize = 5;
   data_zmconvert( Asparse, &A_BCSR, Magma_CSR, Magma_BCSR ); 
+  //data_zprint_bcsr( &A_BCSR );
   
   // Separate the strictly lower and upper elements 
   // into L, and U respectively.
