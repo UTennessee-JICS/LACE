@@ -184,7 +184,7 @@ data_fgmres_householder(
     // fill first column of Kylov subspace for Arnoldi iteration
     #pragma omp parallel
     {
-      #pragma for nowait
+      #pragma omp for nowait
       for ( int i=0; i<n; i++ ) {
         //krylov.val[idx(i,0,krylov.ld)] = r.val[i]/rnorm2;
         krylov.val[idx(i,0,krylov.ld)] = r.val[i];
