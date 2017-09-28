@@ -526,7 +526,7 @@ test_solve_GMRES_householder_precond: test_solve_GMRES_householder_precond.cpp
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@
 
-test_solve_FGMRES_householder: test_solve_FGMRES_householder.cpp
+test_solve_FGMRES_householder: test_solve_FGMRES_Householder.cpp
 	$(CC) $(CFLAGS) \
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
 	control/constants.cpp control/magma_zmio.cpp control/init.cpp \
@@ -540,11 +540,11 @@ test_solve_FGMRES_householder: test_solve_FGMRES_householder.cpp
 	src/givens.cpp \
 	src/orthogonality_error.cpp \
 	src/fgmres_householder.cpp \
-	test_solve_FGMRES_householder.cpp \
+	test_solve_FGMRES_Householder.cpp \
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@
 
-test_solve_FGMRES_householder_opt1: test_solve_FGMRES_householder.cpp
+test_solve_FGMRES_householder_opt1: test_solve_FGMRES_Householder.cpp
 		$(CC) $(CFLAGS) \
 		-L${MKLROOT}/lib -I${MKLROOT}/include \
 		control/constants.cpp control/magma_zmio.cpp control/init.cpp \
@@ -558,11 +558,11 @@ test_solve_FGMRES_householder_opt1: test_solve_FGMRES_householder.cpp
 		src/givens.cpp \
 		src/orthogonality_error.cpp \
 		src/fgmres_householder_opt1.cpp \
-		test_solve_FGMRES_householder.cpp \
+		test_solve_FGMRES_Householder.cpp \
 		-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 		-o $@
 
-test_solve_FGMRES_householder_opt2: test_solve_FGMRES_householder.cpp
+test_solve_FGMRES_householder_opt2: test_solve_FGMRES_Householder.cpp
 		$(CC) $(CFLAGS) \
 		-L${MKLROOT}/lib -I${MKLROOT}/include \
 		control/constants.cpp control/magma_zmio.cpp control/init.cpp \
@@ -576,7 +576,7 @@ test_solve_FGMRES_householder_opt2: test_solve_FGMRES_householder.cpp
 		src/givens.cpp \
 		src/orthogonality_error.cpp \
 		src/fgmres_householder_opt2.cpp \
-		test_solve_FGMRES_householder.cpp \
+		test_solve_FGMRES_Householder.cpp \
 		-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 		-o $@
 
