@@ -13,7 +13,6 @@
 #include "math.h"
 
 
-
 int main(int argc, char* argv[])
 {
   
@@ -86,8 +85,16 @@ int main(int argc, char* argv[])
   diagfactors[0].true_nnz = Asparse.num_rows;
   diagfactors[0].ld = 1;
   diagfactors[0].major = MagmaRowMajor;
-  LACE_CALLOC(diagfactors[0].val, diagfactors[0].nnz);
-  
+  //LACE_CALLOC(diagfactors[0].val, diagfactors[0].nnz);
+  posix_memalign( (void**) &(diagfactors[0].val), 64, (diagfactors[0].nnz*sizeof(dataType)) );
+  #pragma omp parallel 
+  {
+    #pragma omp for schedule(monotonic:dynamic,4096) 
+    for (int p = 0; p<diagfactors[0].nnz; p++) {
+      diagfactors[0].val[p] = 0.0;
+    }
+  }
+    
   diagfactors[1].num_rows = Asparse.num_rows;
   diagfactors[1].num_cols = 1;
   diagfactors[1].nnz = Asparse.num_rows;
