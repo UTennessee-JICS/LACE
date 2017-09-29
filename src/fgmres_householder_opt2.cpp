@@ -99,11 +99,11 @@ data_fgmres_householder(
 
     #pragma omp parallel
     {
-      #pragma omp for nowait
+      #pragma omp for simd schedule(monotonic:static) nowait
       for (int i=0; i<LU.num_rows+1; i++) {
       	ia[i] = LU.row[i] + 1;
       }
-      #pragma omp for nowait
+      #pragma omp for simd schedule(monotonic:static) nowait
       for (int i=0; i<LU.nnz; i++) {
       	ja[i] = LU.col[i] + 1;
       }
@@ -184,7 +184,7 @@ data_fgmres_householder(
     // fill first column of Kylov subspace for Arnoldi iteration
     #pragma omp parallel
     {
-      #pragma omp for nowait
+      #pragma omp for simd schedule(monotonic:static) nowait
       for ( int i=0; i<n; i++ ) {
         //krylov.val[idx(i,0,krylov.ld)] = r.val[i]/rnorm2;
         krylov.val[idx(i,0,krylov.ld)] = r.val[i];
@@ -196,14 +196,14 @@ data_fgmres_householder(
     //#pragma omp parallel
     {
       #pragma omp parallel
-      #pragma omp for nowait
+      #pragma omp for simd schedule(monotonic:static) nowait
       for ( int i=0; i<n; ++i ) {
         krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]/k1norm2;
         //krylov.val[idx(i,0,krylov.ld)] /= k1norm2;
       }
     }
       #pragma omp parallel
-      #pragma omp for nowait
+      #pragma omp for simd schedule(monotonic:static) nowait
       for ( int i=0; i<n; ++i ) {
         q.val[i] = -r.val[i]/dd;
         precondq.val[idx(i,0,precondq.ld)] = q.val[i];
@@ -274,7 +274,7 @@ data_fgmres_householder(
       //#pragma omp parallel
       {
         #pragma omp parallel
-        #pragma omp for nowait
+        #pragma omp for simd schedule(monotonic:static) nowait
         for ( int i=0; i<n; i++ ) {
           for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {
             //u.val[i] = u.val[i] + A->val[j]*Minvvj.val[A->col[j]];
@@ -294,12 +294,12 @@ data_fgmres_householder(
       for ( int j=0; j <= search; ++j ) {
         dataType sum = 0.0;
         #pragma omp parallel
-        #pragma omp for reduction(+:sum) nowait
+        #pragma omp for simd schedule(monotonic:static) reduction(+:sum) nowait
         for ( int i=j; i<n; ++i ) {
           sum = sum + krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
         }
         #pragma omp parallel
-        #pragma omp for nowait
+        #pragma omp for simd schedule(monotonic:static) nowait
         for ( int jj=j; jj < n; ++jj ) {
           krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
         }
@@ -315,11 +315,12 @@ data_fgmres_householder(
         dd = mysgn(krylov.val[idx(search1,search1,krylov.ld)])*snrm2;
         GMRESDBG("dd = %e  %d\n", dd, __LINE__);
         krylov.val[idx(search1,search1,krylov.ld)] = krylov.val[idx(search1,search1,krylov.ld)] + dd;
-        snrm2 = data_dnrm2( (n-search), &(krylov.val[idx(search1,search1,krylov.ld)]), 1 );
+        snrm2 = 1.0 / data_dnrm2( (n-search), &(krylov.val[idx(search1,search1,krylov.ld)]), 1 );
         #pragma omp parallel
-        #pragma omp for nowait
+        #pragma omp for simd schedule(monotonic:static) nowait
         for ( int i=search1; i<n; ++i ) {
-          krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]/snrm2;
+          // krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]/snrm2;
+          krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
         }
         for ( int j=0; j <= search1; ++j ) {
           for ( int i=0; i<n; ++i ) {
@@ -333,20 +334,15 @@ data_fgmres_householder(
         for (int j=search1; j>=0; --j) {
           dataType sum = 0.0;
           #pragma omp parallel
-          #pragma omp for reduction(+:sum) nowait
+          #pragma omp for simd schedule(monotonic:static) reduction(+:sum) nowait
           for ( int i=j; i<n; ++i ) {
             sum = sum + krylov.val[idx(i,j,krylov.ld)]*q.val[i];
           }
           #pragma omp parallel
-          #pragma omp for nowait
+          #pragma omp for simd schedule(monotonic:static) nowait
           for ( int jj=j; jj < n; ++jj ) {
             q.val[jj] = q.val[jj] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
           }
-        }
-        #pragma omp parallel
-        #pragma omp for nowait
-        for ( int i=0; i<n; ++i ) {
-          precondq.val[idx(i,search1,precondq.ld)] = q.val[i];
         }
       }
 
@@ -360,9 +356,13 @@ data_fgmres_householder(
       }
 
       // Monitor Orthogonality Error of Krylov search Space
+      #pragma omp parallel
+      #pragma omp for simd schedule(monotonic:static) nowait
+      for ( int i=0; i<n; ++i ) {
+        precondq.val[idx(i,search1,precondq.ld)] = q.val[i];
+      }
       dataType ortherr = 0.0;
       int imax = 0;
-      //data_orthogonality_error( &krylov, &ortherr, &imax, (search+1) );
       data_orthogonality_error( &precondq, &ortherr, &imax, search1 );
       if ( gmres_par->user_csrtrsv_choice == 0 ) {
         printf("FGMRES_Householders_mkltrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
@@ -480,7 +480,7 @@ data_fgmres_householder(
         // use preconditioned vectors to form the update (GEMV)
         for (int j = 0; j <= search; j++ ) {
           #pragma omp parallel
-          #pragma omp for nowait
+          #pragma omp for simd schedule(monotonic:static) nowait
           for (int i = 0; i < n; i++ ) {
             //z.val[i] = z.val[i] + krylov.val[idx(i,j,krylov.ld)]*alpha.val[j];
             z.val[i] = z.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*alpha.val[j];
@@ -488,7 +488,7 @@ data_fgmres_householder(
         }
 
         #pragma omp parallel
-        #pragma omp for nowait
+        #pragma omp for simd schedule(monotonic:static) nowait
         for (int i = 0; i < n; i++ ) {
           x.val[i] = x.val[i] + z.val[i];
         }

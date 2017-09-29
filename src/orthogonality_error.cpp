@@ -56,17 +56,18 @@ data_orthogonality_error( data_d_matrix* krylov,
   data_d_matrix eye={Magma_DENSE};
   data_zvinit( &eye, search, search, zero );
   #pragma omp parallel
-  #pragma omp for nowait
+  #pragma omp for simd schedule(monotonic:static) nowait
   for (int e=0; e<eye.ld; e++) {
     eye.val[idx(e,e,eye.ld)] = 1.0;
   }
 
 
   #pragma omp parallel
-  #pragma omp for nowait
+  #pragma omp for schedule(monotonic:static) nowait
   for (int i=0; i<eye.num_rows; i++) {
     for (int j=0; j<eye.num_cols; j++) {
       dataType sum = 0.0;
+      #pragma omp simd
       for ( int k=0; k<krylov->num_rows; k++ ) {
         sum += krylov->val[idx(k,i,krylov->ld)] * krylov->val[idx(k,j,krylov->ld)];
       }
