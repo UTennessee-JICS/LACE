@@ -67,10 +67,13 @@ data_orthogonality_error( data_d_matrix* krylov,
   for (int i=0; i<eye.num_rows; i++) {
     for (int j=0; j<eye.num_cols; j++) {
       dataType sum = 0.0;
-      #pragma omp simd
-      for ( int k=0; k<krylov->num_rows; k++ ) {
-        sum += krylov->val[idx(k,i,krylov->ld)] * krylov->val[idx(k,j,krylov->ld)];
-      }
+      // #pragma omp simd
+      // for ( int k=0; k<krylov->num_rows; k++ ) {
+      //   sum += krylov->val[idx(k,i,krylov->ld)] * krylov->val[idx(k,j,krylov->ld)];
+      // }
+      sum = data_zdot_mkl( krylov->num_rows,
+        &(krylov->val[idx(0,i,krylov->ld)]), 1,
+        &(krylov->val[idx(0,j,krylov->ld)]), 1 );
       eye.val[idx(i,j,eye.ld)] -= sum;
     }
   }

@@ -293,11 +293,14 @@ data_fgmres_householder(
       // Householder Transformations
       for ( int j=0; j <= search; ++j ) {
         dataType sum = 0.0;
-        #pragma omp parallel
-        #pragma omp for simd schedule(monotonic:static) reduction(+:sum) nowait
-        for ( int i=j; i<n; ++i ) {
-          sum = sum + krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
-        }
+        // #pragma omp parallel
+        // #pragma omp for simd schedule(monotonic:static) reduction(+:sum) nowait
+        // for ( int i=j; i<n; ++i ) {
+        //   sum = sum + krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
+        // }
+        sum = data_zdot_mkl( (n-j),
+          &(krylov.val[idx(j,j,krylov.ld)]), 1,
+          &(krylov.val[idx(j,search1,krylov.ld)]), 1 );
         #pragma omp parallel
         #pragma omp for simd schedule(monotonic:static) nowait
         for ( int jj=j; jj < n; ++jj ) {
@@ -333,11 +336,14 @@ data_fgmres_householder(
         q.val[search1] = 1.0;
         for (int j=search1; j>=0; --j) {
           dataType sum = 0.0;
-          #pragma omp parallel
-          #pragma omp for simd schedule(monotonic:static) reduction(+:sum) nowait
-          for ( int i=j; i<n; ++i ) {
-            sum = sum + krylov.val[idx(i,j,krylov.ld)]*q.val[i];
-          }
+          // #pragma omp parallel
+          // #pragma omp for simd schedule(monotonic:static) reduction(+:sum) nowait
+          // for ( int i=j; i<n; ++i ) {
+          //   sum = sum + krylov.val[idx(i,j,krylov.ld)]*q.val[i];
+          // }
+          sum = data_zdot_mkl( (n-j),
+            &(krylov.val[idx(j,j,krylov.ld)]), 1,
+            &(q.val[j]), 1 );
           #pragma omp parallel
           #pragma omp for simd schedule(monotonic:static) nowait
           for ( int jj=j; jj < n; ++jj ) {
