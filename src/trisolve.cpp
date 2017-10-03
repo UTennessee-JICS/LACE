@@ -37,12 +37,14 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs,
       step = zero;
       #pragma omp parallel
       {
-        #pragma omp for private(j, tmp) reduction(+:step) nowait
+        //#pragma omp for private(j, tmp) reduction(+:step) nowait
+        #pragma omp for private(tmp) reduction(+:step) nowait
         for ( int i=0; i < L->num_rows; i++ ) {
           tmp = zero;
           for ( int k=L->row[i]; k < L->row[i+1]-1; k++) {
-            j = L->col[k];
-            tmp += L->val[k]*x->val[j];
+            //j = L->col[k];
+            //tmp += L->val[k]*x->val[j];
+            tmp += L->val[k]*x->val[ L->col[k] ];
           }
           tmp = (rhs->val[i] - tmp)/L->val[L->row[i+1] - 1];
           step += pow((x->val[i] - tmp), 2);
@@ -87,12 +89,14 @@ data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs,
       step = zero;
       #pragma omp parallel
       {
-        #pragma omp for private(j, tmp) reduction(+:step) nowait
+        //#pragma omp for private(j, tmp) reduction(+:step) nowait
+        #pragma omp for private(tmp) reduction(+:step) nowait
         for ( int i=U->num_rows-1; i>=0; i-- ) {
           tmp = zero;
           for ( int k=U->row[i]+1; k < U->row[i+1]; k++) {
-            j = U->col[k];
-            tmp += U->val[k]*x->val[j];
+            //j = U->col[k];
+            //tmp += U->val[k]*x->val[j];
+            tmp += U->val[k]*x->val[ U->col[k] ];
           }
           tmp = (rhs->val[i] - tmp)/U->val[U->row[i]];
           step += pow((x->val[i] - tmp), 2);
@@ -261,7 +265,7 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
     && uplo == MagmaLower
     && diag != Magma_NODIAG ) {
 
-    int j = 0;
+    //int j = 0;
     *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;
@@ -272,12 +276,14 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
       step = zero;
       #pragma omp parallel
       {
-        #pragma omp for private(j, tmp) reduction(+:step) nowait
+        //#pragma omp for private(j, tmp) reduction(+:step) nowait
+        #pragma omp for private(tmp) reduction(+:step) nowait
         for ( int i=0; i < num_rows; i++ ) {
           tmp = zero;
           for ( int k=row[i]; k < row[i+1]-1; k++) {
-            j = col[k];
-            tmp += Aval[k]*yval[j];
+            //j = col[k];
+            //tmp += Aval[k]*yval[j];
+            tmp += Aval[k]*yval[ col[k] ];
           }
           tmp = (rhsval[i] - tmp)/Aval[row[i+1] - 1];
           step += pow((yval[i] - tmp), 2);
@@ -301,7 +307,7 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
     && uplo == MagmaUpper
     && diag != Magma_NODIAG ) {
 
-    int j = 0;
+    //int j = 0;
     *iter = 0;
 
     dataType step = 1.e8;
@@ -313,12 +319,14 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
       step = zero;
       #pragma omp parallel
       {
-        #pragma omp for private(j, tmp) reduction(+:step) nowait
+        //#pragma omp for private(j, tmp) reduction(+:step) nowait
+        #pragma omp for private(tmp) reduction(+:step) nowait
         for ( int i=num_rows-1; i>=0; i-- ) {
           tmp = zero;
           for ( int k=row[i]+1; k < row[i+1]; k++) {
-            j = col[k];
-            tmp += Aval[k]*yval[j];
+            //j = col[k];
+            //tmp += Aval[k]*yval[j];
+            tmp += Aval[k]*yval[ col[k] ];
           }
           tmp = (rhsval[i] - tmp)/Aval[row[i]];
           step += pow((yval[i] - tmp), 2);
