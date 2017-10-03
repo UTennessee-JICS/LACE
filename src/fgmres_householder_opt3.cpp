@@ -80,12 +80,7 @@ data_fgmres_householder(
     data_int_t search_directions = 0;
     dataType rtol = gmres_par->rtol;
     dataType rnorm2 = 0.0;
-    dataType bnorm = 0.0;
-    dataType beta = 0.0;
-    dataType delta = 0.0;
-    dataType gamma = 0.0;
     dataType residual = 0.0;
-    data_int_t search = 0; // search directions
 
     // preconditioning
     // for mkl_dcsrtrsv
@@ -118,6 +113,7 @@ data_fgmres_householder(
 
     data_d_matrix tmp={Magma_DENSE};
     data_zvinit( &tmp, n, 1, zero );
+
 
     // store preconditioned vectors for flexibility
     data_d_matrix Minvvj={Magma_DENSE};
@@ -225,8 +221,6 @@ data_fgmres_householder(
     }
     //givens.val[0] = rnorm2;
     givens.val[0] = -dd;
-
-    search = 0;
 
     gmres_log->search_directions = search_directions;
     gmres_log->solve_time = 0.0;
