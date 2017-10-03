@@ -92,7 +92,6 @@ data_fgmres_householder(
     LACE_CALLOC( ia, (LU.num_rows+1) );
     LACE_CALLOC( ja, LU.nnz );
 
-
     int chunk = 1;
     int maxThreads = 0;
     #pragma omp parallel
@@ -174,6 +173,17 @@ data_fgmres_householder(
     data_d_matrix alpha={Magma_DENSE};
     data_zvinit( &alpha, search_max, 1, zero );
     alpha.major = MagmaColMajor;
+
+    #if (defined(__GNUC__) || defined(__GNUG__)) && !(defined(__clang__) || defined(__INTEL_COMPILER))
+    	/* GNU GCC/G++. --------------------------------------------- */
+      printf("GNU COMPILER\n");
+    #endif
+    #if (defined(__INTEL_COMPILER) || defined(__ICC))
+    	/* INTEL ICC/C++. --------------------------------------------- */
+      printf("INTEL COMPILER\n");
+      __assume_aligned( krylov.val, 64 );
+      __assume_aligned( q.val, 64 );
+    #endif
 
     // initial residual
     data_z_spmv( negone, A, &x, zero, &r );
