@@ -101,11 +101,15 @@ data_fgmres_householder(
       chunk = n/maxThreads;
       #pragma omp for simd schedule(static,chunk) nowait
       #pragma vector aligned
+      #pragma vector vecremainder
+      #pragma nounroll_and_jam
       for (int i=0; i<LU.num_rows+1; i++) {
       	ia[i] = LU.row[i] + 1;
       }
       #pragma omp for simd schedule(static,chunk) nowait
       #pragma vector aligned
+      #pragma vector vecremainder
+      #pragma nounroll_and_jam
       for (int i=0; i<LU.nnz; i++) {
       	ja[i] = LU.col[i] + 1;
       }
@@ -189,6 +193,8 @@ data_fgmres_householder(
     {
       #pragma omp for simd schedule(static,chunk) nowait
       #pragma vector aligned
+      #pragma vector vecremainder
+      #pragma nounroll_and_jam
       for ( int i=0; i<n; i++ ) {
         //krylov.val[idx(i,0,krylov.ld)] = r.val[i]/rnorm2;
         krylov.val[idx(i,0,krylov.ld)] = r.val[i];
@@ -203,6 +209,8 @@ data_fgmres_householder(
       #pragma omp parallel
       #pragma omp for simd schedule(static,chunk) nowait
       #pragma vector aligned
+      #pragma vector vecremainder
+      #pragma nounroll_and_jam
       for ( int i=0; i<n; ++i ) {
         //krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]/k1norm2;
         krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]*k1norm2;
@@ -211,6 +219,8 @@ data_fgmres_householder(
       #pragma omp parallel
       #pragma omp for simd schedule(static,chunk) nowait
       #pragma vector aligned
+      #pragma vector vecremainder
+      #pragma nounroll_and_jam
       for ( int i=0; i<n; ++i ) {
         q.val[i] = -r.val[i]/dd;
         precondq.val[idx(i,0,precondq.ld)] = q.val[i];
@@ -281,6 +291,8 @@ data_fgmres_householder(
         #pragma omp parallel
         #pragma omp for simd schedule(static,chunk) nowait
         #pragma vector aligned
+        #pragma vector vecremainder
+        #pragma nounroll_and_jam
         for ( int i=0; i<n; i++ ) {
           for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {
             //u.val[i] = u.val[i] + A->val[j]*Minvvj.val[A->col[j]];
@@ -303,7 +315,7 @@ data_fgmres_householder(
         #pragma omp for simd schedule(static,chunk) reduction(+:sum) nowait
         #pragma vector aligned
         #pragma vector vecremainder
-        #pragma nounroll
+        #pragma nounroll_and_jam
         for ( int i=j; i<n; ++i ) {
           sum = sum + krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
         }
@@ -313,6 +325,8 @@ data_fgmres_householder(
         #pragma omp parallel
         #pragma omp for simd schedule(static,chunk) nowait
         #pragma vector aligned
+        #pragma vector vecremainder
+        #pragma nounroll_and_jam
         for ( int jj=j; jj < n; ++jj ) {
           krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
         }
@@ -332,6 +346,8 @@ data_fgmres_householder(
         #pragma omp parallel
         #pragma omp for simd schedule(static,chunk) nowait
         #pragma vector aligned
+        #pragma vector vecremainder
+        #pragma nounroll_and_jam
         for ( int i=search1; i<n; ++i ) {
           // krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]/snrm2;
           krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
@@ -351,7 +367,7 @@ data_fgmres_householder(
           #pragma omp for simd schedule(static,chunk) reduction(+:sum) nowait
           #pragma vector aligned
           #pragma vector vecremainder
-          #pragma nounroll
+          #pragma nounroll_and_jam
           for ( int i=j; i<n; ++i ) {
             sum = sum + krylov.val[idx(i,j,krylov.ld)]*q.val[i];
           }
@@ -361,6 +377,8 @@ data_fgmres_householder(
           #pragma omp parallel
           #pragma omp for simd schedule(static,chunk) nowait
           #pragma vector aligned
+          #pragma vector vecremainder
+          #pragma nounroll_and_jam
           for ( int jj=j; jj < n; ++jj ) {
             q.val[jj] = q.val[jj] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
           }
@@ -381,6 +399,8 @@ data_fgmres_householder(
         #pragma omp parallel
         #pragma omp for simd schedule(static,chunk) nowait
         #pragma vector aligned
+        #pragma vector vecremainder
+        #pragma nounroll_and_jam
         for ( int i=0; i<n; ++i ) {
           precondq.val[idx(i,search1,precondq.ld)] = q.val[i];
         }
@@ -506,6 +526,8 @@ data_fgmres_householder(
           #pragma omp parallel
           #pragma omp for simd schedule(static,chunk) nowait
           #pragma vector aligned
+          #pragma vector vecremainder
+          #pragma nounroll_and_jam
           for (int i = 0; i < n; i++ ) {
             //z.val[i] = z.val[i] + krylov.val[idx(i,j,krylov.ld)]*alpha.val[j];
             z.val[i] = z.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*alpha.val[j];
@@ -515,6 +537,8 @@ data_fgmres_householder(
         #pragma omp parallel
         #pragma omp for simd schedule(static,chunk) nowait
         #pragma vector aligned
+        #pragma vector vecremainder
+        #pragma nounroll_and_jam
         for (int i = 0; i < n; i++ ) {
           x.val[i] = x.val[i] + z.val[i];
         }

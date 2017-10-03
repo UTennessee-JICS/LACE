@@ -104,11 +104,15 @@ data_fgmres(
       chunk = n/maxThreads;
       #pragma omp for simd schedule(static,chunk) nowait
       #pragma vector aligned
+      #pragma vector vecremainder
+      #pragma nounroll_and_jam
       for (int i=0; i<LU.num_rows+1; i++) {
       	ia[i] = LU.row[i] + 1;
       }
       #pragma omp for simd schedule(static,chunk) nowait
       #pragma vector aligned
+      #pragma vector vecremainder
+      #pragma nounroll_and_jam
       for (int i=0; i<LU.nnz; i++) {
       	ja[i] = LU.col[i] + 1;
       }
@@ -184,6 +188,8 @@ data_fgmres(
     #pragma omp parallel
     #pragma omp for simd schedule(static,chunk) nowait
     #pragma vector aligned
+    #pragma vector vecremainder
+    #pragma nounroll_and_jam
     for ( int i=0; i<n; i++ ) {
       krylov.val[idx(i,0,krylov.ld)] = r.val[i]/rnorm2;
     }
@@ -249,6 +255,8 @@ data_fgmres(
       #pragma omp parallel
       #pragma omp for simd schedule(static,chunk) nowait
       #pragma vector aligned
+      #pragma vector vecremainder
+      #pragma nounroll_and_jam
       for ( int i=0; i<n; i++ ) {
         for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {
           u.val[i] = u.val[i] + A->val[j]*Minvvj.val[idx(A->col[j],search,krylov.ld)];
@@ -272,6 +280,8 @@ data_fgmres(
         #pragma omp parallel
         #pragma omp for simd schedule(static,chunk) reduction(+:tmp) nowait
         #pragma vector aligned
+        #pragma vector vecremainder
+        #pragma nounroll_and_jam
         for ( int i=0; i<n; i++ ) {
           //  h.val[idx(j,search,h.ld)] = h.val[idx(j,search,h.ld)] +
           //    krylov.val[idx(i,j,krylov.ld)]*u.val[i];
@@ -282,6 +292,8 @@ data_fgmres(
         #pragma omp parallel
         #pragma omp for simd schedule(static,chunk) nowait
         #pragma vector aligned
+        #pragma vector vecremainder
+        #pragma nounroll_and_jam
         for ( int i=0; i<n; i++ ) {
           u.val[i] = u.val[i]
             - h.val[idx(j,search,h.ld)]*krylov.val[idx(i,j,krylov.ld)];
@@ -303,6 +315,8 @@ data_fgmres(
           #pragma omp parallel
           #pragma omp for simd schedule(static,chunk) nowait
           #pragma vector aligned
+          #pragma vector vecremainder
+          #pragma nounroll_and_jam
           for ( int i=0; i<n; i++ ) {
             hr = hr + krylov.val[idx(i,j,krylov.ld)]*u.val[i];
           }
@@ -310,6 +324,8 @@ data_fgmres(
           #pragma omp parallel
           #pragma omp for simd schedule(static,chunk) nowait
           #pragma vector aligned
+          #pragma vector vecremainder
+          #pragma nounroll_and_jam
           for ( int i=0; i<n; i++ ) {
             u.val[i] = u.val[i] - hr*krylov.val[idx(i,j,krylov.ld)];
           }
@@ -322,6 +338,8 @@ data_fgmres(
         #pragma omp parallel
         #pragma omp for simd schedule(static,chunk) nowait
         #pragma vector aligned
+        #pragma vector vecremainder
+        #pragma nounroll_and_jam
          for ( int i=0; i<n; i++ ) {
           krylov.val[idx(i,(search+1),krylov.ld)] =
             u.val[i]/h.val[idx((search+1),search,h.ld)];
@@ -417,6 +435,8 @@ data_fgmres(
           #pragma omp parallel
           #pragma omp for simd schedule(static,chunk) nowait
           #pragma vector aligned
+          #pragma vector vecremainder
+          #pragma nounroll_and_jam
           for (int j = 0; j <= search; j++ ) {
             //z.val[i] = z.val[i] + krylov.val[idx(i,j,krylov.ld)]*alpha.val[j];
             z.val[i] = z.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*alpha.val[j];
@@ -426,6 +446,8 @@ data_fgmres(
         #pragma omp parallel
         #pragma omp for simd schedule(static,chunk) nowait
         #pragma vector aligned
+        #pragma vector vecremainder
+        #pragma nounroll_and_jam
         for (int i = 0; i < n; i++ ) {
           x.val[i] = x.val[i] + z.val[i];
         }
