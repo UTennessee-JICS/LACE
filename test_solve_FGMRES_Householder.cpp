@@ -118,6 +118,23 @@ int main(int argc, char* argv[])
     printf("user_csrtrsv_choice = %d\n", gmres_param.user_csrtrsv_choice);
   }
 
+  // Set monitorOrthog
+  gmres_param.monitorOrthog = 0;
+  if ( argc >= 11 ) {
+    gmres_param.monitorOrthog = atoi( argv[10] );
+    printf("monitorOrthog = %d\n", gmres_param.monitorOrthog);
+  }
+
+  int maxthreads = 0;
+  int numprocs = 0;
+  #pragma omp parallel
+  {
+    maxthreads = omp_get_max_threads();
+    numprocs = omp_get_num_procs();
+  }
+
+  printf("maxthreads = %d numprocs = %d\n", maxthreads, numprocs );
+
   // generate preconditioner
   data_d_matrix L = {Magma_CSRL};
   data_d_matrix U = {Magma_CSCU};
@@ -144,6 +161,13 @@ int main(int argc, char* argv[])
   Ucsr.fill_mode = MagmaUpper;
   //data_zprint_csr( Ucsr );
 
+  omp_set_num_threads(numprocs);
+  #pragma omp parallel
+  {
+    maxthreads = omp_get_max_threads();
+    numprocs = omp_get_num_procs();
+  }
+  printf("maxthreads = %d numprocs = %d\n", maxthreads, numprocs );
   data_fgmres_householder( &Asparse, &rhs_vector, &x, &L, &Ucsr, &gmres_param, &gmres_log );
 
   for (int i=0; i<Asparse.num_rows; i++) {

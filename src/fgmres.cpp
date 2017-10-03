@@ -96,13 +96,19 @@ data_fgmres(
     LACE_CALLOC( ia, (LU.num_rows+1) );
     LACE_CALLOC( ja, LU.nnz );
 
+    int chunk = 1;
+    int maxThreads = 0;
     #pragma omp parallel
     {
-      #pragma omp for nowait
+      maxThreads = omp_get_max_threads();
+      chunk = n/maxThreads;
+      #pragma omp for simd schedule(static,chunk) nowait
+      #pragma vector aligned
       for (int i=0; i<LU.num_rows+1; i++) {
       	ia[i] = LU.row[i] + 1;
       }
-      #pragma omp for nowait
+      #pragma omp for simd schedule(static,chunk) nowait
+      #pragma vector aligned
       for (int i=0; i<LU.nnz; i++) {
       	ja[i] = LU.col[i] + 1;
       }
@@ -175,6 +181,9 @@ data_fgmres(
     }
 
     // fill first column of Kylov subspace for Arnoldi iteration
+    #pragma omp parallel
+    #pragma omp for simd schedule(static,chunk) nowait
+    #pragma vector aligned
     for ( int i=0; i<n; i++ ) {
       krylov.val[idx(i,0,krylov.ld)] = r.val[i]/rnorm2;
     }
@@ -237,6 +246,9 @@ data_fgmres(
       //                  &(krylov.val[idx(0,search,krylov.ld)]), &zero,
       //                  u.val );
 
+      #pragma omp parallel
+      #pragma omp for simd schedule(static,chunk) nowait
+      #pragma vector aligned
       for ( int i=0; i<n; i++ ) {
         for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {
           u.val[i] = u.val[i] + A->val[j]*Minvvj.val[idx(A->col[j],search,krylov.ld)];
@@ -255,11 +267,21 @@ data_fgmres(
 
       // Modified Gram-Schmidt
       for ( int j=0; j <= search; j++ ) {
-        h.val[idx(j,search,h.ld)] = 0.0;
+        //h.val[idx(j,search,h.ld)] = 0.0;
+        dataType tmp = 0.0;
+        #pragma omp parallel
+        #pragma omp for simd schedule(static,chunk) reduction(+:tmp) nowait
+        #pragma vector aligned
         for ( int i=0; i<n; i++ ) {
-          h.val[idx(j,search,h.ld)] = h.val[idx(j,search,h.ld)] +
+          //  h.val[idx(j,search,h.ld)] = h.val[idx(j,search,h.ld)] +
+          //    krylov.val[idx(i,j,krylov.ld)]*u.val[i];
+          tmp = tmp +
             krylov.val[idx(i,j,krylov.ld)]*u.val[i];
         }
+        h.val[idx(j,search,h.ld)] = tmp;
+        #pragma omp parallel
+        #pragma omp for simd schedule(static,chunk) nowait
+        #pragma vector aligned
         for ( int i=0; i<n; i++ ) {
           u.val[i] = u.val[i]
             - h.val[idx(j,search,h.ld)]*krylov.val[idx(i,j,krylov.ld)];
@@ -278,10 +300,16 @@ data_fgmres(
         printf("Reorthogonalize %d\n", search);
         for ( int j=0; j <= search; j++ ) {
           hr = 0.0;
+          #pragma omp parallel
+          #pragma omp for simd schedule(static,chunk) nowait
+          #pragma vector aligned
           for ( int i=0; i<n; i++ ) {
             hr = hr + krylov.val[idx(i,j,krylov.ld)]*u.val[i];
           }
           h.val[idx(j,search,h.ld)] = h.val[idx(j,search,h.ld)] + hr;
+          #pragma omp parallel
+          #pragma omp for simd schedule(static,chunk) nowait
+          #pragma vector aligned
           for ( int i=0; i<n; i++ ) {
             u.val[i] = u.val[i] - hr*krylov.val[idx(i,j,krylov.ld)];
           }
@@ -291,6 +319,9 @@ data_fgmres(
 
       // Watch out for happy breakdown
       if ( fabs(h.val[idx((search+1),search,h.ld)]) > 0 ) {
+        #pragma omp parallel
+        #pragma omp for simd schedule(static,chunk) nowait
+        #pragma vector aligned
          for ( int i=0; i<n; i++ ) {
           krylov.val[idx(i,(search+1),krylov.ld)] =
             u.val[i]/h.val[idx((search+1),search,h.ld)];
@@ -302,16 +333,18 @@ data_fgmres(
         printf("%%\t******* happy breakdown **********\n");
       }
 
-      // Monitor Orthogonality Error of Krylov search Space
-      dataType ortherr = 0.0;
-      int imax = 0;
-      data_orthogonality_error( &krylov, &ortherr, &imax, (search+1) );
-      //data_orthogonality_error( &Minvvj, &ortherr, &imax, (search+1) );
-      if ( gmres_par->user_csrtrsv_choice == 0 ) {
-        printf("FGMRES_mkltrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
-      }
-      else {
-        printf("FGMRES_partrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
+      if (gmres_par->monitorOrthog == 1) {
+        // Monitor Orthogonality Error of Krylov search Space
+        dataType ortherr = 0.0;
+        int imax = 0;
+        data_orthogonality_error( &krylov, &ortherr, &imax, (search+1) );
+        //data_orthogonality_error( &Minvvj, &ortherr, &imax, (search+1) );
+        if ( gmres_par->user_csrtrsv_choice == 0 ) {
+          printf("FGMRES_mkltrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
+        }
+        else {
+          printf("FGMRES_partrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
+        }
       }
 
       // Givens rotations
@@ -381,12 +414,18 @@ data_fgmres(
 
         // use preconditioned vectors to form the update (GEMV)
         for (int i = 0; i < n; i++ ) {
+          #pragma omp parallel
+          #pragma omp for simd schedule(static,chunk) nowait
+          #pragma vector aligned
           for (int j = 0; j <= search; j++ ) {
             //z.val[i] = z.val[i] + krylov.val[idx(i,j,krylov.ld)]*alpha.val[j];
             z.val[i] = z.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*alpha.val[j];
           }
         }
 
+        #pragma omp parallel
+        #pragma omp for simd schedule(static,chunk) nowait
+        #pragma vector aligned
         for (int i = 0; i < n; i++ ) {
           x.val[i] = x.val[i] + z.val[i];
         }

@@ -378,21 +378,23 @@ data_fgmres_householder(
         }
       }
 
-      // Monitor Orthogonality Error of Krylov search Space
-      #pragma omp parallel
-      #pragma omp for simd schedule(static,chunk) nowait
-      #pragma vector aligned
-      for ( int i=0; i<n; ++i ) {
-        precondq.val[idx(i,search1,precondq.ld)] = q.val[i];
-      }
-      dataType ortherr = 0.0;
-      int imax = 0;
-      data_orthogonality_error( &precondq, &ortherr, &imax, search1 );
-      if ( gmres_par->user_csrtrsv_choice == 0 ) {
-        printf("FGMRES_Householders_mkltrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
-      }
-      else {
-        printf("FGMRES_Householders_partrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
+      if (gmres_par->monitorOrthog == 1) {
+        // Monitor Orthogonality Error of Krylov search Space
+        #pragma omp parallel
+        #pragma omp for simd schedule(static,chunk) nowait
+        #pragma vector aligned
+        for ( int i=0; i<n; ++i ) {
+          precondq.val[idx(i,search1,precondq.ld)] = q.val[i];
+        }
+        dataType ortherr = 0.0;
+        int imax = 0;
+        data_orthogonality_error( &precondq, &ortherr, &imax, search1 );
+        if ( gmres_par->user_csrtrsv_choice == 0 ) {
+          printf("FGMRES_Householders_mkltrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
+        }
+        else {
+          printf("FGMRES_Householders_partrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
+        }
       }
 
       // Apply Givens rotations
@@ -551,6 +553,7 @@ data_fgmres_householder(
     data_zmfree( &givens_sin );
     data_zmfree( &alpha );
     data_zmfree( &z );
+    data_zmfree( &q );
 
     data_zmfree( &LU );
     free( ia );
