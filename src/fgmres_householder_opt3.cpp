@@ -302,6 +302,8 @@ data_fgmres_householder(
         #pragma omp parallel
         #pragma omp for simd schedule(static,chunk) reduction(+:sum) nowait
         #pragma vector aligned
+        #pragma vector vecremainder
+        #pragma nounroll
         for ( int i=j; i<n; ++i ) {
           sum = sum + krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
         }
@@ -348,6 +350,8 @@ data_fgmres_householder(
           #pragma omp parallel
           #pragma omp for simd schedule(static,chunk) reduction(+:sum) nowait
           #pragma vector aligned
+          #pragma vector vecremainder
+          #pragma nounroll
           for ( int i=j; i<n; ++i ) {
             sum = sum + krylov.val[idx(i,j,krylov.ld)]*q.val[i];
           }
