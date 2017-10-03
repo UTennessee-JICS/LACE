@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+#define DEV_ALIGN               (64)
+
 #define DEV_D_ZERO              ( 0.0)
 #define DEV_D_ONE               ( 1.0)
 #define DEV_D_HALF              ( 0.5)
@@ -37,7 +39,7 @@
 #else
   #define DEV_PRINTF(f_, ...) {\
     (void)0; }
-#endif    
+#endif
 
 #ifdef DEBUG_PARILU
   #define PARILUDBG(f_, ...) {\
@@ -46,7 +48,7 @@
 #else
   #define PARILUDBG(f_, ...) {\
     (void)0; }
-#endif 
+#endif
 
 #ifdef DEBUG_PARTRSV
   #define PARTRSVDBG(f_, ...) {\
@@ -55,7 +57,7 @@
 #else
   #define PARTRSVDBG(f_, ...) {\
     (void)0; }
-#endif 
+#endif
 
 #ifdef DEBUG_GMRES
   #define GMRESDBG(f_, ...) {\
@@ -64,7 +66,7 @@
 #else
   #define GMRESDBG(f_, ...) {\
     (void)0; }
-#endif    
+#endif
 
 #ifdef DEBUG_ORTHOG
   #define ORTHOGDBG(f_, ...) {\
@@ -76,7 +78,7 @@
 #endif
 
 #define idx(i,j,n)  ((i)+(j)*(n))
-  
+
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define SIGN(a,b) ((b) < 0 ? -fabs(a) : fabs(a))
@@ -410,7 +412,7 @@ CBLAS_DIAG      cblas_diag_const   ( data_diag_t  diag  );
 CBLAS_SIDE      cblas_side_const   ( data_side_t  side  );
 
 // --------------------
-// 
+//
 #define CHECK( err )                          \
     do {                                      \
         data_int_t e_ = (err);                \
@@ -420,18 +422,19 @@ CBLAS_SIDE      cblas_side_const   ( data_side_t  side  );
             __FILE__, __LINE__);              \
           exit(-1);                           \
         }                                     \
-    } while(0)   
+    } while(0)
 
-      
+
 #define LACE_CALLOC(ptr, nmemb) lace_calloc((void **) &(ptr), nmemb, sizeof(*(ptr)), #ptr, __FILE__, __LINE__)
 
 static inline void lace_calloc(void **ptr, const size_t nmemb, const size_t size,
                        const char *name, const char *file, const int line)
 {
-  if ((*ptr = calloc(nmemb, size)) == NULL)
+  //if ((*ptr = calloc(nmemb, size)) == NULL)
+  if ( posix_memalign( ptr, DEV_ALIGN, nmemb*size ) != 0 )
   {
-    fprintf(stderr, 
-            "ERROR (memory): Unable to allocate memory for %s (%s, line %d)\n", 
+    fprintf(stderr,
+            "ERROR (memory): Unable to allocate memory for %s (%s, line %d)\n",
             name, file, line);
 #ifdef USING_MPI
     MPI_Abort(MPI_COMM_WORLD, -1);
@@ -441,7 +444,7 @@ static inline void lace_calloc(void **ptr, const size_t nmemb, const size_t size
   }
 }
 
-      
+
 /**
   Macro checks the return code of a function;
   if non-zero, sets info to err, then does goto cleanup.
@@ -449,7 +452,7 @@ static inline void lace_calloc(void **ptr, const size_t nmemb, const size_t size
   Assumes variable info and label cleanup exist.
   Usually, all paths (successful and error) exit through the cleanup code.
   Example:
-  
+
       magma_int_t function()
       {
         data_int_t info = 0;
@@ -475,6 +478,6 @@ static inline void lace_calloc(void **ptr, const size_t nmemb, const size_t size
             file, line);                      \
           goto cleanup;                       \
         }                                     \
-    } while(0)                    
+    } while(0)
 */
 #endif        //  #ifndef DEV_TYPES_H
