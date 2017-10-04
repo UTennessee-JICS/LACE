@@ -216,7 +216,8 @@ data_zfrobenius_LUresidual(
   B.pad_cols = A.pad_cols;
   B.ld = A.ld;
   B.nnz = A.nnz;
-  B.val = (dataType*) calloc( rowlimit*collimit, sizeof(dataType) );
+  // B.val = (dataType*) calloc( rowlimit*collimit, sizeof(dataType) );
+  LACE_CALLOC( B.val, (rowlimit*collimit) );
   if (U.major == MagmaRowMajor) {
     data_dgemm_mkl( L.major, MagmaNoTrans, MagmaNoTrans,
       rowlimit, rowlimit, collimit,
@@ -281,7 +282,8 @@ data_zfrobenius_inplaceLUresidual(
   B.pad_cols = A.pad_cols;
   B.ld = A.ld;
   B.nnz = A.nnz;
-  B.val = (dataType*) calloc( B.num_rows*B.num_cols, sizeof(dataType) );
+  // B.val = (dataType*) calloc( B.num_rows*B.num_cols, sizeof(dataType) );
+  LACE_CALLOC( B.val, (rowlimit*collimit) );
   data_dgemm_mkl( L.major, MagmaNoTrans, MagmaNoTrans,
     rowlimit, rowlimit, collimit,
     alpha, L.val, L.ld, U.val, U.ld,
@@ -326,8 +328,10 @@ data_zilures(
         free( LL.col );
         free( LL.val );
         LL.nnz = L.nnz+L.num_rows;
-        LL.val = (dataType*) malloc( LL.nnz*sizeof(dataType) );
-        LL.col = (int*) malloc( LL.nnz*sizeof(int) );
+        // LL.val = (dataType*) malloc( LL.nnz*sizeof(dataType) );
+        // LL.col = (int*) malloc( LL.nnz*sizeof(int) );
+        LACE_CALLOC( LL.val, LL.nnz );
+        LACE_CALLOC( LL.col, LL.nnz );
         int z=0;
         for (i=0; i < L.num_rows; i++) {
             LL.row[i] = z;
