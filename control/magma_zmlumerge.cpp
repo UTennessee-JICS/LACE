@@ -30,22 +30,22 @@
     @param[in]
     U           data_d_matrix
                 input upper triangular matrix U
-    
+
     @param[out]
     A           data_d_matrix*
                 output matrix
-                
+
     @ingroup magmasparse_zaux
     ********************************************************************/
 
-extern "C" 
+extern "C"
 int
 data_zmlumerge(
     data_d_matrix L,
     data_d_matrix U,
     data_d_matrix *A )
 {
-    data_int_t info = 0;    
+    data_int_t info = 0;
 
     if( L.storage_type == Magma_CSR && U.storage_type == Magma_CSR ){
         CHECK( data_zmconvert( L, A, Magma_CSR, Magma_CSR ));
@@ -64,11 +64,13 @@ data_zmlumerge(
             }
         }
         A->nnz = z;
-        // fill A with the new structure;                                     
+        // fill A with the new structure;
         //CHECK( magma_index_malloc_cpu( &A->col, A->nnz ));
         //CHECK( magma_zmalloc_cpu( &A->val, A->nnz ));
-        A->col = (int*) calloc( A->nnz, sizeof(int) );
-        A->val = (dataType*) calloc( A->nnz, sizeof(dataType) );
+        // A->col = (int*) calloc( A->nnz, sizeof(int) );
+        // A->val = (dataType*) calloc( A->nnz, sizeof(dataType) );
+        LACE_CALLOC( A->col, A->nnz );
+        LACE_CALLOC( A->val, A->nnz );
         z = 0;
         for(data_int_t i=0; i<A->num_rows; i++){
             A->row[i] = z;
@@ -87,14 +89,14 @@ data_zmlumerge(
         }
         A->row[A->num_rows] = z;
         A->nnz = z;
-        
+
     }
     else {
         printf("%% warning: %s , within %s ; matrix in wrong formats L = %d, U = %d.\n",
-          __FILE__, __FUNCTION__, L.storage_type, U.storage_type ); 
+          __FILE__, __FUNCTION__, L.storage_type, U.storage_type );
         data_d_matrix LL = {Magma_CSR};
         data_d_matrix UU = {Magma_CSR};
-        
+
         //if ( L.storage_type != Magma_CSR ) {
           CHECK( data_zmconvert( L, &LL, L.storage_type, Magma_CSR ) );
         //}
@@ -102,7 +104,7 @@ data_zmlumerge(
           CHECK( data_zmconvert( U, &UU, U.storage_type, Magma_CSR ) );
         //}
         info = data_zmlumerge( LL, UU, A );
-          
+
         //info = DEV_ERR_NOT_SUPPORTED;
     }
 //cleanup:
