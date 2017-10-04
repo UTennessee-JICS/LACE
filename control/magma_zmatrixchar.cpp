@@ -30,23 +30,24 @@
     @param[in,out]
     A           data_d_matrix*
                 sparse matrix
-    
+
     @ingroup datasparse_zaux
     ********************************************************************/
 
-extern "C" 
+extern "C"
 int
 data_zrowentries(
     data_d_matrix *A )
 {
     int info = 0;
-    
+
     int *length=NULL;
     int i,j, maxrowlength=0;
-    
+
     // CSR
     if ( A->storage_type == Magma_CSR || A->storage_type == Magma_CSC ) {
-        length = (int*) malloc( A->num_rows*sizeof(int) );
+        // length = (int*) malloc( A->num_rows*sizeof(int) );
+        LACE_CALLOC( length, A->num_rows );
         for( i=0; i<A->num_rows; i++ ) {
             length[i] = A->row[i+1]-A->row[i];
             if (length[i] > maxrowlength)
@@ -56,7 +57,8 @@ data_zrowentries(
     }
     // Dense
     else if ( A->storage_type == Magma_DENSE ) {
-        length = (int*) malloc( A->num_rows*sizeof(int) );
+        //length = (int*) malloc( A->num_rows*sizeof(int) );
+        LACE_CALLOC( length, A->num_rows );
 
         for( i=0; i<A->num_rows; i++ ) {
             length[i] = 0;
@@ -69,7 +71,7 @@ data_zrowentries(
         }
         A->max_nnz_row = maxrowlength;
     }
-    
+
 //cleanup:
     free( length );
     return info;
@@ -89,21 +91,22 @@ data_zrowentries(
     @param[in,out]
     A           data_d_matrix*
                 sparse matrix
-    
+
     @ingroup datasparse_zaux
     ********************************************************************/
-extern "C" 
+extern "C"
 int
 data_zdiameter(
     data_d_matrix *A )
 {
     int info = 0;
-    
+
     int i, j, tmp,  *dim=NULL, maxdim=0;
-    
+
     // CSR
     if ( A->storage_type == Magma_CSR || A->storage_type == Magma_CSC ) {
-        dim = (int*) malloc( A->num_rows*sizeof(int) );
+        // dim = (int*) malloc( A->num_rows*sizeof(int) );
+        LACE_CALLOC( dim, A->num_rows );
         for( i=0; i<A->num_rows; i++ ) {
             dim[i] = 0;
             for( j=A->row[i]; j<A->row[i+1]; j++ ) {
@@ -118,7 +121,8 @@ data_zdiameter(
     }
     // Dense
     else if ( A->storage_type == Magma_DENSE ) {
-        dim = (int*) malloc( A->num_rows*sizeof(int) );
+        // dim = (int*) malloc( A->num_rows*sizeof(int) );
+        LACE_CALLOC( dim, A->num_rows );
         for( i=0; i<A->num_rows; i++ ) {
             dim[i] = 0;
             for( j=0; j<A->num_cols; j++ ) {
@@ -135,7 +139,8 @@ data_zdiameter(
     }
     // ELLPACK
     else if ( A->storage_type == Magma_ELLPACKT ) {
-        dim = (int*) malloc( A->num_rows*sizeof(int) );
+        // dim = (int*) malloc( A->num_rows*sizeof(int) );
+        LACE_CALLOC( dim, A->num_rows );
         for( i=0; i<A->num_rows; i++ ) {
             dim[i] = 0;
             for( j=i*A->max_nnz_row; j<(i+1)*A->max_nnz_row; j++ ) {
