@@ -371,6 +371,8 @@ data_fgmres_householder(
           }
         //}
           #pragma omp barrier
+          #pragma omp single
+          sum *= 2.0;
         //#pragma omp parallel
         //{
           #pragma omp for nowait
@@ -378,20 +380,20 @@ data_fgmres_householder(
             #pragma omp simd
             #pragma vector aligned
             for ( int jj=ii; jj < ii+STRIP; ++jj ) {
-              krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
+              krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
             }
           }
           #pragma omp single
           #pragma omp simd
           #pragma vector aligned
           for ( int jj=j; jj<startStrip; ++jj ) {
-            krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
+            krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
           }
           #pragma omp single
           #pragma omp simd
           #pragma vector aligned
           for ( int jj=BINS*STRIP; jj<n; ++jj ) {
-            krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
+            krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
           }
         }
       }
