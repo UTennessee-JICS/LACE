@@ -346,17 +346,20 @@ data_fgmres_householder(
             int b = ii/STRIP;
             sumTemp[b] = 0.0;
             //printf("ii/STRIP=%d\n", ii/STRIP);
+            #pragma omp simd
             #pragma vector aligned
             for ( int i=ii; i<ii+STRIP; ++i ) {
               sumTemp[b] += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
             }
           }
           #pragma omp single
+          #pragma omp simd
           #pragma vector aligned
           for ( int i=j; i<startStrip; ++i ) {
             sum += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
           }
           #pragma omp single
+          #pragma omp simd
           #pragma vector aligned
           for ( int i=BINS*STRIP; i<n; ++i ) {
             sum += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
@@ -372,17 +375,20 @@ data_fgmres_householder(
         //{
           #pragma omp for nowait
           for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
+            #pragma omp simd
             #pragma vector aligned
             for ( int jj=ii; jj < ii+STRIP; ++jj ) {
               krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
             }
           }
           #pragma omp single
+          #pragma omp simd
           #pragma vector aligned
           for ( int jj=j; jj<startStrip; ++jj ) {
             krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
           }
           #pragma omp single
+          #pragma omp simd
           #pragma vector aligned
           for ( int jj=BINS*STRIP; jj<n; ++jj ) {
             krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
