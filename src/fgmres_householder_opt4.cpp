@@ -248,6 +248,8 @@ data_fgmres_householder(
 
     const int STRIP=1024;
     const int BINS=n/STRIP;
+    const int endStrip = BINS*STRIP;
+    dataType sumTemp[BINS];
 
     // GMRES search direction
     //while ( (rnorm2 > rtol) && (search < search_max) ) {
@@ -332,14 +334,15 @@ data_fgmres_householder(
         // for ( int i=j; i<n; ++i ) {
         //   sum = sum + krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
         // }
-        dataType sumTemp[BINS];
-        int startStrip = (j/STRIP+1)*STRIP;
-        //printf( "n=%d, j=%d, startStrip=%d BINS=%d BINS*STRIP=%d\n",
-        //  n, j, startStrip, BINS, BINS*STRIP );
+
+        const int startStrip = (j/STRIP+1)*STRIP;
+
+        printf( "n=%d, j=%d, startStrip=%d BINS=%d endStrip=%d\n",
+          n, j, startStrip, BINS, endStrip );
         #pragma omp parallel
         {
-          #pragma omp for
-          for ( int ii=startStrip; ii<n; ii+=STRIP ) {
+          #pragma omp for nowait
+          for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
             int b = ii/STRIP;
             sumTemp[b] = 0.0;
             //printf("ii/STRIP=%d\n", ii/STRIP);
@@ -349,14 +352,16 @@ data_fgmres_householder(
             }
           }
           #pragma omp single
+          #pragma vector aligned
           for ( int i=j; i<startStrip; ++i ) {
             sum += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
           }
           #pragma omp single
+          #pragma vector aligned
           for ( int i=BINS*STRIP; i<n; ++i ) {
             sum += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
           }
-          #pragma omp for
+          #pragma omp for nowait
           for ( int b=0; b<BINS; ++b ) {
             #pragma omp atomic
             sum += sumTemp[b];
@@ -366,24 +371,35 @@ data_fgmres_householder(
         // sum = data_zdot_mkl( (n-j),
         //   &(krylov.val[idx(j,j,krylov.ld)]), 1,
         //   &(krylov.val[idx(j,search1,krylov.ld)]), 1 );
-        #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
-        #pragma vector aligned
-        #pragma vector vecremainder
-        #pragma nounroll_and_jam
-        for ( int jj=j; jj < n; ++jj ) {
-          krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
-        }
         // #pragma omp parallel
-        // {
-        //   #pragma omp for
-        //   for ( int ii=j; ii<n; ii+=STRIP ) {
-        //     #pragma vector aligned
-        //     for ( int jj=ii; jj < ii+STRIP; ++jj ) {
-        //       krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
-        //     }
-        //   }
+        // #pragma omp for simd schedule(static,chunk) nowait
+        // #pragma vector aligned
+        // #pragma vector vecremainder
+        // #pragma nounroll_and_jam
+        // for ( int jj=j; jj < n; ++jj ) {
+        //   krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
         // }
+
+        #pragma omp parallel
+        {
+          #pragma omp for
+          for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
+            #pragma vector aligned
+            for ( int jj=ii; jj < ii+STRIP; ++jj ) {
+              krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
+            }
+          }
+          #pragma omp single
+          #pragma vector aligned
+          for ( int jj=j; jj<startStrip; ++jj ) {
+            krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
+          }
+          #pragma omp single
+          #pragma vector aligned
+          for ( int jj=BINS*STRIP; jj<n; ++jj ) {
+            krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
+          }
+        }
       }
       for ( int j=0; j <= search1; ++j ) {
         for ( int i=0; i<n; ++i ) {
