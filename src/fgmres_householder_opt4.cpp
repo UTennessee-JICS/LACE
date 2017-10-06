@@ -337,8 +337,8 @@ data_fgmres_householder(
 
         const int startStrip = (j/STRIP+1)*STRIP;
 
-        printf( "n=%d, j=%d, startStrip=%d BINS=%d endStrip=%d\n",
-          n, j, startStrip, BINS, endStrip );
+        //printf( "n=%d, j=%d, startStrip=%d BINS=%d endStrip=%d\n",
+        //  n, j, startStrip, BINS, endStrip );
         #pragma omp parallel
         {
           #pragma omp for nowait
@@ -361,28 +361,16 @@ data_fgmres_householder(
           for ( int i=BINS*STRIP; i<n; ++i ) {
             sum += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
           }
-          #pragma omp for nowait
+          #pragma omp for reduction(+:sum) nowait
           for ( int b=0; b<BINS; ++b ) {
-            #pragma omp atomic
+            //#pragma omp atomic
             sum += sumTemp[b];
           }
-        }
-
-        // sum = data_zdot_mkl( (n-j),
-        //   &(krylov.val[idx(j,j,krylov.ld)]), 1,
-        //   &(krylov.val[idx(j,search1,krylov.ld)]), 1 );
-        // #pragma omp parallel
-        // #pragma omp for simd schedule(static,chunk) nowait
-        // #pragma vector aligned
-        // #pragma vector vecremainder
-        // #pragma nounroll_and_jam
-        // for ( int jj=j; jj < n; ++jj ) {
-        //   krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
-        // }
-
-        #pragma omp parallel
-        {
-          #pragma omp for
+        //}
+          #pragma omp barrier
+        //#pragma omp parallel
+        //{
+          #pragma omp for nowait
           for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
             #pragma vector aligned
             for ( int jj=ii; jj < ii+STRIP; ++jj ) {
