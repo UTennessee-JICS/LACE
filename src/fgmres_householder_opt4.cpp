@@ -362,6 +362,7 @@ data_fgmres_householder(
             sum += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
           }
           #pragma omp for reduction(+:sum) nowait
+          #pragma nounroll
           for ( int b=0; b<BINS; ++b ) {
             sum += sumTemp[b];
           }
@@ -378,7 +379,7 @@ data_fgmres_householder(
               krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
             }
           }
-          #pragma omp single
+          #pragma omp single nowait
           #pragma omp simd
           #pragma vector aligned
           for ( int jj=j; jj<startStrip; ++jj ) {
@@ -415,7 +416,7 @@ data_fgmres_householder(
               krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
             }
           }
-          #pragma omp single
+          #pragma omp single nowait
           #pragma omp simd
           #pragma vector aligned
           for ( int i=search1; i<startStrip; ++i ) {
@@ -454,7 +455,7 @@ data_fgmres_householder(
                 sumTemp[b] += krylov.val[idx(i,j,krylov.ld)]*q.val[i];
               }
             }
-            #pragma omp single
+            #pragma omp single nowait
             #pragma omp simd
             #pragma vector aligned
             for ( int i=j; i<startStrip; ++i ) {
@@ -467,6 +468,7 @@ data_fgmres_householder(
               sum += krylov.val[idx(i,j,krylov.ld)]*q.val[i];
             }
             #pragma omp for reduction(+:sum) nowait
+            #pragma nounroll
             for ( int b=0; b<BINS; ++b ) {
               sum += sumTemp[b];
             }
@@ -484,7 +486,7 @@ data_fgmres_householder(
                 q.val[jj] = q.val[jj] - sum*krylov.val[idx(jj,j,krylov.ld)];
               }
             }
-            #pragma omp single
+            #pragma omp single nowait
             #pragma omp simd
             #pragma vector aligned
             for ( int jj=j; jj<startStrip; ++jj ) {
