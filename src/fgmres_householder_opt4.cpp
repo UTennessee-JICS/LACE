@@ -171,7 +171,7 @@ data_fgmres_householder(
                                      // preconditioner application,
                                      // and solution update
       __assume_aligned( q.val, 64 ); // reinitialized each search direction
-      __assume_aligned( sumTemp, 64 ); // strip-mining summation bins
+      //__assume_aligned( sumTemp, 64 ); // strip-mining summation bins
       __assume_aligned( krylov.val, 64 );  // Householder transformed search space
       __assume_aligned( precondq.val, 64 ); // Search vectors
       __assume_aligned( givens.val, 64 ); // Residual approximation
