@@ -148,11 +148,6 @@ data_fgmres_householder(
     data_zvinit( &precondq, n, search_max+1, zero );
     precondq.major = MagmaColMajor;
 
-    // Hessenberg Matrix for Arnoldi iterations
-    data_d_matrix h={Magma_DENSE};
-    data_zvinit( &h, search_max+1, search_max, zero );
-    h.major = MagmaColMajor;
-
     // Givens rotation vectors
     data_d_matrix givens={Magma_DENSE};
     data_zvinit( &givens, search_max+1, 1, zero );
@@ -218,14 +213,6 @@ data_fgmres_householder(
     dataType k1norm2 = 0.0;
     #pragma omp parallel
     {
-      // #pragma omp for simd schedule(static,chunk) nowait
-      // #pragma vector aligned
-      // #pragma vector vecremainder
-      // #pragma nounroll_and_jam
-      // for ( int i=0; i<n; i++ ) {
-      //   //krylov.val[idx(i,0,krylov.ld)] = r.val[i]/rnorm2;
-      //   krylov.val[idx(i,0,krylov.ld)] = r.val[i];
-      // }
       #pragma omp for nowait
       for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
         #pragma omp simd
@@ -241,26 +228,14 @@ data_fgmres_householder(
         krylov.val[idx(i,0,krylov.ld)] = r.val[i];
       }
 
-    //}
       #pragma omp barrier
       #pragma omp single
       {
         dd = mysgn(krylov.val[idx(0,0,krylov.ld)])*rnorm2;
         krylov.val[idx(0,0,krylov.ld)] = krylov.val[idx(0,0,krylov.ld)] + dd;
-        // dataType k1norm2 = data_dnrm2( n, krylov.val, 1 );
         k1norm2 = 1.0/data_dnrm2( n, krylov.val, 1 );
       }
-    //#pragma omp parallel
-    //{
-      // #pragma omp parallel
-      // #pragma omp for simd schedule(static,chunk) nowait
-      // #pragma vector aligned
-      // #pragma vector vecremainder
-      // #pragma nounroll_and_jam
-      // for ( int i=0; i<n; ++i ) {
-      //   //krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]/k1norm2;
-      //   krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]*k1norm2;
-      // }
+      #pragma omp barrier
       #pragma omp for nowait
       for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
         #pragma omp simd
@@ -275,17 +250,8 @@ data_fgmres_householder(
       for ( int i=BINS*STRIP; i<n; ++i ) {
         krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]*k1norm2;
       }
-    //}
-      //#pragma omp parallel
       #pragma omp barrier
-      // #pragma omp for simd schedule(static,chunk) nowait
-      // #pragma vector aligned
-      // #pragma vector vecremainder
-      // #pragma nounroll_and_jam
-      // for ( int i=0; i<n; ++i ) {
-      //   q.val[i] = -r.val[i]/dd;
-      //   precondq.val[idx(i,0,precondq.ld)] = q.val[i];
-      // }
+      #pragma omp for nowait
       for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
         #pragma omp simd
         #pragma vector aligned
@@ -305,7 +271,6 @@ data_fgmres_householder(
     for ( int i=0; i<n; ++i ) {
       GMRESDBG("q.val[%d] = %e\n", i, q.val[i]);
     }
-    //givens.val[0] = rnorm2;
     givens.val[0] = -dd;
 
     gmres_log->search_directions = search_directions;
@@ -314,11 +279,8 @@ data_fgmres_householder(
 
 
     // GMRES search direction
-    //while ( (rnorm2 > rtol) && (search < search_max) ) {
     for ( int search = 0; search < search_max; search++ ) {
       int search1 = search + 1;
-      //data_zmfree( &u );
-      //data_zvinit( &u, n, 1, zero );
       data_zmfree( &tmp );
       data_zvinit( &tmp, n, 1, zero );
 
@@ -358,12 +320,7 @@ data_fgmres_householder(
           i, search, Minvvj.ld, Minvvj.val[idx(i,search,Minvvj.ld)]);
       }
 
-      //mkl_dcsrmv( "N", &A->num_rows, &A->num_cols,
-      //                  &one, "GFNC", A->val,
-      //                  A->col, A->row, A->row+1,
-      //                  &(krylov.val[idx(0,search,krylov.ld)]), &zero,
-      //                  u.val );
-
+      // Sparse matrix-vector product, mkl_dcsrmv
       #pragma omp parallel
       #pragma omp for simd schedule(static,chunk) nowait
       #pragma vector aligned
@@ -371,7 +328,6 @@ data_fgmres_householder(
       #pragma nounroll_and_jam
       for ( int i=0; i<n; i++ ) {
         for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {
-          //u.val[i] = u.val[i] + A->val[j]*Minvvj.val[A->col[j]];
           krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)] + A->val[j]*Minvvj.val[idx(A->col[j],search,Minvvj.ld)];
         }
       }
@@ -385,15 +341,6 @@ data_fgmres_householder(
       // Householder Transformations
       for ( int j=0; j <= search; ++j ) {
         dataType sum = 0.0;
-        // #pragma omp parallel
-        // #pragma omp for simd schedule(static,chunk) reduction(+:sum) nowait
-        // #pragma vector aligned
-        // #pragma vector vecremainder
-        // #pragma nounroll_and_jam
-        // for ( int i=j; i<n; ++i ) {
-        //   sum = sum + krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
-        // }
-
         startStrip = (j/STRIP+1)*STRIP;
 
         //printf( "n=%d, j=%d, startStrip=%d BINS=%d endStrip=%d\n",
@@ -425,15 +372,13 @@ data_fgmres_householder(
           }
           #pragma omp for reduction(+:sum) nowait
           for ( int b=0; b<BINS; ++b ) {
-            //#pragma omp atomic
             sum += sumTemp[b];
           }
-        //}
           #pragma omp barrier
           #pragma omp single
           sum *= 2.0;
-        //#pragma omp parallel
-        //{
+          #pragma omp barrier
+
           #pragma omp for nowait
           for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
             #pragma omp simd
@@ -468,15 +413,6 @@ data_fgmres_householder(
         GMRESDBG("dd = %e  %d\n", dd, __LINE__);
         krylov.val[idx(search1,search1,krylov.ld)] = krylov.val[idx(search1,search1,krylov.ld)] + dd;
         snrm2 = 1.0 / data_dnrm2( (n-search), &(krylov.val[idx(search1,search1,krylov.ld)]), 1 );
-        // #pragma omp parallel
-        // #pragma omp for simd schedule(static,chunk) nowait
-        // #pragma vector aligned
-        // #pragma vector vecremainder
-        // #pragma nounroll_and_jam
-        // for ( int i=search1; i<n; ++i ) {
-        //   // krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]/snrm2;
-        //   krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
-        // }
         startStrip = (search1/STRIP+1)*STRIP;
         #pragma omp parallel
         {
@@ -515,14 +451,6 @@ data_fgmres_householder(
         for (int j=search1; j>=0; --j) {
           dataType sum = 0.0;
           startStrip = (j/STRIP+1)*STRIP;
-          // #pragma omp parallel
-          // #pragma omp for simd schedule(static,chunk) reduction(+:sum) nowait
-          // #pragma vector aligned
-          // #pragma vector vecremainder
-          // #pragma nounroll_and_jam
-          // for ( int i=j; i<n; ++i ) {
-          //   sum = sum + krylov.val[idx(i,j,krylov.ld)]*q.val[i];
-          // }
           #pragma omp parallel
           {
             #pragma omp for nowait
@@ -551,20 +479,12 @@ data_fgmres_householder(
             for ( int b=0; b<BINS; ++b ) {
               sum += sumTemp[b];
             }
-
             #pragma omp barrier
             #pragma omp single
             sum *= 2.0;
+            #pragma omp barrier
 
 
-            // #pragma omp parallel
-            // #pragma omp for simd schedule(static,chunk) nowait
-            // #pragma vector aligned
-            // #pragma vector vecremainder
-            // #pragma nounroll_and_jam
-            // for ( int jj=j; jj < n; ++jj ) {
-            //   q.val[jj] = q.val[jj] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
-            // }
             #pragma omp for nowait
             for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
               #pragma omp simd
@@ -601,13 +521,6 @@ data_fgmres_householder(
       if (gmres_par->monitorOrthog == 1) {
         // Monitor Orthogonality Error of Krylov search Space
         #pragma omp parallel
-        // #pragma omp for simd schedule(static,chunk) nowait
-        // #pragma vector aligned
-        // #pragma vector vecremainder
-        // #pragma nounroll_and_jam
-        // for ( int i=0; i<n; ++i ) {
-        //   precondq.val[idx(i,search1,precondq.ld)] = q.val[i];
-        // }
         {
           #pragma omp for nowait
           for ( int ii=0; ii<endStrip; ii+=STRIP ) {
@@ -639,11 +552,6 @@ data_fgmres_householder(
       dataType temp0 = 0.0;
       dataType temp1 = 0.0;
       for ( int j = 0; j<search; ++j ) {
-        // dataType temp = givens_cos.val[j]*krylov.val[idx(j,search1,krylov.ld)]
-        //   + givens_sin.val[j]*krylov.val[idx(j+1,search1,krylov.ld)];
-        // krylov.val[idx(j+1,search1,krylov.ld)] = -givens_sin.val[j]*krylov.val[idx(j,search1,krylov.ld)]
-        //   + givens_cos.val[j]*krylov.val[idx(j+1,search1,krylov.ld)];
-        // krylov.val[idx(j,search1,krylov.ld)] = temp;
         temp0 = krylov.val[idx(j,search1,krylov.ld)];
         temp1 = krylov.val[idx(j+1,search1,krylov.ld)];
 
@@ -683,13 +591,12 @@ data_fgmres_householder(
         // approximate residual norm
         givens.val[search1] = -givens_sin.val[search]*givens.val[search];
         givens.val[search] = givens_cos.val[search]*givens.val[search];
-        residual = fabs(givens.val[search1]); // /rnorm2;
+        residual = fabs(givens.val[search1]);
       }
       for ( int i=0; i<givens.ld; ++i ) {
         GMRESDBG("givens.val[%d] = %e\n", i, givens.val[i]);
       }
 
-      //printf("%%======= FGMRES search %d fabs(givens.val[(%d+1)]) = %.16e =======\n", search, search, fabs(givens.val[(search+1)]));
       if ( gmres_par->user_csrtrsv_choice == 0 ) {
         printf("FGMRES_Householders_mkltrsv_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));
       }
@@ -700,16 +607,6 @@ data_fgmres_householder(
       // solve the least squares problem
       if ( fabs(givens.val[(search+1)]) < rtol  || (search == (search_max-1)) ) {
         GMRESDBG(" !!!!!!! update the solution %d!!!!!!!\n",0);
-        //for ( int i = 0; i <= search; i++ ) {
-        //  alpha.val[i] = givens.val[i]/h.val[idx(i,i,h.ld)];
-        //}
-        //for ( int j = search; j > 0; j-- ) {
-        //  for (int i = j-1; i > -1; i-- ) {
-        //    alpha.val[i] = alpha.val[i]
-        //     - h.val[idx(i,j,h.ld)]*alpha.val[j]/h.val[idx(i,i,h.ld)];
-        //  }
-        //}
-
         #pragma omp parallel
         #pragma omp for simd schedule(static,chunk) nowait
         #pragma vector aligned
@@ -728,24 +625,6 @@ data_fgmres_householder(
           GMRESDBG("alpha.val[%d] = %e\n", i, alpha.val[i]);
         }
 
-        //for (int i = 0; i < alpha.ld; ++i ) {
-        //  z.val[i] = alpha.val[i];
-        //}
-        //
-        //
-        //for (int j = search; j >= 0; --j ) {
-        //  dataType sum = 0.0;
-        //  for ( int i = j; i < n; ++i ) {
-        //    sum = sum + krylov.val[idx(i,j,krylov.ld)]*z.val[i];
-        //  }
-        //  for ( int i = j; i < n; ++i ) {
-        //    z.val[i] = z.val[i] - 2.0*sum*krylov.val[idx(i,j,krylov.ld)];
-        //  }
-        //}
-        //for ( int i=0; i<n; ++i ) {
-        //  GMRESDBG("z.val[%d] = %e\n", i, z.val[i]);
-        //}
-
         // use preconditioned vectors to form the update (GEMV)
         for (int j = 0; j <= search; j++ ) {
           #pragma omp parallel
@@ -754,20 +633,9 @@ data_fgmres_householder(
           #pragma vector vecremainder
           #pragma nounroll_and_jam
           for (int i = 0; i < n; i++ ) {
-            //z.val[i] = z.val[i] + krylov.val[idx(i,j,krylov.ld)]*alpha.val[j];
-            // z.val[i] = z.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*alpha.val[j];
             x.val[i] = x.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*alpha.val[j];
           }
         }
-
-        // #pragma omp parallel
-        // #pragma omp for simd schedule(static,chunk) nowait
-        // #pragma vector aligned
-        // #pragma vector vecremainder
-        // #pragma nounroll_and_jam
-        // for (int i = 0; i < n; i++ ) {
-        //   x.val[i] = x.val[i] + z.val[i];
-        // }
 
         gmres_log->search_directions = search+1;
         dataType wend = omp_get_wtime();
@@ -779,13 +647,7 @@ data_fgmres_householder(
 
     }
 
-    // for ( int i=0; i<Minvvj.ld; i++ ) {
-    //   GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n",
-    //     i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
-    // }
-
     data_zmconvert( x, x0, Magma_DENSE, Magma_DENSE );
-
 
     if (gmres_log->final_residual > rtol) {
       info = 0;
@@ -794,21 +656,18 @@ data_fgmres_householder(
     data_zmfree( &x );
     data_zmfree( &r );
     data_zmfree( &krylov );
-    data_zmfree( &h );
-    //data_zmfree( &u );
     data_zmfree( &givens );
     data_zmfree( &givens_cos );
     data_zmfree( &givens_sin );
     data_zmfree( &alpha );
-    //data_zmfree( &z );
     data_zmfree( &q );
-
     data_zmfree( &LU );
-    free( ia );
-    free( ja );
     data_zmfree( &tmp );
     data_zmfree( &Minvvj );
     data_zmfree( &precondq );
+
+    free( ia );
+    free( ja );
 
     return info;
 }
