@@ -121,9 +121,6 @@ data_fgmres_householder(
       }
     }
 
-    data_d_matrix tmp={Magma_DENSE};
-    data_zvinit( &tmp, n, 1, zero );
-
     // store preconditioned vectors for flexibility
     data_d_matrix Minvvj={Magma_DENSE};
     data_zvinit( &Minvvj, n, search_max, zero );
@@ -160,11 +157,6 @@ data_fgmres_householder(
     givens_sin.major = MagmaColMajor;
     dataType eps = nextafter(0.0,1.0);
 
-    // Coefficents for update to solution vector
-    data_d_matrix alpha={Magma_DENSE};
-    data_zvinit( &alpha, search_max, 1, zero );
-    alpha.major = MagmaColMajor;
-
     // Memory alignment hints for optimized access
     #if (defined(__GNUC__) || defined(__GNUG__)) && !(defined(__clang__) || defined(__INTEL_COMPILER))
     	/* GNU GCC/G++. --------------------------------------------- */
@@ -173,16 +165,16 @@ data_fgmres_householder(
     #if (defined(__INTEL_COMPILER) || defined(__ICC))
     	/* INTEL ICC/C++. --------------------------------------------- */
       printf("INTEL COMPILER\n");
-      __assume_aligned( r.val, 64 ); // used once
-      __assume_aligned( tmp.val, 64 ); // reinitialized each search direction
+      __assume_aligned( r.val, 64 ); // used for initial residual,
+                                     // preconditioner application,
+                                     // and solution update
       __assume_aligned( q.val, 64 ); // reinitialized each search direction
-      __assume_aligned( alpha.val, 64 ); // used once
 
-      __assume_aligned( krylov.val, 64 );
-      __assume_aligned( precondq.val, 64 );
-      __assume_aligned( givens.val, 64 );
-      __assume_aligned( givens_cos.val, 64 );
-      __assume_aligned( givens_sin.val, 64 );
+      __assume_aligned( krylov.val, 64 );  // Householder transformed search space
+      __assume_aligned( precondq.val, 64 ); // Search vectors
+      __assume_aligned( givens.val, 64 ); // Residual approximation
+      __assume_aligned( givens_cos.val, 64 ); // Rotation Cosine Coefficents
+      __assume_aligned( givens_sin.val, 64 ); // Rotation Sine Coefficents
     #endif
 
     // initial residual
@@ -281,8 +273,8 @@ data_fgmres_householder(
     // GMRES search direction
     for ( int search = 0; search < search_max; search++ ) {
       int search1 = search + 1;
-      data_zmfree( &tmp );
-      data_zvinit( &tmp, n, 1, zero );
+      data_zmfree( &r );
+      data_zvinit( &r, n, 1, zero );
 
       for ( int i=0; i<krylov.ld; i++ ) {
         GMRESDBG("\tkrylov.val[idx(%d,%d,%d)] = %e\n", i, search, krylov.ld, krylov.val[idx(i,search,krylov.ld)]);
@@ -294,23 +286,22 @@ data_fgmres_householder(
 		    cvar='N';
 		    cvar2='U';
 		    mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
-		      q.val, tmp.val );
+		      q.val, r.val );
 		    cvar1='U';
 		    cvar='N';
 		    cvar2='N';
 		    mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
-		      tmp.val, &(Minvvj.val[idx(0,search,Minvvj.ld)]) );
+		      r.val, &(Minvvj.val[idx(0,search,Minvvj.ld)]) );
       }
       else {
 		    data_parcsrtrsv( MagmaLower, L->storage_type, L->diagorder_type,
           L->num_rows, L->val, L->row, L->col,
-          q.val, tmp.val,
+          q.val, r.val,
           ptrsv_tol, &ptrsv_iter );
         printf("ParCSRTRSV_L(%d) = %d;\n", search+1, ptrsv_iter);
-
         data_parcsrtrsv( MagmaUpper, U->storage_type, U->diagorder_type,
           U->num_rows, U->val, U->row, U->col,
-          tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]),
+          r.val, &(Minvvj.val[idx(0,search,krylov.ld)]),
           ptrsv_tol, &ptrsv_iter );
         printf("ParCSRTRSV_U(%d) = %d;\n", search+1, ptrsv_iter);
       }
@@ -613,16 +604,16 @@ data_fgmres_householder(
         #pragma vector vecremainder
         #pragma nounroll_and_jam
         for ( int i = 0; i <= search; ++i ) {
-          alpha.val[i] = givens.val[i]/krylov.val[idx(i,i+1,krylov.ld)];
+          r.val[i] = givens.val[i]/krylov.val[idx(i,i+1,krylov.ld)];
         }
         for ( int j = search; j > 0; --j ) {
           for (int i = j-1; i >= 0; --i ) {
-            alpha.val[i] = alpha.val[i]
-             - krylov.val[idx(i,j+1,krylov.ld)]*alpha.val[j]/krylov.val[idx(i,i+1,krylov.ld)];
+            r.val[i] = r.val[i]
+             - krylov.val[idx(i,j+1,krylov.ld)]*r.val[j]/krylov.val[idx(i,i+1,krylov.ld)];
           }
         }
         for ( int i=0; i<n; ++i ) {
-          GMRESDBG("alpha.val[%d] = %e\n", i, alpha.val[i]);
+          GMRESDBG("r.val[%d] = %e\n", i, r.val[i]);
         }
 
         // use preconditioned vectors to form the update (GEMV)
@@ -633,7 +624,7 @@ data_fgmres_householder(
           #pragma vector vecremainder
           #pragma nounroll_and_jam
           for (int i = 0; i < n; i++ ) {
-            x.val[i] = x.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*alpha.val[j];
+            x.val[i] = x.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*r.val[j];
           }
         }
 
@@ -659,10 +650,8 @@ data_fgmres_householder(
     data_zmfree( &givens );
     data_zmfree( &givens_cos );
     data_zmfree( &givens_sin );
-    data_zmfree( &alpha );
     data_zmfree( &q );
     data_zmfree( &LU );
-    data_zmfree( &tmp );
     data_zmfree( &Minvvj );
     data_zmfree( &precondq );
 
