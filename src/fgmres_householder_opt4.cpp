@@ -124,7 +124,6 @@ data_fgmres_householder(
     data_d_matrix tmp={Magma_DENSE};
     data_zvinit( &tmp, n, 1, zero );
 
-
     // store preconditioned vectors for flexibility
     data_d_matrix Minvvj={Magma_DENSE};
     data_zvinit( &Minvvj, n, search_max, zero );
@@ -145,24 +144,14 @@ data_fgmres_householder(
     data_d_matrix krylov={Magma_DENSE};
     data_zvinit( &krylov, n, search_max+1, zero );
     krylov.major = MagmaColMajor;
-    //data_d_matrix z={Magma_DENSE};
-    //data_zvinit( &z, n, 1, zero );
     data_d_matrix precondq={Magma_DENSE};
     data_zvinit( &precondq, n, search_max+1, zero );
     precondq.major = MagmaColMajor;
-
-    // Reorthogonalize
-    //dataType eps = nextafter(0.0,1.0);
-    //dataType normav = 0.0;
-    //dataType normav2 = 0.0;
-    //dataType hr = 0.0;
 
     // Hessenberg Matrix for Arnoldi iterations
     data_d_matrix h={Magma_DENSE};
     data_zvinit( &h, search_max+1, search_max, zero );
     h.major = MagmaColMajor;
-    //data_d_matrix u={Magma_DENSE};
-    //data_zvinit( &u, n, 1, zero );
 
     // Givens rotation vectors
     data_d_matrix givens={Magma_DENSE};
@@ -181,6 +170,7 @@ data_fgmres_householder(
     data_zvinit( &alpha, search_max, 1, zero );
     alpha.major = MagmaColMajor;
 
+    // Memory alignment hints for optimized access
     #if (defined(__GNUC__) || defined(__GNUG__)) && !(defined(__clang__) || defined(__INTEL_COMPILER))
     	/* GNU GCC/G++. --------------------------------------------- */
       printf("GNU COMPILER\n");
@@ -188,9 +178,12 @@ data_fgmres_householder(
     #if (defined(__INTEL_COMPILER) || defined(__ICC))
     	/* INTEL ICC/C++. --------------------------------------------- */
       printf("INTEL COMPILER\n");
-      __assume_aligned( tmp.val, 64 );
+      __assume_aligned( r.val, 64 ); // used once
+      __assume_aligned( tmp.val, 64 ); // reinitialized each search direction
+      __assume_aligned( q.val, 64 ); // reinitialized each search direction
+      __assume_aligned( alpha.val, 64 ); // used once
+
       __assume_aligned( krylov.val, 64 );
-      __assume_aligned( q.val, 64 );
       __assume_aligned( precondq.val, 64 );
       __assume_aligned( givens.val, 64 );
       __assume_aligned( givens_cos.val, 64 );
@@ -198,7 +191,17 @@ data_fgmres_householder(
     #endif
 
     // initial residual
-    data_z_spmv( negone, A, &x, zero, &r );
+    //data_z_spmv( negone, A, &x, zero, &r );
+    #pragma omp parallel
+    #pragma omp for simd schedule(static,chunk) nowait
+    #pragma vector aligned
+    #pragma vector vecremainder
+    #pragma nounroll_and_jam
+    for ( int i=0; i<n; i++ ) {
+      for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {
+        r.val[i] = r.val[i] - A->val[j]*x.val[ A->col[j] ];
+      }
+    }
     data_zaxpy( n, one, b->val, 1, r.val, 1);
     rnorm2 = data_dnrm2( n, r.val, 1 );
     printf("rnorm2 = %e; tol = %e; rtol = %e;\n", rnorm2, rtol, rtol*rnorm2 );
@@ -211,43 +214,94 @@ data_fgmres_householder(
     }
 
     // fill first column of Kylov subspace for Arnoldi iteration
+    dataType dd = 0.0;
+    dataType k1norm2 = 0.0;
     #pragma omp parallel
     {
-      #pragma omp for simd schedule(static,chunk) nowait
+      // #pragma omp for simd schedule(static,chunk) nowait
+      // #pragma vector aligned
+      // #pragma vector vecremainder
+      // #pragma nounroll_and_jam
+      // for ( int i=0; i<n; i++ ) {
+      //   //krylov.val[idx(i,0,krylov.ld)] = r.val[i]/rnorm2;
+      //   krylov.val[idx(i,0,krylov.ld)] = r.val[i];
+      // }
+      #pragma omp for nowait
+      for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
+        #pragma omp simd
+        #pragma vector aligned
+        for ( int i=ii; i<ii+STRIP; ++i ) {
+          krylov.val[idx(i,0,krylov.ld)] = r.val[i];
+        }
+      }
+      #pragma omp single
+      #pragma omp simd
       #pragma vector aligned
-      #pragma vector vecremainder
-      #pragma nounroll_and_jam
-      for ( int i=0; i<n; i++ ) {
-        //krylov.val[idx(i,0,krylov.ld)] = r.val[i]/rnorm2;
+      for ( int i=BINS*STRIP; i<n; ++i ) {
         krylov.val[idx(i,0,krylov.ld)] = r.val[i];
       }
-    }
-    dataType dd = mysgn(krylov.val[idx(0,0,krylov.ld)])*rnorm2;
-    krylov.val[idx(0,0,krylov.ld)] = krylov.val[idx(0,0,krylov.ld)] + dd;
-    // dataType k1norm2 = data_dnrm2( n, krylov.val, 1 );
-    dataType k1norm2 = 1.0/data_dnrm2( n, krylov.val, 1 );
+
+    //}
+      #pragma omp barrier
+      #pragma omp single
+      {
+        dd = mysgn(krylov.val[idx(0,0,krylov.ld)])*rnorm2;
+        krylov.val[idx(0,0,krylov.ld)] = krylov.val[idx(0,0,krylov.ld)] + dd;
+        // dataType k1norm2 = data_dnrm2( n, krylov.val, 1 );
+        k1norm2 = 1.0/data_dnrm2( n, krylov.val, 1 );
+      }
     //#pragma omp parallel
-    {
-      #pragma omp parallel
-      #pragma omp for simd schedule(static,chunk) nowait
+    //{
+      // #pragma omp parallel
+      // #pragma omp for simd schedule(static,chunk) nowait
+      // #pragma vector aligned
+      // #pragma vector vecremainder
+      // #pragma nounroll_and_jam
+      // for ( int i=0; i<n; ++i ) {
+      //   //krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]/k1norm2;
+      //   krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]*k1norm2;
+      // }
+      #pragma omp for nowait
+      for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
+        #pragma omp simd
+        #pragma vector aligned
+        for ( int i=ii; i<ii+STRIP; ++i ) {
+          krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]*k1norm2;
+        }
+      }
+      #pragma omp single
+      #pragma omp simd
       #pragma vector aligned
-      #pragma vector vecremainder
-      #pragma nounroll_and_jam
-      for ( int i=0; i<n; ++i ) {
-        //krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]/k1norm2;
+      for ( int i=BINS*STRIP; i<n; ++i ) {
         krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]*k1norm2;
       }
-    }
-      #pragma omp parallel
-      #pragma omp for simd schedule(static,chunk) nowait
+    //}
+      //#pragma omp parallel
+      #pragma omp barrier
+      // #pragma omp for simd schedule(static,chunk) nowait
+      // #pragma vector aligned
+      // #pragma vector vecremainder
+      // #pragma nounroll_and_jam
+      // for ( int i=0; i<n; ++i ) {
+      //   q.val[i] = -r.val[i]/dd;
+      //   precondq.val[idx(i,0,precondq.ld)] = q.val[i];
+      // }
+      for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
+        #pragma omp simd
+        #pragma vector aligned
+        for ( int i=ii; i<ii+STRIP; ++i ) {
+          q.val[i] = -r.val[i]/dd;
+          precondq.val[idx(i,0,precondq.ld)] = q.val[i];
+        }
+      }
+      #pragma omp single
+      #pragma omp simd
       #pragma vector aligned
-      #pragma vector vecremainder
-      #pragma nounroll_and_jam
-      for ( int i=0; i<n; ++i ) {
+      for ( int i=BINS*STRIP; i<n; ++i ) {
         q.val[i] = -r.val[i]/dd;
         precondq.val[idx(i,0,precondq.ld)] = q.val[i];
       }
-    //}
+    }
     for ( int i=0; i<n; ++i ) {
       GMRESDBG("q.val[%d] = %e\n", i, q.val[i]);
     }
@@ -309,21 +363,18 @@ data_fgmres_householder(
       //                  A->col, A->row, A->row+1,
       //                  &(krylov.val[idx(0,search,krylov.ld)]), &zero,
       //                  u.val );
-      //#pragma omp parallel
-      {
-        #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
-        #pragma vector aligned
-        #pragma vector vecremainder
-        #pragma nounroll_and_jam
-        for ( int i=0; i<n; i++ ) {
-          for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {
-            //u.val[i] = u.val[i] + A->val[j]*Minvvj.val[A->col[j]];
-            krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)] + A->val[j]*Minvvj.val[idx(A->col[j],search,Minvvj.ld)];
-          }
+
+      #pragma omp parallel
+      #pragma omp for simd schedule(static,chunk) nowait
+      #pragma vector aligned
+      #pragma vector vecremainder
+      #pragma nounroll_and_jam
+      for ( int i=0; i<n; i++ ) {
+        for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {
+          //u.val[i] = u.val[i] + A->val[j]*Minvvj.val[A->col[j]];
+          krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)] + A->val[j]*Minvvj.val[idx(A->col[j],search,Minvvj.ld)];
         }
       }
-      //normav = data_dnrm2( n, &(krylov.val[idx(i,search1,krylov.ld)]), 1 );
 
       for ( int j=0; j <= search1; j++ ) {
         for ( int i=0; i<krylov.ld; i++ ) {
@@ -659,6 +710,11 @@ data_fgmres_householder(
         //  }
         //}
 
+        #pragma omp parallel
+        #pragma omp for simd schedule(static,chunk) nowait
+        #pragma vector aligned
+        #pragma vector vecremainder
+        #pragma nounroll_and_jam
         for ( int i = 0; i <= search; ++i ) {
           alpha.val[i] = givens.val[i]/krylov.val[idx(i,i+1,krylov.ld)];
         }
