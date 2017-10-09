@@ -87,8 +87,9 @@ data_fgmres_householder(
     const int BINS=n/STRIP;
     const int endStrip = BINS*STRIP;
     int startStrip = 0;
-    dataType *sumTemp;
-    LACE_CALLOC( sumTemp, BINS );
+    // dataType *sumTemp;
+    // LACE_CALLOC( sumTemp, BINS );
+    dataType sumTemp[BINS] __attribute__((aligned(64)));
 
     // preconditioning
     // for mkl_dcsrtrsv
@@ -662,7 +663,7 @@ data_fgmres_householder(
     data_zmfree( &Minvvj );
     data_zmfree( &precondq );
 
-    free( sumTemp );
+    // free( sumTemp );
     free( ia );
     free( ja );
 
