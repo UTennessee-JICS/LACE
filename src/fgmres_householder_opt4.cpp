@@ -87,7 +87,8 @@ data_fgmres_householder(
     const int BINS=n/STRIP;
     const int endStrip = BINS*STRIP;
     int startStrip = 0;
-    dataType sumTemp[BINS];
+    dataType *sumTemp;
+    LACE_CALLOC( sumTemp, BINS );
 
     // preconditioning
     // for mkl_dcsrtrsv
@@ -169,7 +170,7 @@ data_fgmres_householder(
                                      // preconditioner application,
                                      // and solution update
       __assume_aligned( q.val, 64 ); // reinitialized each search direction
-
+      __assume_aligned( sumTemp, 64 ); // strip-mining summation bins
       __assume_aligned( krylov.val, 64 );  // Householder transformed search space
       __assume_aligned( precondq.val, 64 ); // Search vectors
       __assume_aligned( givens.val, 64 ); // Residual approximation
@@ -363,6 +364,8 @@ data_fgmres_householder(
           }
           #pragma omp for reduction(+:sum) nowait
           #pragma nounroll
+          #pragma vector aligned
+          #pragma vector vecremainder
           for ( int b=0; b<BINS; ++b ) {
             sum += sumTemp[b];
           }
@@ -469,6 +472,8 @@ data_fgmres_householder(
             }
             #pragma omp for reduction(+:sum) nowait
             #pragma nounroll
+            #pragma vector aligned
+            #pragma vector vecremainder
             for ( int b=0; b<BINS; ++b ) {
               sum += sumTemp[b];
             }
@@ -657,6 +662,7 @@ data_fgmres_householder(
     data_zmfree( &Minvvj );
     data_zmfree( &precondq );
 
+    free( sumTemp );
     free( ia );
     free( ja );
 
