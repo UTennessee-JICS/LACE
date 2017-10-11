@@ -387,6 +387,7 @@ data_zilures(
     }
 
     for(i=0; i<LU->num_rows; i++){
+        #pragma nounroll
         for(j=LU->row[i]; j<LU->row[i+1]; j++){
             tmp = LU->val[j];
             (*res) = (*res) + tmp * tmp;

@@ -75,17 +75,16 @@ data_fgmres_householder(
 
     // initialize
     data_int_t info = DEV_NOTCONVERGED;
-    data_int_t n = A->num_rows;
-    //data_int_t search_max = gmres_par->search_max;
-    int  search_max = gmres_par->search_max;
+    const data_int_t n = A->num_rows;
+    data_int_t search_max = gmres_par->search_max;
     data_int_t search_directions = 0;
     dataType rtol = gmres_par->rtol;
     dataType rnorm2 = 0.0;
     dataType residual = 0.0;
 
     // strip-mining for efficient memory access
-    const int STRIP=1024;
-    const int BINS=n/STRIP;
+    const int STRIP = 1024;
+    const int BINS = (n/STRIP);
     const int endStrip = BINS*STRIP;
     int startStrip = 0;
     // dataType *sumTemp;
@@ -102,20 +101,16 @@ data_fgmres_householder(
     LACE_CALLOC( ia, (LU.num_rows+1) );
     LACE_CALLOC( ja, LU.nnz );
 
-    int chunk = 1;
-    int maxThreads = 0;
     #pragma omp parallel
     {
-      maxThreads = omp_get_max_threads();
-      chunk = n/maxThreads;
-      #pragma omp for simd schedule(static,chunk) nowait
+      #pragma omp for simd schedule(simd: static) nowait
       #pragma vector aligned
       #pragma vector vecremainder
       #pragma nounroll_and_jam
       for (int i=0; i<LU.num_rows+1; i++) {
       	ia[i] = LU.row[i] + 1;
       }
-      #pragma omp for simd schedule(static,chunk) nowait
+      #pragma omp for simd schedule(simd: static) nowait
       #pragma vector aligned
       #pragma vector vecremainder
       #pragma nounroll_and_jam
@@ -183,7 +178,7 @@ data_fgmres_householder(
     // initial residual
     //data_z_spmv( negone, A, &x, zero, &r );
     #pragma omp parallel
-    #pragma omp for simd schedule(static,chunk) nowait
+    #pragma omp for schedule(monotonic:static) nowait
     #pragma vector aligned
     #pragma vector vecremainder
     #pragma nounroll_and_jam
@@ -208,10 +203,11 @@ data_fgmres_householder(
     dataType k1norm2 = 0.0;
     #pragma omp parallel
     {
-      #pragma omp for schedule(static,chunk) nowait
+      #pragma omp for schedule(monotonic:static) nowait
       for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
         #pragma omp simd
         #pragma vector aligned
+        #pragma loop_count max(STRIP)
         for ( int i=ii; i<ii+STRIP; ++i ) {
           krylov.val[idx(i,0,krylov.ld)] = r.val[i];
         }
@@ -219,6 +215,7 @@ data_fgmres_householder(
       #pragma omp single
       #pragma omp simd
       #pragma vector aligned
+      #pragma loop_count max(STRIP)
       for ( int i=BINS*STRIP; i<n; ++i ) {
         krylov.val[idx(i,0,krylov.ld)] = r.val[i];
       }
@@ -231,10 +228,11 @@ data_fgmres_householder(
         k1norm2 = 1.0/data_dnrm2( n, krylov.val, 1 );
       }
       #pragma omp barrier
-      #pragma omp for schedule(static,chunk) nowait
+      #pragma omp for schedule(monotonic:static) nowait
       for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
         #pragma omp simd
         #pragma vector aligned
+        #pragma loop_count max(STRIP)
         for ( int i=ii; i<ii+STRIP; ++i ) {
           krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]*k1norm2;
         }
@@ -242,14 +240,16 @@ data_fgmres_householder(
       #pragma omp single
       #pragma omp simd
       #pragma vector aligned
+      #pragma loop_count max(STRIP)
       for ( int i=BINS*STRIP; i<n; ++i ) {
         krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]*k1norm2;
       }
       #pragma omp barrier
-      #pragma omp for nowait
+      #pragma omp for schedule(monotonic:static) nowait
       for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
         #pragma omp simd
         #pragma vector aligned
+        #pragma loop_count max(STRIP)
         for ( int i=ii; i<ii+STRIP; ++i ) {
           q.val[i] = -r.val[i]/dd;
           precondq.val[idx(i,0,precondq.ld)] = q.val[i];
@@ -258,6 +258,7 @@ data_fgmres_householder(
       #pragma omp single
       #pragma omp simd
       #pragma vector aligned
+      #pragma loop_count max(STRIP)
       for ( int i=BINS*STRIP; i<n; ++i ) {
         q.val[i] = -r.val[i]/dd;
         precondq.val[idx(i,0,precondq.ld)] = q.val[i];
@@ -274,7 +275,7 @@ data_fgmres_householder(
 
 
     // GMRES search direction
-    for ( int search = 0; search < search_max; search++ ) {
+    for ( int search = 0; search < search_max; ++search ) {
       int search1 = search + 1;
       data_zmfree( &r );
       data_zvinit( &r, n, 1, zero );
@@ -316,7 +317,7 @@ data_fgmres_householder(
 
       // Sparse matrix-vector product, mkl_dcsrmv
       #pragma omp parallel
-      #pragma omp for simd schedule(static,chunk) nowait
+      #pragma omp for schedule(monotonic:static) nowait
       #pragma vector aligned
       #pragma vector vecremainder
       #pragma nounroll_and_jam
@@ -343,7 +344,7 @@ data_fgmres_householder(
         //  n, j, startStrip, BINS, endStrip );
         #pragma omp parallel
         {
-          #pragma omp for nowait
+          #pragma omp for schedule(monotonic:static) nowait
           for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
             int b = ii/STRIP;
             sumTemp[b] = 0.0;
@@ -351,6 +352,7 @@ data_fgmres_householder(
             #pragma omp simd
             #pragma vector aligned
             #pragma vector vecremainder
+	    #pragma loop_count max(STRIP)
             for ( int i=ii; i<ii+STRIP; ++i ) {
               sumTemp[b] += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
             }
@@ -362,6 +364,7 @@ data_fgmres_householder(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
+	      #pragma loop_count max(STRIP)
               for ( int i=j; i<startStrip; ++i ) {
                 sumBegin += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
               }
@@ -371,16 +374,17 @@ data_fgmres_householder(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
+	      #pragma loop_count max(STRIP)
               for ( int i=BINS*STRIP; i<n; ++i ) {
                 sumEnd += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
               }
             }
           }
-          #pragma omp for reduction(+:sum) nowait
+          #pragma omp for simd schedule(simd: static) reduction(+:sum) nowait
           #pragma nounroll
 	  #pragma vector aligned
           #pragma vector vecremainder
-          for ( int b=0; b<BINS; ++b ) {
+	  for ( int b=0; b<BINS; ++b ) {
             sum += sumTemp[b];
           }
           #pragma omp barrier
@@ -388,11 +392,12 @@ data_fgmres_householder(
           sum = 2.0*(sumBegin+sum+sumEnd);
           #pragma omp barrier
 
-          #pragma omp for nowait
+          #pragma omp for schedule(monotonic:static) nowait
           for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
             #pragma omp simd
             #pragma vector aligned
             #pragma vector vecremainder
+	    #pragma loop_count max(STRIP)
             for ( int jj=ii; jj < ii+STRIP; ++jj ) {
               krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
             }
@@ -404,6 +409,7 @@ data_fgmres_householder(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
+	      #pragma loop_count max(STRIP)
               for ( int jj=j; jj<startStrip; ++jj ) {
                 krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
               }
@@ -413,6 +419,7 @@ data_fgmres_householder(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
+	      #pragma loop_count max(STRIP)
               for ( int jj=BINS*STRIP; jj<n; ++jj ) {
                 krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
               }
@@ -436,11 +443,12 @@ data_fgmres_householder(
         startStrip = (search1/STRIP+1)*STRIP;
         #pragma omp parallel
         {
-          #pragma omp for nowait
+          #pragma omp for schedule(monotonic:static) nowait
           for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
             #pragma omp simd
             #pragma vector aligned
             #pragma vector vecremainder
+	    #pragma loop_count max(STRIP)
             for ( int i=ii; i<ii+STRIP; ++i ) {
               krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
             }
@@ -449,6 +457,7 @@ data_fgmres_householder(
           #pragma omp simd
           #pragma vector aligned
           #pragma vector vecremainder
+	  #pragma loop_count max(STRIP)
           for ( int i=search1; i<startStrip; ++i ) {
             krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
           }
@@ -456,6 +465,7 @@ data_fgmres_householder(
           #pragma omp simd
           #pragma vector aligned
           #pragma vector vecremainder
+	  #pragma loop_count max(STRIP)
           for ( int i=BINS*STRIP; i<n; ++i ) {
             krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
           }
@@ -478,13 +488,14 @@ data_fgmres_householder(
           startStrip = (j/STRIP+1)*STRIP;
           #pragma omp parallel
           {
-            #pragma omp for nowait
+            #pragma omp for schedule(monotonic:static) nowait
             for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
               int b = ii/STRIP;
               sumTemp[b] = 0.0;
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
+	      #pragma loop_count max(STRIP)
               for ( int i=ii; i<ii+STRIP; ++i ) {
                 sumTemp[b] += krylov.val[idx(i,j,krylov.ld)]*q.val[i];
               }
@@ -497,6 +508,7 @@ data_fgmres_householder(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
+		#pragma loop_count max(STRIP)
                 for ( int i=j; i<startStrip; ++i ) {
                   sumBegin += krylov.val[idx(i,j,krylov.ld)]*q.val[i];
                 }
@@ -506,6 +518,7 @@ data_fgmres_householder(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
+		#pragma loop_count max(STRIP)
                 for ( int i=BINS*STRIP; i<n; ++i ) {
                   sumEnd += krylov.val[idx(i,j,krylov.ld)]*q.val[i];
                 }
@@ -513,7 +526,7 @@ data_fgmres_householder(
             }
             #pragma omp taskwait
 
-            #pragma omp for reduction(+:sum) nowait
+            #pragma omp for simd schedule(simd: static) reduction(+:sum) nowait
             #pragma nounroll
 	    #pragma vector aligned
             #pragma vector vecremainder
@@ -526,11 +539,12 @@ data_fgmres_householder(
             #pragma omp barrier
 
 
-            #pragma omp for nowait
+            #pragma omp for schedule(monotonic:static) nowait
             for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
+	      #pragma loop_count max(STRIP)
               for ( int jj=ii; jj < ii+STRIP; ++jj ) {
                 q.val[jj] = q.val[jj] - sum*krylov.val[idx(jj,j,krylov.ld)];
               }
@@ -542,6 +556,7 @@ data_fgmres_householder(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
+		#pragma loop_count max(STRIP)
                 for ( int jj=j; jj<startStrip; ++jj ) {
                   q.val[jj] = q.val[jj] - sum*krylov.val[idx(jj,j,krylov.ld)];
                 }
@@ -551,6 +566,7 @@ data_fgmres_householder(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
+		#pragma loop_count max(STRIP)
                 for ( int jj=BINS*STRIP; jj<n; ++jj ) {
                   q.val[jj] = q.val[jj] - sum*krylov.val[idx(jj,j,krylov.ld)];
                 }
@@ -574,7 +590,7 @@ data_fgmres_householder(
         // Monitor Orthogonality Error of Krylov search Space
         #pragma omp parallel
         {
-          #pragma omp for nowait
+          #pragma omp for schedule(monotonic:static) nowait
           for ( int ii=0; ii<endStrip; ii+=STRIP ) {
             #pragma omp simd
             #pragma vector aligned
@@ -660,7 +676,7 @@ data_fgmres_householder(
       if ( fabs(givens.val[(search+1)]) < rtol  || (search == (search_max-1)) ) {
         GMRESDBG(" !!!!!!! update the solution %d!!!!!!!\n",0);
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for simd schedule(simd: static) nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
@@ -680,7 +696,7 @@ data_fgmres_householder(
         // use preconditioned vectors to form the update (GEMV)
         for (int j = 0; j <= search; j++ ) {
           #pragma omp parallel
-          #pragma omp for simd schedule(static,chunk) nowait
+          #pragma omp for simd schedule(simd: static) nowait
           #pragma vector aligned
           #pragma vector vecremainder
           #pragma nounroll_and_jam

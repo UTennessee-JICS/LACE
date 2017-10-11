@@ -1,10 +1,13 @@
 #
 #
-CC=g++-6
+#
+#CC=g++-6
+CC=icpc
 #
 #
 VPATH=blas control include src testing
-CFLAGS=-std=c++11 -g -Wall -O2 -fno-unsafe-math-optimizations -fopenmp
+#CFLAGS=-std=c++11 -g -Wall -O2 -fno-unsafe-math-optimizations -fopenmp
+CFLAGS=-std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
 LDFLAGS=-isystem ${GTEST_DIR}/include -pthread libgtest.a
 LDFLAGS2=-isystem ${GTEST_DIR}/include -isystem ${GMOCK_DIR}/include -pthread libgmock.a
 SOURCES=example_01.cpp
