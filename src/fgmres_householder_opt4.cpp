@@ -76,7 +76,8 @@ data_fgmres_householder(
     // initialize
     data_int_t info = DEV_NOTCONVERGED;
     data_int_t n = A->num_rows;
-    data_int_t search_max = gmres_par->search_max;
+    //data_int_t search_max = gmres_par->search_max;
+    int  search_max = gmres_par->search_max;
     data_int_t search_directions = 0;
     dataType rtol = gmres_par->rtol;
     dataType rnorm2 = 0.0;
@@ -376,7 +377,8 @@ data_fgmres_householder(
             }
           }
           #pragma omp for reduction(+:sum) nowait
-          #pragma vector aligned
+          #pragma nounroll
+	  #pragma vector aligned
           #pragma vector vecremainder
           for ( int b=0; b<BINS; ++b ) {
             sum += sumTemp[b];
@@ -512,7 +514,8 @@ data_fgmres_householder(
             #pragma omp taskwait
 
             #pragma omp for reduction(+:sum) nowait
-            #pragma vector aligned
+            #pragma nounroll
+	    #pragma vector aligned
             #pragma vector vecremainder
             for ( int b=0; b<BINS; ++b ) {
               sum += sumTemp[b];
