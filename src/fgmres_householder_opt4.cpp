@@ -183,7 +183,6 @@ data_fgmres_householder(
     #pragma vector vecremainder
     #pragma nounroll_and_jam
     for ( int i=0; i<n; i++ ) {
-      #pragma ivdep
       #pragma nounroll_and_jam
       for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {
         r.val[i] = r.val[i] - A->val[j]*x.val[ A->col[j] ];
@@ -324,7 +323,6 @@ data_fgmres_householder(
       #pragma vector vecremainder
       #pragma nounroll_and_jam
       for ( int i=0; i<n; i++ ) {
-        #pragma ivdep
         #pragma nounroll_and_jam
         for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {
           krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)] + A->val[j]*Minvvj.val[idx(A->col[j],search,Minvvj.ld)];
