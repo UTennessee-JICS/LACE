@@ -227,7 +227,7 @@ data_fgmres(
 		    mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
 		      tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]) );
       }
-      else {
+      else if ( gmres_par->user_csrtrsv_choice == 1 ) {
 		    data_parcsrtrsv( MagmaLower, L->storage_type, L->diagorder_type,
           L->num_rows, L->val, L->row, L->col,
           &(krylov.val[idx(0,search,krylov.ld)]), tmp.val,
@@ -239,6 +239,11 @@ data_fgmres(
           tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]),
           ptrsv_tol, &ptrsv_iter );
         printf("ParCSRTRSV_U(%d) = %d;\n", search+1, ptrsv_iter);
+      }
+      else if ( gmres_par->user_csrtrsv_choice == 2 ) {
+        for ( int i=0; i<Minvvj.ld; i++ ) {
+          Minvvj.val[idx(i,search,Minvvj.ld)] = krylov.val[idx(i,search,krylov.ld)];
+        }
       }
 
       for ( int i=0; i<Minvvj.ld; i++ ) {
