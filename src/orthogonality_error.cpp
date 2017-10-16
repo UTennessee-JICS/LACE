@@ -69,10 +69,6 @@ data_orthogonality_error( data_d_matrix* krylov,
   for (int i=0; i<eye.num_rows; i++) {
     for (int j=0; j<eye.num_cols; j++) {
       dataType sum = 0.0;
-      // #pragma omp simd
-      // for ( int k=0; k<krylov->num_rows; k++ ) {
-      //   sum += krylov->val[idx(k,i,krylov->ld)] * krylov->val[idx(k,j,krylov->ld)];
-      // }
       sum = data_zdot_mkl( krylov->num_rows,
         &(krylov->val[idx(0,i,krylov->ld)]), 1,
         &(krylov->val[idx(0,j,krylov->ld)]), 1 );
@@ -81,6 +77,40 @@ data_orthogonality_error( data_d_matrix* krylov,
   }
 
   data_infinity_norm( &eye, imax, ortherr );
+
+  data_zmfree( &eye );
+
+}
+
+extern "C"
+void
+data_orthogonality_error_incremental( data_d_matrix* krylov,
+  dataType* ortherr,
+  int* imax,
+  int search )
+{
+
+  dataType zero = 0.0;
+  dataType one = 1.0;
+  dataType negone = -1.0;
+
+  data_d_matrix eye={Magma_DENSE};
+  data_zvinit( &eye, search, 1, zero );
+  eye.val[(search-1)] = 1.0;
+  dataType inorm = 0.0;
+
+  #pragma omp parallel
+  #pragma omp for schedule(monotonic:static) reduction(+:inorm) nowait
+  #pragma vector aligned
+  for (int i=0; i<eye.num_rows; ++i) {
+    dataType sum = data_zdot_mkl( krylov->num_rows,
+      &(krylov->val[idx(0,i,krylov->ld)]), 1,
+      &(krylov->val[idx(0,(search-1),krylov->ld)]), 1 );
+    eye.val[i] -= sum;
+    inorm += fabs( eye.val[i] );
+  }
+
+  (*ortherr) = inorm;
 
   data_zmfree( &eye );
 
