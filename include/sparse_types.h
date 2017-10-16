@@ -143,6 +143,7 @@ typedef struct data_z_preconditioner_log
 
 typedef struct data_z_gmres_log
 {
+    data_int_t             restarts;
     data_int_t             search_directions;
     dataType               solve_time;
     dataType               initial_residual;
@@ -153,7 +154,7 @@ typedef struct data_z_gmres_log
 
 typedef struct data_z_gmres_param
 {
-    data_int_t             search_max;	   // max sear directions
+    data_int_t             search_max;	   // max search directions per restart
     data_int_t             tol_type;	     // 0 -- absolute; 1 -- relative
     dataType               rtol;	         // relative residual reduction factor
     data_int_t             reorth;         // 0 -- Brown/Hindmarsh condition (default)
@@ -163,6 +164,7 @@ typedef struct data_z_gmres_param
                                                 // 1 -- ParCSRTRSV
     data_int_t             monitorOrthog;  // 0 -- do not monitor
                                            // 1 -- monitor
+    data_int_t             restart_max;    // max restarts
 } data_d_gmres_param;
 
 
