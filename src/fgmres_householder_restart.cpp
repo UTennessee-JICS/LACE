@@ -190,6 +190,7 @@ data_fgmres_householder(
         data_zvinit( &givens, search_max+1, 1, zero );
         data_zvinit( &givens_cos, search_max, 1, zero );
         data_zvinit( &givens_sin, search_max, 1, zero );
+        startStrip = 0;
       }
       // initial residual
       //data_z_spmv( negone, A, &x, zero, &r );
