@@ -210,15 +210,12 @@ data_fgmres_householder(
         gmres_log->search_directions = search_directions;
         gmres_log->solve_time = 0.0;
         gmres_log->initial_residual = rnorm2;
+        if ( gmres_par->tol_type == 1 ) {
+          rtol = rtol*rnorm2;
+        }
       }
-      // else {
-      //   rnorm2 = gmres_log->initial_residual;
-      // }
-      printf("rnorm2 = %e; tol = %e; rtol = %e;\n", rnorm2, rtol, rtol*rnorm2 );
+      printf("rnorm2 = %e; rtol = %e;\n", rnorm2, rtol );
 
-      if ( gmres_par->tol_type == 1 ) {
-        rtol = rtol*rnorm2;
-      }
       if (rnorm2 < rtol ) {
         info = 0;
         return info;
@@ -745,6 +742,10 @@ data_fgmres_householder(
           dataType wend = omp_get_wtime();
           gmres_log->solve_time = (wend-wstart);
           gmres_log->final_residual = fabs(givens.val[(search+1)]);
+
+          if ( fabs(givens.val[(search+1)]) < rtol ) {
+            restart = restart_max;
+          }
 
           break;
         }
