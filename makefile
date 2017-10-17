@@ -1,10 +1,13 @@
 #
 #
-CC=g++-6
+#
+#CC=g++-6
+CC=icpc
 #
 #
 VPATH=blas control include src testing
-CFLAGS=-std=c++11 -g -Wall -O2 -fno-unsafe-math-optimizations -fopenmp
+#CFLAGS=-std=c++11 -g -Wall -O2 -fno-unsafe-math-optimizations -fopenmp
+CFLAGS=-std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
 LDFLAGS=-isystem ${GTEST_DIR}/include -pthread libgtest.a
 LDFLAGS2=-isystem ${GTEST_DIR}/include -isystem ${GMOCK_DIR}/include -pthread libgmock.a
 SOURCES=example_01.cpp
@@ -526,7 +529,7 @@ test_solve_GMRES_householder_precond: test_solve_GMRES_householder_precond.cpp
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@
 
-test_solve_FGMRES_householder: test_solve_FGMRES_householder.cpp
+test_solve_FGMRES_householder: test_solve_FGMRES_Householder.cpp
 	$(CC) $(CFLAGS) \
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
 	control/constants.cpp control/magma_zmio.cpp control/init.cpp \
@@ -540,11 +543,11 @@ test_solve_FGMRES_householder: test_solve_FGMRES_householder.cpp
 	src/givens.cpp \
 	src/orthogonality_error.cpp \
 	src/fgmres_householder.cpp \
-	test_solve_FGMRES_householder.cpp \
+	test_solve_FGMRES_Householder.cpp \
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@
 
-test_solve_FGMRES_householder_opt1: test_solve_FGMRES_householder.cpp
+test_solve_FGMRES_householder_opt1: test_solve_FGMRES_Householder.cpp
 		$(CC) $(CFLAGS) \
 		-L${MKLROOT}/lib -I${MKLROOT}/include \
 		control/constants.cpp control/magma_zmio.cpp control/init.cpp \
@@ -558,7 +561,132 @@ test_solve_FGMRES_householder_opt1: test_solve_FGMRES_householder.cpp
 		src/givens.cpp \
 		src/orthogonality_error.cpp \
 		src/fgmres_householder_opt1.cpp \
-		test_solve_FGMRES_householder.cpp \
+		test_solve_FGMRES_Householder.cpp \
+		-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+		-o $@
+
+test_solve_FGMRES_householder_opt2: test_solve_FGMRES_Householder.cpp
+		$(CC) $(CFLAGS) \
+		-L${MKLROOT}/lib -I${MKLROOT}/include \
+		control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+		control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+		control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+		control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+		blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+		blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+		src/parilu_v0_3.cpp \
+		src/trisolve.cpp \
+		src/givens.cpp \
+		src/orthogonality_error.cpp \
+		src/fgmres_householder_opt2.cpp \
+		test_solve_FGMRES_Householder.cpp \
+		-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+		-o $@
+
+test_solve_FGMRES_householder_opt3: test_solve_FGMRES_Householder.cpp
+		$(CC) $(CFLAGS) \
+		-L${MKLROOT}/lib -I${MKLROOT}/include \
+		control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+		control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+		control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+		control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+		blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+		blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+		src/parilu_v0_3.cpp \
+		src/trisolve.cpp \
+		src/givens.cpp \
+		src/orthogonality_error.cpp \
+		src/fgmres_householder_opt3.cpp \
+		test_solve_FGMRES_Householder.cpp \
+		-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+		-o $@
+
+test_solve_FGMRES_householder_opt4: test_solve_FGMRES_Householder.cpp
+		$(CC) $(CFLAGS) \
+		-L${MKLROOT}/lib -I${MKLROOT}/include \
+		control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+		control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+		control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+		control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+		blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+		blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+		src/parilu_v0_3.cpp \
+		src/trisolve.cpp \
+		src/givens.cpp \
+		src/orthogonality_error.cpp \
+		src/fgmres_householder_opt4.cpp \
+		test_solve_FGMRES_Householder.cpp \
+		-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+		-o $@
+
+test_solve_FGMRES_precond: test_solve_FGMRES.cpp
+	$(CC) $(CFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+	src/parilu_v0_3.cpp \
+	src/trisolve.cpp \
+	src/orthogonality_error.cpp \
+	src/fgmres.cpp \
+	test_solve_FGMRES.cpp \
+	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+	-o $@
+
+test_solve_FGMRES_householder_precond: test_solve_FGMRES_Householder.cpp
+		$(CC) $(CFLAGS) \
+		-L${MKLROOT}/lib -I${MKLROOT}/include \
+		control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+		control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+		control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+		control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+		blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+		blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+		src/parilu_v0_3.cpp \
+		src/trisolve.cpp \
+		src/givens.cpp \
+		src/orthogonality_error.cpp \
+		src/fgmres_householder_precond.cpp \
+		test_solve_FGMRES_Householder.cpp \
+		-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+		-o $@
+
+test_solve_FGMRES_householder_restart: test_solve_FGMRES_Householder_restart.cpp
+		$(CC) $(CFLAGS) \
+		-L${MKLROOT}/lib -I${MKLROOT}/include \
+		control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+		control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+		control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+		control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+		blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+		blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+		src/parilu_v0_3.cpp \
+		src/trisolve.cpp \
+		src/givens.cpp \
+		src/orthogonality_error.cpp \
+		src/fgmres_householder_restart.cpp \
+		test_solve_FGMRES_Householder_restart.cpp \
+		-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+		-o $@
+
+test_solve_FGMRES_restart: test_solve_FGMRES_restart.cpp
+		$(CC) $(CFLAGS) \
+		-L${MKLROOT}/lib -I${MKLROOT}/include \
+		control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+		control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+		control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+		control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+		blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+		blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+		src/parilu_v0_3.cpp \
+		src/trisolve.cpp \
+		src/givens.cpp \
+		src/orthogonality_error.cpp \
+		src/fgmres_restart.cpp \
+		test_solve_FGMRES_restart.cpp \
 		-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 		-o $@
 
@@ -567,6 +695,19 @@ test_malloc: test_malloc.cpp
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
 	control/magma_zfree.cpp \
 	test_malloc.cpp \
+	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+	-o $@
+
+test_orthogError: test_orthogError.cpp
+	$(CC) $(CFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+	src/orthogonality_error.cpp \
+	test_orthogError.cpp \
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@
 

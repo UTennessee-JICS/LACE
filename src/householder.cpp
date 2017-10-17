@@ -158,6 +158,49 @@ data_hqrd( data_d_matrix* X,
   
 }
 
+extern "C" 
+void
+data_hqrd_progressive( int p,
+  data_d_matrix* X,  
+  data_d_matrix* U,
+  data_d_matrix* R ) 
+{
+  ORTHOGDBG("data_hqrd begin\n X\n");
+  #ifdef DEBUG_ORTHOG
+    data_zdisplay_dense( X );
+  #endif
+  
+  int length = 0;
+  int n = X->num_rows;
+  //int p = X->num_cols;
+  dataType* v;
+  LACE_CALLOC( v, n );
+  for ( int k=0; k<MIN(n,p); k++ ) {
+    length = n - k;
+    data_housegen( length, &(X->val[idx(k,k,X->ld)]), &(U->val[idx(k,k,U->ld)]), &(R->val[idx(k,k,R->ld)]) );
+    for ( int j=k+1; j<p; j++ ) {
+      dataType colsum = 0.0;
+      for ( int i=k; i<n; i++ ) {
+        ORTHOGDBG("U[%d,%d] = %e X[%d,%d] = %e\n", i, k, U->val[idx(i,k,U->ld)], i, j, X->val[idx(i,j,X->ld)] );
+        colsum = colsum + U->val[idx(i,k,U->ld)] * X->val[idx(i,j,X->ld)];
+      }
+      v[j] = colsum;
+      ORTHOGDBG("k=%d v[%d] = %e\n", k, j, v[j] );
+    }
+    for ( int i=k; i<n; i++ ) {
+      length = n - k;
+      for ( int j=k+1; j<p; j++ ) {
+        X->val[idx(i,j,X->ld)] = X->val[idx(i,j,X->ld)] - U->val[idx(i,k,U->ld)] * v[j];
+      }
+    }
+    for ( int j=k+1; j<p; j++ ) {
+      ORTHOGDBG("R[%d,%d] = %e\n", k, j, R->val[idx(k,j,R->ld)] );
+      R->val[idx(k,j,R->ld)] = X->val[idx(k,j,X->ld)];
+    }
+    
+  }
+  
+}
 
 /*******************************************************************************
     Purpose

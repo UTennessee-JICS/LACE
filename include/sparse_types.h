@@ -72,8 +72,8 @@ typedef struct data_d_solver_par
     //---------------------------------
     // the input for verbose is:
     // 0 = production mode
-    // k>0 = convergence and timing is monitored in *res_vec and *timeing every  
-    // k-th iteration 
+    // k>0 = convergence and timing is monitored in *res_vec and *timeing every
+    // k-th iteration
     //
     // the output of info is:
     //  0 = convergence (stopping criterion met)
@@ -94,12 +94,12 @@ typedef struct data_z_preconditioner
     data_int_t             bsize;
     data_int_t             offset;
     data_precision         format;
-    dataType               atol;                
-    dataType               rtol;    
+    dataType               atol;
+    dataType               rtol;
     data_int_t             maxiter;
-    data_int_t             restart; 
+    data_int_t             restart;
     data_int_t             numiter;
-    data_int_t             spmv_count;  
+    data_int_t             spmv_count;
     dataType               init_res;
     dataType               final_res;
     real_Double_t          runtime;                 // feedback: preconditioner runtime needed
@@ -119,7 +119,7 @@ typedef struct data_z_preconditioner
     data_d_matrix          work2;
     data_int_t*            int_array_1;
     data_int_t*            int_array_2;
-    
+
 #if defined(HAVE_PASTIX)
     pastix_data_t*         pastix_data;
     data_int_t*            iparm;
@@ -129,31 +129,32 @@ typedef struct data_z_preconditioner
 
 typedef struct data_z_preconditioner_log
 {
-    data_int_t             sweeps;	
+    data_int_t             sweeps;
     dataType               tol;
     dataType               A_Frobenius;
     dataType               precond_generation_time;
     dataType               initial_residual;
     dataType               initial_nonlinear_residual;
-    dataType               residual;	
+    dataType               residual;
     dataType               nonlinear_residual;
-    data_int_t             omp_num_threads;	  
+    data_int_t             omp_num_threads;
 } data_d_preconditioner_log;
 
 
 typedef struct data_z_gmres_log
 {
-    data_int_t             search_directions;	
-    dataType               solve_time;	
+    data_int_t             restarts;
+    data_int_t             search_directions;
+    dataType               solve_time;
     dataType               initial_residual;
     dataType               final_residual;
-    dataType               scaled_residual;	
-    dataType               original_residual;  
+    dataType               scaled_residual;
+    dataType               original_residual;
 } data_d_gmres_log;
 
 typedef struct data_z_gmres_param
 {
-    data_int_t             search_max;	   // max sear directions
+    data_int_t             search_max;	   // max search directions per restart
     data_int_t             tol_type;	     // 0 -- absolute; 1 -- relative
     dataType               rtol;	         // relative residual reduction factor
     data_int_t             reorth;         // 0 -- Brown/Hindmarsh condition (default)
@@ -161,6 +162,9 @@ typedef struct data_z_gmres_param
                                            // 2 -- Always reorthogonalize (not cheap!)
     data_int_t             user_csrtrsv_choice; // 0 -- MKL CSRTRSV
                                                 // 1 -- ParCSRTRSV
+    data_int_t             monitorOrthog;  // 0 -- do not monitor
+                                           // 1 -- monitor
+    data_int_t             restart_max;    // max restarts
 } data_d_gmres_param;
 
 

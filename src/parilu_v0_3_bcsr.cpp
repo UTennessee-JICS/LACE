@@ -148,11 +148,29 @@ data_PariLU_v0_3( data_d_matrix* A,
             // avoid branching when possible
             if ( jl == ju ) {
               //sp = ( jl == ju ) ? L->val[il] * U->val[iu] : sp;
+              //data_dgemm_mkl( MagmaRowMajor, MagmaNoTrans, MagmaNoTrans, 
+              //  A->blocksize, A->blocksize, A->blocksize, 
+              //  one, &(L->val[il*A->ldblock]), A->blocksize, 
+              //  &(U->val[iu*A->ldblock]), A->blocksize,
+              //  zero, sp.val, A->blocksize );
+              
+              dataType * Ltmp;
+              LACE_CALLOC(Ltmp, A->ldblock);
+              for ( int kk=0; kk< A->ldblock; kk++) {
+                Ltmp[kk] = L->val[il*A->ldblock+kk];
+              }
+              dataType * Utmp;
+              LACE_CALLOC(Utmp, A->ldblock);
+              for ( int kk=0; kk< A->ldblock; kk++) {
+                Utmp[kk] = U->val[iu*A->ldblock+kk];
+              }
               data_dgemm_mkl( MagmaRowMajor, MagmaNoTrans, MagmaNoTrans, 
                 A->blocksize, A->blocksize, A->blocksize, 
-                one, &(L->val[il*A->ldblock]), A->blocksize, 
-                &(U->val[iu*A->ldblock]), A->blocksize,
+                one, Ltmp, A->blocksize, 
+                Utmp, A->blocksize,
                 zero, sp.val, A->blocksize );
+              free( Ltmp );
+              free( Utmp );
               
               //s = ( jl == ju ) ? s-sp : s;
               //data_domatadd_mkl( MagmaRowMajor, MagmaNoTrans, MagmaNoTrans,
@@ -161,7 +179,7 @@ data_PariLU_v0_3( data_d_matrix* A,
               //  negone, sp.val, A->blocksize,
               //  s.val,  A->blocksize );
               for ( int kk=0; kk< A->ldblock; kk++) {
-                s.val[kk] -= sp.val[kk];
+                s.val[kk] = s.val[kk] - sp.val[kk];
               }
             }            
             il = ( jl <= ju ) ? il+1 : il;

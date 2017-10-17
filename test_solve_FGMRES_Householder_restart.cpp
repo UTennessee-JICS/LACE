@@ -1,3 +1,4 @@
+//#define DEBUG_GMRES
 #include "include/sparse.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,7 +124,24 @@ int main(int argc, char* argv[])
     gmres_param.monitorOrthog = atoi( argv[10] );
     printf("monitorOrthog = %d\n", gmres_param.monitorOrthog);
   }
-  
+
+  // Set restart_max
+  gmres_param.restart_max = 1;
+  if ( argc >= 12 ) {
+    gmres_param.restart_max = atoi( argv[11] );
+    printf("restart_max = %d\n", gmres_param.restart_max);
+  }
+
+  int maxthreads = 0;
+  int numprocs = 0;
+  #pragma omp parallel
+  {
+    maxthreads = omp_get_max_threads();
+    numprocs = omp_get_num_procs();
+  }
+
+  printf("maxthreads = %d numprocs = %d\n", maxthreads, numprocs );
+
   // generate preconditioner
   data_d_matrix L = {Magma_CSRL};
   data_d_matrix U = {Magma_CSCU};
@@ -140,17 +158,19 @@ int main(int argc, char* argv[])
   printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
   printf("PariLU_v0_3_omp_num_threads = %d\n", parilu_log.omp_num_threads );
 
-
-  //data_zprint_csr( L );
-  //data_zprint_csr( U );
-  // data_parcsrtrsv requires L to be CSRL and U to be CSRU !!!!
   data_d_matrix Ucsr = {Magma_CSRU};
   CHECK( data_zmconvert( U, &Ucsr, Magma_CSC, Magma_CSR ) );
   Ucsr.storage_type = Magma_CSRU;
   Ucsr.fill_mode = MagmaUpper;
-  //data_zprint_csr( Ucsr );
 
-  data_fgmres( &Asparse, &rhs_vector, &x, &L, &Ucsr, &gmres_param, &gmres_log );
+  omp_set_num_threads(numprocs);
+  #pragma omp parallel
+  {
+    maxthreads = omp_get_max_threads();
+    numprocs = omp_get_num_procs();
+  }
+  printf("maxthreads = %d numprocs = %d\n", maxthreads, numprocs );
+  data_fgmres_householder( &Asparse, &rhs_vector, &x, &L, &Ucsr, &gmres_param, &gmres_log );
 
   for (int i=0; i<Asparse.num_rows; i++) {
     GMRESDBG("x.val[%d] = %.16e\n", i, x.val[i]);
@@ -178,6 +198,7 @@ int main(int argc, char* argv[])
   printf("%% Matrix: %s\n%% \t%d -by- %d with %d non-zeros\n",
     sparse_filename, Asparse.num_rows, Asparse.num_cols, Asparse.nnz );
   printf("%% Solver: FGMRES\n");
+  printf("%% \trestarts: %d\n", gmres_log.restarts );
   printf("%% \tsearch directions: %d\n", gmres_log.search_directions );
   printf("%% \tsolve time [s]: %e\n", gmres_log.solve_time );
   printf("%% \tinitial residual: %e\n", gmres_log.initial_residual );
