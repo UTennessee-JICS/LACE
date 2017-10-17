@@ -10,7 +10,9 @@ data_zvinit(
     dataType values )
 {
     data_int_t info = 0;
-    
+
+    data_zmfree( x);
+
     x->val = NULL;
     x->diag = NULL;
     x->row = NULL;
@@ -31,12 +33,12 @@ data_zvinit(
     x->alignment = 1;
     x->major = MagmaColMajor;
     x->ld = num_rows;
-    
+
     LACE_CALLOC( x->val, x->nnz );
-    
+
     for( data_int_t i=0; i<x->nnz; i++) {
          x->val[i] = values;
     }
-    
-    return info; 
+
+    return info;
 }

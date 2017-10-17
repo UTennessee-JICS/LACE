@@ -84,7 +84,6 @@ data_fgmres_householder(
     data_int_t search_directions = 0;
     dataType rtol = gmres_par->rtol;
     dataType rnorm2 = 0.0;
-    dataType residual = 0.0;
 
     // strip-mining for efficient memory access
     const int STRIP = 1024;
@@ -187,6 +186,7 @@ data_fgmres_householder(
         data_zvinit( &q, n, 1, zero );
         data_zvinit( &krylov, n, search_max+1, zero );
         data_zvinit( &precondq, n, search_max+1, zero );
+        data_zvinit( &Minvvj, n, search_max, zero );
         data_zvinit( &givens, search_max+1, 1, zero );
         data_zvinit( &givens_cos, search_max, 1, zero );
         data_zvinit( &givens_sin, search_max, 1, zero );
@@ -293,16 +293,10 @@ data_fgmres_householder(
       }
       givens.val[0] = -dd;
 
-      // if ( restart == 0 ) {
-      //   gmres_log->search_directions = search_directions;
-      //   gmres_log->solve_time = 0.0;
-      //   gmres_log->initial_residual = rnorm2;
-      // }
-
       // GMRES search direction
       for ( int search = 0; search < search_max; ++search ) {
         int search1 = search + 1;
-        data_zmfree( &r );
+        //data_zmfree( &r );
         data_zvinit( &r, n, 1, zero );
 
         for ( int i=0; i<krylov.ld; i++ ) {
@@ -327,12 +321,12 @@ data_fgmres_householder(
             L->num_rows, L->val, L->row, L->col,
             q.val, r.val,
             ptrsv_tol, &ptrsv_iter );
-          printf("ParCSRTRSV_L(%d) = %d;\n", search+1, ptrsv_iter);
+          printf("ParCSRTRSV_L(%d) = %d;\n", search1, ptrsv_iter);
           data_parcsrtrsv( MagmaUpper, U->storage_type, U->diagorder_type,
             U->num_rows, U->val, U->row, U->col,
             r.val, &(Minvvj.val[idx(0,search,krylov.ld)]),
             ptrsv_tol, &ptrsv_iter );
-          printf("ParCSRTRSV_U(%d) = %d;\n", search+1, ptrsv_iter);
+          printf("ParCSRTRSV_U(%d) = %d;\n", search1, ptrsv_iter);
         }
         else if ( gmres_par->user_csrtrsv_choice == 2 ) {
           for ( int i=0; i<Minvvj.ld; i++ ) {
@@ -508,7 +502,7 @@ data_fgmres_householder(
             }
           }
 
-          data_zmfree( &q );
+          //data_zmfree( &q );
           data_zvinit( &q, n, 1, zero );
           q.val[search1] = 1.0;
 
@@ -640,10 +634,10 @@ data_fgmres_householder(
           int imax = 0;
           data_orthogonality_error( &precondq, &ortherr, &imax, search1 );
           if ( gmres_par->user_csrtrsv_choice == 0 ) {
-            printf("FGMRES_Householders_mkltrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
+            printf("FGMRES_Householders_mkltrsv_ortherr(%d) = %.16e;\n", search1, ortherr);
           }
           else {
-            printf("FGMRES_Householders_partrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
+            printf("FGMRES_Householders_partrsv_ortherr(%d) = %.16e;\n", search1, ortherr);
           }
         }
 
@@ -690,21 +684,20 @@ data_fgmres_householder(
           // approximate residual norm
           givens.val[search1] = -givens_sin.val[search]*givens.val[search];
           givens.val[search] = givens_cos.val[search]*givens.val[search];
-          residual = fabs(givens.val[search1]);
         }
         for ( int i=0; i<givens.ld; ++i ) {
           GMRESDBG("givens.val[%d] = %e\n", i, givens.val[i]);
         }
 
         if ( gmres_par->user_csrtrsv_choice == 0 ) {
-          printf("FGMRES_Householders_mkltrsv_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));
+          printf("FGMRES_Householders_mkltrsv_search(%d) = %.16e;\n", search1, fabs(givens.val[(search1)]));
         }
         else {
-          printf("FGMRES_Householders_partrsv_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));
+          printf("FGMRES_Householders_partrsv_search(%d) = %.16e;\n", search1, fabs(givens.val[(search1)]));
         }
         // update the solution
         // solve the least squares problem
-        if ( fabs(givens.val[(search+1)]) < rtol  || (search == (search_max-1)) ) {
+        if ( fabs(givens.val[(search1)]) < rtol  || (search == (search_max-1)) ) {
           GMRESDBG(" !!!!!!! update the solution %d!!!!!!!\n",0);
           #pragma omp parallel
           #pragma omp for simd schedule(simd: static) nowait
@@ -736,14 +729,13 @@ data_fgmres_householder(
             }
           }
 
-
-          gmres_log->restarts = restart+1;
-          gmres_log->search_directions = search+1;
+          gmres_log->restarts = restart;
+          gmres_log->search_directions = search1;
           dataType wend = omp_get_wtime();
           gmres_log->solve_time = (wend-wstart);
-          gmres_log->final_residual = fabs(givens.val[(search+1)]);
+          gmres_log->final_residual = fabs(givens.val[(search1)]);
 
-          if ( fabs(givens.val[(search+1)]) < rtol ) {
+          if ( fabs(givens.val[(search1)]) < rtol ) {
             restart = restart_max;
           }
 

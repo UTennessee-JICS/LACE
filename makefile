@@ -672,6 +672,24 @@ test_solve_FGMRES_householder_restart: test_solve_FGMRES_Householder_restart.cpp
 		-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 		-o $@
 
+test_solve_FGMRES_restart: test_solve_FGMRES_restart.cpp
+		$(CC) $(CFLAGS) \
+		-L${MKLROOT}/lib -I${MKLROOT}/include \
+		control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+		control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+		control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+		control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+		blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+		blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+		src/parilu_v0_3.cpp \
+		src/trisolve.cpp \
+		src/givens.cpp \
+		src/orthogonality_error.cpp \
+		src/fgmres_restart.cpp \
+		test_solve_FGMRES_restart.cpp \
+		-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
+		-o $@
+
 test_malloc: test_malloc.cpp
 	$(CC) $(CFLAGS) \
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
