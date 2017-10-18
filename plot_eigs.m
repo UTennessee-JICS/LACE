@@ -1,9 +1,9 @@
-function [ f ] = plot_eigs( A, n, matname )
+function [ f, sm, lm, sr, lr, li, si ] = plot_eigs( A, n, matname )
 %UNTITLED5 Summary of this function goes here
 %   Detailed explanation goes here
 
 
-f = figure(n)
+f = figure(n);
 hold on
 sm = eigs(A,3,'sm');
 plot(sm,'r*')
