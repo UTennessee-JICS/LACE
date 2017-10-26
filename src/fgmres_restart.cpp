@@ -75,8 +75,12 @@ data_fgmres(
 
     // initialize
     data_int_t info = DEV_NOTCONVERGED;
-    data_int_t n = A->num_rows;
+    const data_int_t n = A->num_rows;
+    data_int_t restart_max = gmres_par->restart_max;
     data_int_t search_max = gmres_par->search_max;
+    printf("%% data_fgmres restart_max = %d search_max =%d\n",
+      restart_max, search_max);
+
     data_int_t search_directions = 0;
     dataType rtol = gmres_par->rtol;
     dataType rnorm2 = 0.0;
@@ -84,6 +88,7 @@ data_fgmres(
     dataType beta = 0.0;
     dataType delta = 0.0;
     dataType gamma = 0.0;
+    dataType residual = 0.0;
 
     // preconditioning
     // for mkl_dcsrtrsv
@@ -170,14 +175,33 @@ data_fgmres(
     data_zvinit( &alpha, search_max, 1, zero );
     alpha.major = MagmaColMajor;
 
+    // GMRES Restarts
+    for ( int restart = 0; restart < restart_max; ++restart ) {
+      printf("restart = %d\n", restart);
+      if ( restart > 0 ) {
+        data_zvinit( &r, n, 1, zero );
+        data_zvinit( &u, n, 1, zero );
+        data_zvinit( &krylov, n, search_max+1, zero );
+        data_zvinit( &Minvvj, n, search_max, zero );
+        data_zvinit( &givens, search_max+1, 1, zero );
+        data_zvinit( &givens_cos, search_max, 1, zero );
+        data_zvinit( &givens_sin, search_max, 1, zero );
+      }
+
     // initial residual
     data_z_spmv( negone, A, &x, zero, &r );
     data_zaxpy( n, one, b->val, 1, r.val, 1);
     rnorm2 = data_dnrm2( n, r.val, 1 );
-    printf("rnorm2 = %e; tol = %e; rtol = %e;\n", rnorm2, rtol, rtol*rnorm2 );
-    if ( gmres_par->tol_type == 1 ) {
-      rtol = rtol*rnorm2;
+    if ( restart == 0 ) {
+      gmres_log->search_directions = search_directions;
+      gmres_log->solve_time = 0.0;
+      gmres_log->initial_residual = rnorm2;
+      if ( gmres_par->tol_type == 1 ) {
+        rtol = rtol*rnorm2;
+      }
     }
+    printf("rnorm2 = %e; rtol = %e;\n", rnorm2, rtol );
+
     if (rnorm2 < rtol ) {
       info = 0;
       return info;
@@ -194,7 +218,6 @@ data_fgmres(
     }
     givens.val[0] = rnorm2;
 
-
     gmres_log->search_directions = search_directions;
     gmres_log->solve_time = 0.0;
     gmres_log->initial_residual = rnorm2;
@@ -203,9 +226,9 @@ data_fgmres(
     //while ( (rnorm2 > rtol) && (search < search_max) ) {
     for ( int search = 0; search < search_max; search++ ) {
       int search1 = search + 1;
-      data_zmfree( &u );
+      //data_zmfree( &u );
       data_zvinit( &u, n, 1, zero );
-      data_zmfree( &tmp );
+      //data_zmfree( &tmp );
       data_zvinit( &tmp, n, 1, zero );
 
       for ( int i=0; i<krylov.ld; i++ ) {
@@ -367,7 +390,7 @@ data_fgmres(
           printf("FGMRES_partrsv_ortherr(%d) = %.16e;\n", search1, ortherr);
         }
 
-        data_orthogonality_error_incremental( &krylov, &ortherr, &imax, (search1) );
+        data_orthogonality_error_incremental( &krylov, &ortherr, &imax, (search+2) );
         if ( gmres_par->user_csrtrsv_choice == 0 ) {
           printf("FGMRES_mkltrsv_ortherr_inc(%d) = %.16e;\n", search1, ortherr);
         }
@@ -443,32 +466,26 @@ data_fgmres(
         }
 
         // use preconditioned vectors to form the update (GEMV)
-        #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
-        #pragma vector aligned
-        #pragma vector vecremainder
-        #pragma nounroll_and_jam
-        for (int i = 0; i < n; i++ ) {
-
-          for (int j = 0; j <= search; j++ ) {
-            //z.val[i] = z.val[i] + krylov.val[idx(i,j,krylov.ld)]*alpha.val[j];
-            z.val[i] = z.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*alpha.val[j];
+        for (int j = 0; j <= search; j++ ) {
+          #pragma omp parallel
+          #pragma omp for simd schedule(simd: static) nowait
+          #pragma vector aligned
+          #pragma vector vecremainder
+          #pragma nounroll_and_jam
+          for (int i = 0; i < n; i++ ) {
+            x.val[i] = x.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*alpha.val[j];
           }
         }
 
-        #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
-        #pragma vector aligned
-        #pragma vector vecremainder
-        #pragma nounroll_and_jam
-        for (int i = 0; i < n; i++ ) {
-          x.val[i] = x.val[i] + z.val[i];
-        }
-
+        gmres_log->restarts = restart;
         gmres_log->search_directions = search1;
         dataType wend = omp_get_wtime();
         gmres_log->solve_time = (wend-wstart);
         gmres_log->final_residual = fabs(givens.val[(search1)]);
+
+        if ( fabs(givens.val[(search1)]) < rtol ) {
+          restart = restart_max;
+        }
 
         break;
       }
@@ -478,6 +495,8 @@ data_fgmres(
     for ( int i=0; i<Minvvj.ld; i++ ) {
       GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n",
         i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
+    }
+
     }
 
     data_zmconvert( x, x0, Magma_DENSE, Magma_DENSE );
