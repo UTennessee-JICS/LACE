@@ -1,15 +1,19 @@
 #
 #
-#
-#CC=g++-6
+# ACF compiler selection
 CC=icpc
+CFLAGS=-std=c++11 -Wall -Wextra -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
 #
 #
-VPATH=blas control include src testing
-#CFLAGS=-std=c++11 -g -Wall -O2 -fno-unsafe-math-optimizations -fopenmp
-CFLAGS=-std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
-LDFLAGS=-isystem ${GTEST_DIR}/include -pthread libgtest.a
-LDFLAGS2=-isystem ${GTEST_DIR}/include -isystem ${GMOCK_DIR}/include -pthread libgmock.a
+# Mac compiler overide to use OpenMP
+#CC=g++-6
+#CFLAGS=-std=c++11 -Wall -g -O3 -fopenmp
+#
+#
+#
+CPPFLAGS += -isystem $(GTEST_DIR)/include -isystem $(GMOCK_DIR)/include
+LDFLAGS=-isystem $(GTEST_DIR)/include -pthread libgtest.a
+LDFLAGS2=-isystem $(GTEST_DIR)/include -isystem $(GMOCK_DIR)/include -pthread libgmock.a
 SOURCES=example_01.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=exampleGoogleTest_01
@@ -27,19 +31,19 @@ all: gtest-all.o gmock-all.o exampleGoogleTest_01 exampleGoogleTest_02 \
 	test_dense_trisolve
 
 exampleGoogleTest_01: example_01.cpp libgtest.a
-	$(CC) $(LDFLAGS) $(CFLAGS) example_01.cpp -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -lpthread $^ -o $@
 
 exampleGoogleTest_02: example_02.cpp libgmock.a
-	$(CC) $(LDFLAGS2) $(CFLAGS) example_02.cpp -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -lpthread $^ -o $@
 
 test_matrix_io: test_matrix_io.cpp libgmock.a
-	$(CC) $(LDFLAGS2) $(CFLAGS) \
+	$(CC) $(CPPFLAGS) $(CFLAGS) \
 	-L${MKLROOT}/lib -I${MKLROOT}/include \
-	test_matrix_io.cpp control/magma_zmio.cpp \
+	control/magma_zmio.cpp \
 	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
 	control/magma_zfree.cpp \
 	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
-	-o $@
+	$^ -o $@
 
 test_vector_io: test_vector_io.cpp libgmock.a
 	$(CC) $(LDFLAGS2) $(CFLAGS) \
@@ -662,21 +666,61 @@ test_malloc: test_malloc.cpp
 	-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl \
 	-o $@
 
-libgtest.a: gtest-all.o
-	ar -rv libgtest.a gtest-all.o
+GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
+	$(GTEST_DIR)/include/gtest/internal/*.h
 
-libgmock.a: gtest-all.o gmock-all.o
-	ar -rv libgmock.a gtest-all.o gmock-all.o
+GMOCK_HEADERS = $(GMOCK_DIR)/include/gmock/*.h \
+	$(GMOCK_DIR)/include/gmock/internal/*.h \
+	$(GTEST_HEADERS)
 
-gtest-all.o: ${GTEST_DIR}/src/gtest-all.cc
-	$(CC) -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
-        -isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} \
-        -pthread -c ${GTEST_DIR}/src/gtest-all.cc
+GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
+GMOCK_SRCS_ = $(GMOCK_DIR)/src/*.cc $(GMOCK_HEADERS)
 
-gmock-all.o: ${GMOCK_DIR}/src/gmock-all.cc
-	$(CC) -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
-        -isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} \
-        -pthread -c ${GMOCK_DIR}/src/gmock-all.cc
+gtest-all.o : $(GTEST_SRCS_)
+	$(CC) $(CPPFLAGS) -I$(GTEST_DIR) $(CFLAGS) -c \
+		$(GTEST_DIR)/src/gtest-all.cc
+
+gtest_main.o : $(GTEST_SRCS_)
+	$(CC) $(CPPFLAGS) -I$(GTEST_DIR) $(CFLAGS) -c \
+		$(GTEST_DIR)/src/gtest_main.cc
+
+libgtest.a : gtest-all.o
+	$(AR) $(ARFLAGS) $@ $^
+
+gtest_main.a : gtest-all.o gtest_main.o
+	$(AR) $(ARFLAGS) $@ $^
+
+gmock-all.o : $(GMOCK_SRCS_)
+	$(CC) $(CPPFLAGS) -I$(GTEST_DIR) -I$(GMOCK_DIR) $(CFLAGS) \
+		-c $(GMOCK_DIR)/src/gmock-all.cc
+
+gmock_main.o : $(GMOCK_SRCS_)
+	$(CC) $(CPPFLAGS) -I$(GTEST_DIR) -I$(GMOCK_DIR) $(CFLAGS) \
+		-c $(GMOCK_DIR)/src/gmock_main.cc
+
+libgmock.a : gmock-all.o gtest-all.o
+	$(AR) $(ARFLAGS) $@ $^
+
+gmock_main.a : gmock-all.o gtest-all.o gmock_main.o
+	$(AR) $(ARFLAGS) $@ $^
+
+
+
+#libgtest.a: gtest-all.o
+#	ar -rv libgtest.a gtest-all.o
+
+#libgmock.a: gtest-all.o gmock-all.o
+#	ar -rv libgmock.a gtest-all.o gmock-all.o
+
+#gtest-all.o: ${GTEST_DIR}/src/gtest-all.cc
+#	$(CC) -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
+#        -isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} \
+#        -pthread -c ${GTEST_DIR}/src/gtest-all.cc
+
+#gmock-all.o: ${GMOCK_DIR}/src/gmock-all.cc
+#	$(CC) -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
+#        -isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} \
+#        -pthread -c ${GMOCK_DIR}/src/gmock-all.cc
 
 clean:
 	rm exampleGoogleTest_01 exampleGoogleTest_02 test_matrix_io test_vector_io \
