@@ -1049,6 +1049,12 @@ data_orthogonality_error( data_d_matrix* krylov,
   int* imax,
   int search );
 
+void
+data_orthogonality_error_incremental( data_d_matrix* krylov,
+  dataType* ortherr,
+  int* imax,
+  int search );
+
 #ifdef __cplusplus
 }
 #endif
