@@ -1,19 +1,18 @@
-#
-#
-# ACF compiler selection
-CXX			 	 = icpc
-CXXFLAGS	 = -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
-#
-#
-# Mac compiler overide to use OpenMP
-#CXX				 = g++-6
-#CXXFLAGS	 = -std=c++11 -Wall -g -O3 -fopenmp -pthread
-#
-#
-#
+
+# Users should make all changes in make.inc
+# Example files for the ACF clusters make.inc.ACF
+# and for MacOS make.inc.Mac are useful starting points for customization.
+# It should not be necessary to change anything in here.
+
+-include make.inc
+
+# defaults if nothing else is given in make.inc
+CXX			 	 ?= icpc
+CXXFLAGS	 ?= -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
+
 
 CPPFLAGS  += -I$(GTEST_DIR)/include -I$(GMOCK_DIR)/include \
-	-I$(MKLROOT)/include
+	-I$(MKLROOT)/include -I./include
 
 LACE_HEADERS = include/*.h
 SRCDIRS = control blas src testing
@@ -25,40 +24,42 @@ LIBDIR		?= -L$(MKLROOT)/lib
 LIB 			?= -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl
 LIBS			 = $(LIBDIR) $(LIB)
 
-TARGETS = exampleGoogleTest_01 exampleGoogleTest_02 \
-  test_matrix_io test_vector_io
+TESTS = testing/exampleGoogleTest_01 testing/exampleGoogleTest_02 \
+  testing/test_matrix_io testing/test_vector_io
+
+TARGETS = $(TESTS)
 
 all: $(TARGETS)
 
 #
 # Google Test and Mock examples
 #
-exampleGoogleTest_01: example_01.o libgtest.a
+testing/exampleGoogleTest_01: testing/example_01.o libgtest.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
 
-exampleGoogleTest_02: example_02.o libgmock.a
+testing/exampleGoogleTest_02: testing/example_02.o libgmock.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
 
 #
-# Generate Testers
+# Generate LACE Unit Testers for TDD
 #
 generateTester = $(CXX) $(CPPFLAGS) $(CXXFLAGS) \
   $(LIBS) \
   $^ -o $@
 
 # explicitly list prerequisite objects to ensure lean re-makes
-test_matrix_io_OBJS = test_matrix_io.o \
+test_matrix_io_OBJS = testing/test_matrix_io.o \
   control/magma_zmio.o control/mmio.o \
   control/magma_zmconverter.o control/magma_zmtranspose.o \
-  control/magma_zfree.o libgmock.a
-test_matrix_io: $(test_matrix_io_OBJS)
+  control/magma_zfree.o testing/test_main.o libgmock.a
+testing/test_matrix_io: $(test_matrix_io_OBJS)
 	$(generateTester)
 
-test_vector_io_OBJS = test_vector_io.o \
+test_vector_io_OBJS = testing/test_vector_io.o \
   control/magma_zmio.o control/mmio.o \
   control/magma_zmconverter.o control/magma_zmtranspose.o \
   control/magma_zfree.o libgmock.a
-test_vector_io: $(test_vector_io_OBJS)
+testing/test_vector_io: $(test_vector_io_OBJS)
 	$(generateTester)
 
 #
