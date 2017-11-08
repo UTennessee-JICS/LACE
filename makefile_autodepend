@@ -44,8 +44,7 @@ testing/exampleGoogleTest_02: testing/example_02.o libgmock.a
 # Generate LACE Unit Testers for TDD
 #
 generateTester = $(CXX) $(CPPFLAGS) $(CXXFLAGS) \
-  $(LIBS) \
-  $^ -o $@
+  $^ -o $@ $(LIBS)
 
 # explicitly list prerequisite objects to ensure lean re-makes
 test_matrix_io_OBJS = testing/test_matrix_io.o \
