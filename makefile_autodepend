@@ -47,17 +47,17 @@ generateTester = $(CXX) $(CPPFLAGS) $(CXXFLAGS) \
   $^ -o $@
 
 # explicitly list prerequisite objects to ensure lean re-makes
-test_matrix_io_OBJS = libgmock.a test_matrix_io.o \
+test_matrix_io_OBJS = test_matrix_io.o \
   control/magma_zmio.o control/mmio.o \
   control/magma_zmconverter.o control/magma_zmtranspose.o \
-  control/magma_zfree.o
+  control/magma_zfree.o libgmock.a
 test_matrix_io: $(test_matrix_io_OBJS)
 	$(generateTester)
 
-test_vector_io_OBJS = libgmock.a test_vector_io.o \
+test_vector_io_OBJS = test_vector_io.o \
   control/magma_zmio.o control/mmio.o \
   control/magma_zmconverter.o control/magma_zmtranspose.o \
-  control/magma_zfree.o
+  control/magma_zfree.o libgmock.a
 test_vector_io: $(test_vector_io_OBJS)
 	$(generateTester)
 
