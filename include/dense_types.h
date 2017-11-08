@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 #define DEV_ALIGN               (64)
@@ -442,6 +443,7 @@ static inline void lace_calloc(void **ptr, const size_t nmemb, const size_t size
     exit(-1);
 #endif
   }
+  memset( (*ptr), '\0', nmemb*size );
 }
 
 
