@@ -1,0 +1,149 @@
+#
+#
+# ACF compiler selection
+CXX			 	 = icpc
+CXXFLAGS	 = -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
+#
+#
+# Mac compiler overide to use OpenMP
+#CXX				 = g++-6
+#CXXFLAGS	 = -std=c++11 -Wall -g -O3 -fopenmp -pthread
+#
+#
+#
+
+CPPFLAGS  += -I$(GTEST_DIR)/include -I$(GMOCK_DIR)/include \
+	-I$(MKLROOT)/include
+
+LACE_HEADERS = include/*.h
+SRCDIRS = control blas src testing
+SRCFILES = $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.cpp))
+SRCS = *.cpp $(SRCFILES) $(LACE_HEADERS)
+OBJS = $(SRCFILES:%.cpp=%.o)
+
+LIBDIR		?= -L$(MKLROOT)/lib
+LIB 			?= -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl
+LIBS			 = $(LIBDIR) $(LIB)
+
+TARGETS = exampleGoogleTest_01 exampleGoogleTest_02 \
+  test_matrix_io test_vector_io
+
+all: $(TARGETS)
+
+#
+# Google Test and Mock examples
+#
+exampleGoogleTest_01: example_01.o libgtest.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+exampleGoogleTest_02: example_02.o libgmock.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+#
+# Generate Testers
+#
+generateTester = $(CXX) $(CPPFLAGS) $(CXXFLAGS) \
+  $(LIBS) \
+  $^ -o $@
+
+# explicitly list prerequisite objects to ensure lean re-makes
+test_matrix_io_OBJS = libgmock.a test_matrix_io.o \
+  control/magma_zmio.o control/mmio.o \
+  control/magma_zmconverter.o control/magma_zmtranspose.o \
+  control/magma_zfree.o
+test_matrix_io: $(test_matrix_io_OBJS)
+	$(generateTester)
+
+test_vector_io_OBJS = libgmock.a test_vector_io.o \
+  control/magma_zmio.o control/mmio.o \
+  control/magma_zmconverter.o control/magma_zmtranspose.o \
+  control/magma_zfree.o
+test_vector_io: $(test_vector_io_OBJS)
+	$(generateTester)
+
+#
+# Incorporate Google Testing & Mocking Framework
+#
+GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
+	$(GTEST_DIR)/include/gtest/internal/*.h
+
+GMOCK_HEADERS = $(GMOCK_DIR)/include/gmock/*.h \
+	$(GMOCK_DIR)/include/gmock/internal/*.h \
+	$(GTEST_HEADERS)
+
+GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
+GMOCK_SRCS_ = $(GMOCK_DIR)/src/*.cc $(GMOCK_HEADERS)
+
+gtest-all.o : $(GTEST_SRCS_)
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
+		$(GTEST_DIR)/src/gtest-all.cc
+
+gtest_main.o : $(GTEST_SRCS_)
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
+		$(GTEST_DIR)/src/gtest_main.cc
+
+libgtest.a : gtest-all.o
+	$(AR) $(ARFLAGS) $@ $^
+
+gtest_main.a : gtest-all.o gtest_main.o
+	$(AR) $(ARFLAGS) $@ $^
+
+gmock-all.o : $(GMOCK_SRCS_)
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) -I$(GMOCK_DIR) $(CXXFLAGS) \
+		-c $(GMOCK_DIR)/src/gmock-all.cc
+
+gmock_main.o : $(GMOCK_SRCS_)
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) -I$(GMOCK_DIR) $(CXXFLAGS) \
+		-c $(GMOCK_DIR)/src/gmock_main.cc
+
+libgmock.a : gmock-all.o gtest-all.o
+	$(AR) $(ARFLAGS) $@ $^
+
+gmock_main.a : gmock-all.o gtest-all.o gmock_main.o
+	$(AR) $(ARFLAGS) $@ $^
+
+#
+# Handle dependencies automatically
+#
+DEPDIR := .d
+$(shell mkdir -p $(DEPDIR) >/dev/null)
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+
+COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
+
+%.o : %.cpp
+%.o : %.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+blas/%.o : blas/%.cpp
+blas/%.o : blas/%.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+control/%.o : control/%.cpp
+control/%.o : control/%.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+src/%.o : src/%.cpp
+src/%.o : src/%.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+testing/%.o : testing/%.cpp
+testing/%.o : testing/%.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+$(DEPDIR)/%.d: ;
+.PRECIOUS: $(DEPDIR)/%.d
+
+include $(wildcard $(patsubst %,$(DEPDIR)/%.d,$(basename $(SRCS))))
+#
+#
+#
+
+clean:
+	rm *.o *.a $(wildcard **/*.o) $(wildcard **/*.a) $(TARGETS)
