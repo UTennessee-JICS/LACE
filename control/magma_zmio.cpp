@@ -1336,7 +1336,7 @@ data_zdisplay_dense(
       printf( "%d %d\n", int(row_limit), int(col_limit));
       for(int i=0; i < row_limit; i++) {
         for(int j=0; j < col_limit; j++) {
-          printf( "%.16e ", (A->val[ i * A->ld + j ]));
+          printf( "%23.16e, ", (A->val[ i * A->ld + j ]));
         }
         printf("\n");
       }
@@ -1345,7 +1345,7 @@ data_zdisplay_dense(
       printf( "%d %d\n", int(row_limit), int(col_limit));
       for(int i=0; i < row_limit; i++) {
         for(int j=0; j < col_limit; j++) {
-          printf( "%.16e ", (A->val[ i + j * A->ld ]));
+          printf( "%23.16e ", (A->val[ i + j * A->ld ]));
         }
         printf("\n");
       }

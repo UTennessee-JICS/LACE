@@ -26,7 +26,11 @@ LIBS			 = $(LIBDIR) $(LIB)
 
 EXAMPLES = testing/exampleGoogleTest_01 testing/exampleGoogleTest_02
 
-TESTS = testing/test_matrix_io testing/test_vector_io testing/test_matrix_ops
+TESTS = \
+  testing/test_vector_io \
+  testing/test_matrix_io \
+  testing/test_matrix_ops \
+  testing/test_LU_ops
 
 TARGETS = $(TESTS)
 
@@ -58,10 +62,19 @@ testing/test_vector_io_OBJS = testing/test_vector_io.o \
   control/magma_zmconverter.o control/magma_zmtranspose.o \
   control/magma_zfree.o testing/test_main.o libgmock.a
 
-testing/test_matrix_ops_OBJS = testing/test_matrix_operations.cpp \
-  control/constants.cpp control/magma_zmio.cpp \
-  control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
-  control/magma_zfree.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+testing/test_matrix_ops_OBJS = testing/test_matrix_operations.o \
+  control/constants.o control/magma_zmio.o \
+  control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+  control/magma_zfree.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+  testing/test_main.o libgmock.a
+
+testing/test_LU_ops_OBJS = testing/test_LU_operations.o \
+  control/constants.o control/magma_zmio.o \
+  control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+  control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+  control/sparse_sub.o control/sparse_tilepattern.o \
+  blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+  blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
   testing/test_main.o libgmock.a
 
 define generateTester
