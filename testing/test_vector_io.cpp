@@ -1,19 +1,3 @@
-/*
-
-#mac osx
-g++ -isystem ${GTEST_DIR}/include -I${GTEST_DIR} -pthread -c ${GTEST_DIR}/src/gtest-all.cc
-ar -rv libgtest.a gtest-all.o
-g++ -std=c++11 -isystem ${GTEST_DIR}/include -pthread example_02.cpp libgtest.a -o example_02
-g++ -std=c++11 -isystem ${GTEST_DIR}/include -isystem ${GMOCK_DIR}/include -pthread example_02.cpp libgtest.a libgmock.a -o example_02
-
-#beacon
-icpc -isystem ${GTEST_DIR}/include -I${GTEST_DIR} -pthread -c ${GTEST_DIR}/src/gtest-all.cc
-ar -rv libgtest.a gtest-all.o
-icpc -std=c++11 -isystem ${GTEST_DIR}/include -pthread example_02.cpp libgtest.a -o example_02
-
-./example_02 --gtest_output="xml:report.xml"
-
-*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -86,31 +70,4 @@ TEST(ReadRow, WorksForMTXformat) {
 
   EXPECT_THAT(dense_val, testing::ContainerEq(dense_valcheck));
   data_zmfree( &A );
-}
-
-
-int main(int argc, char* argv[])
-{
-/*
-  data_storage_t A_dense_storage = Magma_DENSE;
-  data_order_t A_order = MagmaRowMajor;
-
-  int dense_nrow, dense_ncol, dense_nnz;
-  dataType *dense_val;
-  char dense_filename[] = "vectors/io_row_test.mtx";
-
-  read_z_dense_from_mtx( &A_dense_storage, &dense_nrow, &dense_ncol, &dense_nnz,
-    A_order, &dense_val, dense_filename );
-  data_zprint_dense_mtx(dense_nrow, dense_ncol, dense_nnz, A_order, &dense_val);
-
-  data_d_matrix D = {Magma_DENSE};
-  data_z_dense_mtx( &D, A_order, dense_filename );
-  data_zprint_dense( D );
-
-  free( dense_val );
-  data_zmfree( &D );
-*/
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-
 }
