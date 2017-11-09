@@ -411,14 +411,9 @@ z_transpose_dense(
     B->true_nnz     = A.true_nnz;
     B->pad_rows     = A.pad_cols;
     B->pad_cols     = A.pad_rows;
-    //B->ld           = A.ld;
 
     if ( B->val != NULL )
       free( B->val );
-    //if (A.pad_rows > 0 && A.pad_cols > 0)
-    //  B->val = (dataType*) malloc( A.pad_rows*A.pad_cols*sizeof(dataType) );
-    //else
-    //  B->val = (dataType*) malloc( A.num_rows*A.num_cols*sizeof(dataType) );
 
     int rowlimit = B->num_rows;
     int collimit = B->num_cols;
@@ -426,55 +421,25 @@ z_transpose_dense(
        rowlimit = B->pad_rows;
        collimit = B->pad_cols;
     }
-    // B->val = (dataType*) malloc( rowlimit*collimit*sizeof(dataType) );
     LACE_CALLOC( B->val, (rowlimit*collimit));
 
     if (A.major == MagmaRowMajor) {
-      for ( int i = 0; i < rowlimit; i++ ) {
-        for ( int j = 0; j < collimit; j++ ) {
-          B->val[ i + j*rowlimit ] = A.val[ i*collimit + j ];
+      for ( int i = 0; i < collimit; i++ ) {
+        for ( int j = 0; j < rowlimit; j++ ) {
+          B->val[ i + j*collimit ] = A.val[ i*A.ld + j ];
         }
       }
-      //if (A.pad_rows > 0 && A.pad_cols > 0) {
-      //  for ( int i = 0; i < A.pad_rows; i++ ) {
-      //    for ( int j = 0; j < A.pad_cols; j++ ) {
-      //      B->val[ i + j*A.pad_rows ] = A.val[ i*A.pad_cols + j ];
-      //    }
-      //  }
-      //}
-      //else {
-      //  for ( int i = 0; i < A.num_rows; i++ ) {
-      //    for ( int j = 0; j < A.num_cols; j++ ) {
-      //      B->val[ i + j*A.num_rows ] = A.val[ i*A.num_cols + j ];
-      //    }
-      //  }
-      //}
       B->major = MagmaRowMajor;
-      B->ld = rowlimit;
+      B->ld = collimit;
     }
     else if (A.major == MagmaColMajor) {
-      for ( int j = 0; j < collimit; j++ ) {
-        for ( int i = 0; i < rowlimit; i++ ) {
-          B->val[ i*collimit + j ] = A.val[ i + j*rowlimit ];
+      for ( int j = 0; j < rowlimit; j++ ) {
+        for ( int i = 0; i < collimit; i++ ) {
+          B->val[ i*rowlimit + j ] = A.val[ i + j*A.ld ];
         }
       }
-      //if (A.pad_rows > 0 && A.pad_cols > 0) {
-      //  for ( int j = 0; j < A.num_cols; j++ ) {
-      //    for ( int i = 0; i < A.num_rows; i++ ) {
-      //      B->val[ i*A.pad_cols + j ] = A.val[ i + j*A.pad_rows ];
-      //    }
-      //  }
-      //}
-      //else {
-      //  for ( int j = 0; j < A.num_cols; j++ ) {
-      //    for ( int i = 0; i < A.num_rows; i++ ) {
-      //      B->val[ i*A.num_cols + j ] = A.val[ i + j*A.num_rows ];
-      //    }
-      //  }
-      //}
       B->major = MagmaColMajor;
-      B->ld = collimit;
-      //printf("%s line %d\n", __FILE__, __LINE__);
+      B->ld = rowlimit;
     }
 
     //cleanup:

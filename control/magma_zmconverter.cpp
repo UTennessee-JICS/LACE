@@ -533,9 +533,10 @@ data_zmconvert(
             // B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
             LACE_CALLOC( B->val, B->nnz );
 
-            for(int i=0; i < rowlimit; i++ ) {
-                for(int j=A.row[i]; j < A.row[i+1]; j++ )
-                    B->val[i * (A.num_cols) + A.col[j] ] = A.val[ j ];
+            for(int i=0; i < A.num_rows; ++i ) {
+                for(int j=A.row[i]; j < A.row[i+1]; ++j ) {
+                    B->val[i * (B->num_cols) + A.col[j] ] = A.val[ j ];
+                }
             }
 
             //printf( "done\n" );
