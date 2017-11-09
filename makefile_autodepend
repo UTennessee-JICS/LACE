@@ -24,12 +24,13 @@ LIBDIR		?= -L$(MKLROOT)/lib
 LIB 			?= -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl
 LIBS			 = $(LIBDIR) $(LIB)
 
-TESTS = testing/exampleGoogleTest_01 testing/exampleGoogleTest_02 \
-  testing/test_matrix_io testing/test_vector_io
+EXAMPLES = testing/exampleGoogleTest_01 testing/exampleGoogleTest_02
+
+TESTS = testing/test_matrix_io testing/test_vector_io
 
 TARGETS = $(TESTS)
 
-all: $(TARGETS)
+all: $(EXAMPLES) $(TARGETS)
 
 #
 # Google Test and Mock examples
@@ -43,23 +44,30 @@ testing/exampleGoogleTest_02: testing/example_02.o libgmock.a
 #
 # Generate LACE Unit Testers for TDD
 #
-generateTester = $(CXX) $(CPPFLAGS) $(CXXFLAGS) \
-  $^ -o $@ $(LIBS)
-
-# explicitly list prerequisite objects to ensure lean re-makes
-test_matrix_io_OBJS = testing/test_matrix_io.o \
+#   explicitly list prerequisite objects for each object
+#   to ensure lean re-makes.
+#   Prerequisite objects for a target A must be named A_OBJS
+#
+testing/test_matrix_io_OBJS = testing/test_matrix_io.o \
   control/magma_zmio.o control/mmio.o \
   control/magma_zmconverter.o control/magma_zmtranspose.o \
   control/magma_zfree.o testing/test_main.o libgmock.a
-testing/test_matrix_io: $(test_matrix_io_OBJS)
-	$(generateTester)
 
-test_vector_io_OBJS = testing/test_vector_io.o \
+testing/test_vector_io_OBJS = testing/test_vector_io.o \
   control/magma_zmio.o control/mmio.o \
   control/magma_zmconverter.o control/magma_zmtranspose.o \
-  control/magma_zfree.o libgmock.a
-testing/test_vector_io: $(test_vector_io_OBJS)
-	$(generateTester)
+  control/magma_zfree.o testing/test_main.o libgmock.a
+
+
+define generateTester
+
+$(1): $$($(1)_OBJS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) \
+  $$($(1)_OBJS) -o $(1) $(LIBS)
+
+endef
+
+$(foreach i, $(TESTS), $(eval $(call generateTester,$(i))))
 
 #
 # Incorporate Google Testing & Mocking Framework
