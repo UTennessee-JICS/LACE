@@ -32,7 +32,7 @@
     @ingroup datasparse_zaux
     ********************************************************************/
 
-extern "C" 
+extern "C"
 int
 data_zmfree(
     data_d_matrix *A )
@@ -42,7 +42,7 @@ data_zmfree(
         free( A->col );
         A->num_rows = 0;
         A->num_cols = 0;
-        A->nnz = 0; 
+        A->nnz = 0;
         A->true_nnz = 0;
     }
     else if (A->storage_type == Magma_ELLD ) {
@@ -50,7 +50,7 @@ data_zmfree(
         free( A->col );
         A->num_rows = 0;
         A->num_cols = 0;
-        A->nnz = 0; 
+        A->nnz = 0;
         A->true_nnz = 0;
     }
     else if ( A->storage_type == Magma_ELLRT ) {
@@ -68,7 +68,7 @@ data_zmfree(
         free( A->col );
         A->num_rows = 0;
         A->num_cols = 0;
-        A->nnz = 0; 
+        A->nnz = 0;
         A->true_nnz = 0;
     }
     else if ( A->storage_type == Magma_CSRLIST ) {
@@ -78,7 +78,7 @@ data_zmfree(
         free( A->list );
         A->num_rows = 0;
         A->num_cols = 0;
-        A->nnz = 0; 
+        A->nnz = 0;
         A->true_nnz = 0;
     }
     else if ( A->storage_type == Magma_CSR || A->storage_type == Magma_CSRD
@@ -88,7 +88,7 @@ data_zmfree(
                                     || A->storage_type == Magma_CSCD
                                     || A->storage_type == Magma_CSCL
                                     || A->storage_type == Magma_CSCU ) {
-    
+
         free( A->val );
         free( A->col );
         free( A->row );
@@ -99,7 +99,7 @@ data_zmfree(
         A->num_cols = 0;
         A->pad_rows = 0;
         A->pad_cols = 0;
-        A->nnz = 0; 
+        A->nnz = 0;
         A->true_nnz = 0;
         A->major = (data_order_t) 0;
         A->diameter = 0;
@@ -113,7 +113,7 @@ data_zmfree(
         A->num_cols = 0;
         A->pad_rows = 0;
         A->pad_cols = 0;
-        A->nnz = 0; 
+        A->nnz = 0;
         A->true_nnz = 0;
         A->major = (data_order_t) 0;
         A->diameter = 0;
@@ -127,22 +127,22 @@ data_zmfree(
         A->num_cols = 0;
         A->pad_rows = 0;
         A->pad_cols = 0;
-        A->nnz = 0; 
+        A->nnz = 0;
         A->true_nnz = 0;
         A->blockinfo = 0;
         A->major = (data_order_t) 0;
         A->diameter = 0;
     }
-    else if ( A->storage_type == Magma_DENSE  || A->storage_type == Magma_DENSEL 
-                                         || A->storage_type == Magma_DENSEU 
+    else if ( A->storage_type == Magma_DENSE  || A->storage_type == Magma_DENSEL
+                                         || A->storage_type == Magma_DENSEU
                                          || A->storage_type == Magma_DENSED ) {
-        if ( A->val )
+        if ( A->val != NULL )
           free( A->val );
         A->num_rows = 0;
         A->num_cols = 0;
         A->pad_rows = 0;
         A->pad_cols = 0;
-        A->nnz = 0; 
+        A->nnz = 0;
         A->true_nnz = 0;
         A->major = (data_order_t) 0;
     }
@@ -153,6 +153,6 @@ data_zmfree(
     A->blockinfo = NULL;
     A->diag = NULL;
     A->list = NULL;
-    
+
     return DEV_SUCCESS;
 }

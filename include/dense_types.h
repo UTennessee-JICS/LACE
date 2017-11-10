@@ -431,8 +431,8 @@ CBLAS_SIDE      cblas_side_const   ( data_side_t  side  );
 static inline void lace_calloc(void **ptr, const size_t nmemb, const size_t size,
                        const char *name, const char *file, const int line)
 {
-  //if ((*ptr = calloc(nmemb, size)) == NULL)
-  if ( posix_memalign( ptr, DEV_ALIGN, nmemb*size ) != 0 )
+  int ns = (nmemb*size)/DEV_ALIGN;
+  if ( posix_memalign( ptr, DEV_ALIGN, (ns+1)*DEV_ALIGN ) != 0 )
   {
     fprintf(stderr,
             "ERROR (memory): Unable to allocate memory for %s (%s, line %d)\n",
