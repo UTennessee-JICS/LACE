@@ -83,7 +83,7 @@ testing/test_LU_larnv_OBJS = testing/test_LU_larnv.o \
 	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
-	src/parlu_v0_0.cpp \
+	src/parlu_v0_0.cpp src/parlu_v0_1.cpp src/parlu_v1_0.cpp \
   testing/test_main.o libgmock.a
 
 define generateTester
