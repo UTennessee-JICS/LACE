@@ -1385,7 +1385,8 @@ data_z_pad_dense(
 
   printf("tile_size = %d num_rows = %d pad_rows = %d \n", tile_size, A->num_rows, A->pad_rows);
 
-  A->val = (dataType*) calloc( A->nnz, sizeof(dataType) );
+  //A->val = (dataType*) calloc( A->nnz, sizeof(dataType) );
+  LACE_CALLOC( A->val, A->nnz );
 
   if ( A->major == MagmaRowMajor ) {
     for ( int i = 0; i < A->num_rows; i++ ) {

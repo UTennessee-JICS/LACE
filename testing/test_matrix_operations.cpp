@@ -190,7 +190,8 @@ TEST(Operations_dense, dgemm) {
   C.num_cols = 7;
   C.ld = 7;
   C.nnz = 49;
-  C.val = (dataType*) malloc( C.num_rows*C.num_cols*sizeof(dataType) );
+  //C.val = (dataType*) malloc( C.num_rows*C.num_cols*sizeof(dataType) );
+  LACE_CALLOC( C.val, C.nnz );
 
   printf("\nfull matrices\nA.ld=%d, B.ld=%d, C.ld=%d\n", A.ld, B.ld, C.ld);
   data_dgemm_mkl( A.major, MagmaNoTrans, MagmaTrans, 7, 7, 5,
@@ -209,7 +210,8 @@ TEST(Operations_dense, dgemm) {
   D.num_cols = 3;
   D.ld = 3;
   D.nnz = 9;
-  D.val = (dataType*) malloc( D.num_rows*D.num_cols*sizeof(dataType) );
+  //D.val = (dataType*) malloc( D.num_rows*D.num_cols*sizeof(dataType) );
+  LACE_CALLOC( D.val, D.nnz );
 
   printf("\nsub matrices 1\nA.ld=%d, B.ld=%d, C.ld=%d\n", A.ld, B.ld, D.ld);
   data_dgemm_mkl( A.major, MagmaNoTrans, MagmaTrans, 3, 3, 3,
