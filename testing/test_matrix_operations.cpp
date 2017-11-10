@@ -111,8 +111,8 @@ TEST(Operations_dense, dgemv) {
   data_dgemv_mkl( A.major, MagmaNoTrans, 7, 5, alpha, A.val, A.ld,
     B.val, 1, beta, y, 1);
 
-  EXPECT_THAT(y, testing::ContainerEq(y_valcheck));
-  //EXPECT_ARRAY_DOUBLE_EQ(7, y, y_valcheck);
+  //EXPECT_THAT(y, testing::ContainerEq(y_valcheck));
+  EXPECT_ARRAY_DOUBLE_EQ(7, y, y_valcheck);
 
   data_dgemv_mkl( A.major, MagmaTrans, 7, 5, alpha, A.val, A.ld,
     B.val, 1, beta, ytrans, 1);
