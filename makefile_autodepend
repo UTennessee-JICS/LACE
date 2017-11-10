@@ -30,7 +30,8 @@ TESTS = \
   testing/test_vector_io \
   testing/test_matrix_io \
   testing/test_matrix_ops \
-  testing/test_LU_ops
+  testing/test_LU_ops \
+	testing/test_LU_larnv
 
 TARGETS = $(TESTS)
 
@@ -72,9 +73,17 @@ testing/test_LU_ops_OBJS = testing/test_LU_operations.o \
   control/constants.o control/magma_zmio.o \
   control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
   control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
-  control/sparse_sub.o control/sparse_tilepattern.o \
   blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
   blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+  testing/test_main.o libgmock.a
+
+testing/test_LU_larnv_OBJS = testing/test_LU_larnv.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+	src/parlu_v0_0.cpp \
   testing/test_main.o libgmock.a
 
 define generateTester
