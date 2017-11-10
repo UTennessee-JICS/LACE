@@ -88,6 +88,7 @@ endef
 $(foreach i, $(TESTS), $(eval $(call generateTester,$(i))))
 
 runTests :
+	make -f makefile_autodepend $(TESTS)
 	@cd testing; \
   $(foreach i, $(TESTS), echo ====; echo $(i); ../$(i); echo ====;)
 
