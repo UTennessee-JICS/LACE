@@ -87,6 +87,10 @@ endef
 
 $(foreach i, $(TESTS), $(eval $(call generateTester,$(i))))
 
+runTests :
+	@cd testing; \
+  $(foreach i, $(TESTS), echo ====; echo $(i); ../$(i); echo ====;)
+
 #
 # Incorporate Google Testing & Mocking Framework
 #
