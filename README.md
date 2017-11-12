@@ -33,7 +33,7 @@ Make from project root for now
 				* $ cd mybuild
 				* $ cmake -Dgtest_build_samples=ON ${GMOCK_DIR}
 				* $ make
-			* Adding definitions for GTEST_DIR and GMOCK directories to your shell profile file (.bashrc) will simplify future LACE development. LACES's makefile expects these locations to be defined.  
+			* Adding definitions for GTEST_DIR and GMOCK_DIR directories to your shell profile file (.bashrc) will simplify future LACE development. LACES's makefile expects these locations to be defined.  
 		2. MKL
 			* Register and download MKL from https://software.intel.com/en-us/mkl
 			* following installation of MKL enable LACE to access it by sourcing it:
