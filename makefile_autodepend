@@ -32,7 +32,8 @@ TESTS = \
   testing/test_matrix_ops \
   testing/test_LU_ops \
 	testing/test_LU_larnv \
-	testing/test_LU
+	testing/test_LU \
+	testing/test_iLU_ops
 
 TARGETS = $(TESTS)
 
@@ -82,25 +83,34 @@ testing/test_LU_larnv_OBJS = testing/test_LU_larnv.o \
 	control/constants.o control/magma_zmio.o \
 	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
 	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
-	control/init.cpp \
+	control/init.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
-	src/parlu_v0_0.cpp src/parlu_v0_1.cpp src/parlu_v1_0.cpp \
+	src/parlu_v0_0.o src/parlu_v0_1.o src/parlu_v1_0.o \
   testing/test_cmd_line_main.o libgmock.a
-
 
 testing/test_LU_OBJS = testing/test_LU.o \
 	control/constants.o control/magma_zmio.o \
 	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
 	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
-	control/init.cpp \
+	control/init.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
-	src/parlu_v0_0.cpp src/parlu_v0_1.cpp src/parlu_v1_0.cpp \
-	src/parlu_v1_1.cpp src/parlu_v1_2.cpp src/parlu_v1_3.cpp \
-	src/parlu_v2_0.cpp src/parlu_v2_1.cpp \
-	src/parlu_v3_0.cpp src/parlu_v3_1.cpp \
+	src/parlu_v0_0.o src/parlu_v0_1.o src/parlu_v1_0.o \
+	src/parlu_v1_1.o src/parlu_v1_2.o src/parlu_v1_3.o \
+	src/parlu_v2_0.o src/parlu_v2_1.o \
+	src/parlu_v3_0.o src/parlu_v3_1.o \
   testing/test_cmd_line_main.o libgmock.a
+
+	testing/test_iLU_ops_OBJS = testing/test_iLU_operations.o \
+		control/constants.o control/magma_zmio.o \
+		control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+		control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+		control/sparse_sub.o control/sparse_tilepattern.o \
+		blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+		blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+		src/parilu_v0_0.o src/parilu_v3_0.o \
+		testing/test_cmd_line_main.o libgmock.a
 
 define generateTester
 
@@ -118,7 +128,7 @@ runTests :
   $(foreach i, $(TESTS), echo ====; echo $(i); ../$(i); echo ====;) \
 	./test_LU_larnv --dim 500; \
 	./test_LU --dim 500; \
-	./test_LU --matrix matrices/Trefethen_20.mtx
+	./test_LU --matrix matrices/Trefethen_20.mtx --tile 2
 
 #
 # Incorporate Google Testing & Mocking Framework
