@@ -435,7 +435,8 @@ static inline void lace_calloc(void **ptr, const size_t nmemb, const size_t size
   if ( posix_memalign( ptr, DEV_ALIGN, (ns+1)*DEV_ALIGN ) != 0 )
   {
     fprintf(stderr,
-            "ERROR (memory): Unable to allocate memory for %s (%s, line %d)\n",
+            "ERROR (memory): Unable to allocate memory [%d bytes for %d elements] for %s (%s, line %d)\n",
+            (ns+1)*DEV_ALIGN, int(nmemb),
             name, file, line);
 #ifdef USING_MPI
     MPI_Abort(MPI_COMM_WORLD, -1);
