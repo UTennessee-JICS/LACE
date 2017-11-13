@@ -31,7 +31,10 @@ protected:
 
     int dim = 1000;
     char default_matrix[] = "LARNV";
-    char* matrix_name = NULL ;
+    char* matrix_name = NULL;
+    tile_size = new int;
+    (*tile_size) = 8;
+
     // parse command line arguments
     if (my_argc>1) {
       int count = 1;
@@ -44,6 +47,11 @@ protected:
         else if ( (strcmp(my_argv[count], "--dim") == 0)
             && count+1 < my_argc ) {
           dim = atoi(my_argv[count+1]);
+          count = count + 2;
+        }
+        else if ( (strcmp(my_argv[count], "--tile") == 0)
+            && count+1 < my_argc ) {
+          (*tile_size) = atoi(my_argv[count+1]);
           count = count + 2;
         }
         else {
@@ -114,12 +122,14 @@ protected:
   virtual void TearDown() {}
 
   // shared by all tests
-  static data_d_matrix* A;// = {Magma_DENSE};
+  static data_d_matrix* A;
   static dataType* Amkldiff;
+  static int* tile_size;
 };
 
 data_d_matrix* LUTest::A = NULL;
 dataType* LUTest::Amkldiff = NULL;
+int* LUTest::tile_size = NULL;
 
 TEST_F(LUTest, ParLUv0_0) {
   // =========================================================================
@@ -191,6 +201,199 @@ TEST_F(LUTest, ParLUv1_0) {
   // Check ||A-LU||_Frobenius
   data_zfrobenius_LUresidual((*A), L, U, &Adiff);
   printf("ParLUv1_0_res = %e\n", Adiff);
+  fflush(stdout);
+
+  EXPECT_LE( Adiff, (*Amkldiff)*10.0 );
+
+  data_zmfree( &L );
+  data_zmfree( &U );
+  // =========================================================================
+}
+
+TEST_F(LUTest, ParLUv1_1) {
+  // =========================================================================
+  // ParLU v1.1
+  // =========================================================================
+  printf("%% ParLU v1.1\n");
+  data_d_matrix L = {Magma_DENSEL};
+  data_d_matrix U = {Magma_DENSEU};
+  dataType Adiff = 0.0;
+  // Separate the strictly lower, upper elements
+  // into L and U respectively.
+  printf("%% ParLU v1.1\n");
+  L = {Magma_DENSEL};
+  U = {Magma_DENSEU};
+  // ParLU with dot products replacing summations
+  data_ParLU_v1_1( A, &L, &U);
+  // Check ||A-LU||_Frobenius
+  data_zfrobenius_LUresidual((*A), L, U, &Adiff);
+  printf("ParLUv1_1_res = %e\n", Adiff);
+  fflush(stdout);
+
+  EXPECT_LE( Adiff, (*Amkldiff)*10.0 );
+
+  data_zmfree( &L );
+  data_zmfree( &U );
+  // =========================================================================
+}
+
+TEST_F(LUTest, ParLUv1_2) {
+  // =========================================================================
+  // ParLU v1.2
+  // =========================================================================
+  printf("%% ParLU v1.2\n");
+  data_d_matrix L = {Magma_DENSEL};
+  data_d_matrix U = {Magma_DENSEU};
+  dataType Adiff = 0.0;
+  // Separate the strictly lower, upper elements
+  // into L and U respectively.
+  // ParLU with dot products and a tiled access pattern
+  printf("%% ParLU v1.2\n");
+  L = {Magma_DENSEL};
+  U = {Magma_DENSEU};
+  // ParLU with dot products replacing summations
+  data_ParLU_v1_2( A, &L, &U, (*LUTest::tile_size) );
+  // Check ||A-LU||_Frobenius
+  data_zfrobenius_LUresidual((*A), L, U, &Adiff);
+  printf("ParLUv1_2_res = %e\n", Adiff);
+  fflush(stdout);
+
+  EXPECT_LE( Adiff, (*Amkldiff)*10.0 );
+
+  data_zmfree( &L );
+  data_zmfree( &U );
+  // =========================================================================
+}
+
+TEST_F(LUTest, ParLUv1_3) {
+  // =========================================================================
+  // ParLU v1.3
+  // =========================================================================
+  printf("%% ParLU v1.3\n");
+  data_d_matrix L = {Magma_DENSEL};
+  data_d_matrix U = {Magma_DENSEU};
+  dataType Adiff = 0.0;
+  // Separate the strictly lower, upper elements
+  // into L and U respectively.
+  // Convert U to column major storage.
+  // ParLU with dot products and a tiled access pattern
+  printf("%% ParLU v1.3\n");
+  L = {Magma_DENSEL};
+  U = {Magma_DENSEU};
+  data_ParLU_v1_3( A, &L, &U, (*LUTest::tile_size) );
+  // Check ||A-LU||_Frobenius
+  data_zfrobenius_LUresidual((*A), L, U, &Adiff);
+  printf("ParLUv1_3_res = %e\n", Adiff);
+  fflush(stdout);
+
+  EXPECT_LE( Adiff, (*Amkldiff)*10.0 );
+
+  data_zmfree( &L );
+  data_zmfree( &U );
+  // =========================================================================
+}
+
+TEST_F(LUTest, ParLUv2_0) {
+  // =========================================================================
+  // ParLU v2.0
+  // =========================================================================
+  printf("%% ParLU v2.0\n");
+  data_d_matrix L = {Magma_DENSEL};
+  data_d_matrix U = {Magma_DENSEU};
+  dataType Adiff = 0.0;
+  // Separate the strictly lower, strictly upper, and diagonal elements
+  // into L, U, and D respectively.
+  // ParLU with matrix-vector products and a tiled access pattern
+  printf("%% ParLU v2.0\n");
+  L = {Magma_DENSEL};
+  U = {Magma_DENSEU};
+  data_ParLU_v2_0( A, &L, &U, (*LUTest::tile_size) );
+  // Check ||A-LU||_Frobenius
+  data_zfrobenius_LUresidual((*A), L, U, &Adiff);
+  printf("ParLUv2_0_res = %e\n", Adiff);
+  fflush(stdout);
+
+  EXPECT_LE( Adiff, (*Amkldiff)*10.0 );
+
+  data_zmfree( &L );
+  data_zmfree( &U );
+  // =========================================================================
+}
+
+TEST_F(LUTest, ParLUv2_1) {
+  // =========================================================================
+  // ParLU v2.1
+  // =========================================================================
+  printf("%% ParLU v2.1\n");
+  data_d_matrix L = {Magma_DENSEL};
+  data_d_matrix U = {Magma_DENSEU};
+  dataType Adiff = 0.0;
+  // Separate the strictly lower, strictly upper, and diagonal elements
+  // into L, U, and D respectively.
+  // ParLU with matrix-vector products and a tiled access pattern
+  // Convert U to column major storage.
+  printf("%% ParLU v2.1\n");
+  L = {Magma_DENSEL};
+  U = {Magma_DENSEU};
+  data_ParLU_v2_1( A, &L, &U, (*LUTest::tile_size) );
+  // Check ||A-LU||_Frobenius
+  data_zfrobenius_LUresidual((*A), L, U, &Adiff);
+  printf("ParLUv2_1_res = %e\n", Adiff);
+  fflush(stdout);
+
+  EXPECT_LE( Adiff, (*Amkldiff)*10.0 );
+
+  data_zmfree( &L );
+  data_zmfree( &U );
+  // =========================================================================
+}
+
+TEST_F(LUTest, ParLUv3_0) {
+  // =========================================================================
+  // ParLU v3.0
+  // =========================================================================
+  printf("%% ParLU v3.0\n");
+  data_d_matrix L = {Magma_DENSEL};
+  data_d_matrix U = {Magma_DENSEU};
+  dataType Adiff = 0.0;
+  // Separate the strictly lower, strictly upper, and diagonal elements
+  // into L, U, and D respectively.
+  // ParLU with matrix-vector products and a tiled access pattern
+  printf("%% ParLU v3.0\n");
+  L = {Magma_DENSEL};
+  U = {Magma_DENSEU};
+  data_ParLU_v3_0( A, &L, &U, (*LUTest::tile_size) );
+  // Check ||A-LU||_Frobenius
+  data_zfrobenius_LUresidual((*A), L, U, &Adiff);
+  printf("ParLUv3_0_res = %e\n", Adiff);
+  fflush(stdout);
+
+  EXPECT_LE( Adiff, (*Amkldiff)*10.0 );
+
+  data_zmfree( &L );
+  data_zmfree( &U );
+  // =========================================================================
+}
+
+TEST_F(LUTest, ParLUv3_1) {
+  // =========================================================================
+  // ParLU v3.1
+  // =========================================================================
+  printf("%% ParLU v3.1\n");
+  data_d_matrix L = {Magma_DENSEL};
+  data_d_matrix U = {Magma_DENSEU};
+  dataType Adiff = 0.0;
+  // Separate the strictly lower, strictly upper, and diagonal elements
+  // into L, U, and D respectively.
+  // Convert U to column major storage.
+  // ParLU with matrix-vector products and a tiled access pattern
+  printf("%% ParLU v3.1\n");
+  L = {Magma_DENSEL};
+  U = {Magma_DENSEU};
+  data_ParLU_v3_1( A, &L, &U, (*LUTest::tile_size) );
+  // Check ||A-LU||_Frobenius
+  data_zfrobenius_LUresidual((*A), L, U, &Adiff);
+  printf("ParLUv3_1_res = %e\n", Adiff);
   fflush(stdout);
 
   EXPECT_LE( Adiff, (*Amkldiff)*10.0 );

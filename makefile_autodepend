@@ -97,6 +97,9 @@ testing/test_LU_OBJS = testing/test_LU.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
 	src/parlu_v0_0.cpp src/parlu_v0_1.cpp src/parlu_v1_0.cpp \
+	src/parlu_v1_1.cpp src/parlu_v1_2.cpp src/parlu_v1_3.cpp \
+	src/parlu_v2_0.cpp src/parlu_v2_1.cpp \
+	src/parlu_v3_0.cpp src/parlu_v3_1.cpp \
   testing/test_cmd_line_main.o libgmock.a
 
 define generateTester
@@ -115,7 +118,7 @@ runTests :
   $(foreach i, $(TESTS), echo ====; echo $(i); ../$(i); echo ====;) \
 	./test_LU_larnv --dim 500; \
 	./test_LU --dim 500; \
-	./test_LU --matrix matrices/Trefethen_20.mtx 
+	./test_LU --matrix matrices/Trefethen_20.mtx
 
 #
 # Incorporate Google Testing & Mocking Framework
