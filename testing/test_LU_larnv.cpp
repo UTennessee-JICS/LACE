@@ -48,6 +48,8 @@ protected:
     A->storage_type = Magma_DENSE;
     A->num_rows = dim;
     A->num_cols = dim;
+    A->pad_rows = 0;
+    A->pad_cols = 0;
     A->nnz = dim*dim;
     A->true_nnz = A->nnz;
     A->ld = dim;
