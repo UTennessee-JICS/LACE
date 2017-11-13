@@ -148,7 +148,8 @@ data_zvinit(
     data_d_matrix *x,
     data_int_t num_rows,
     data_int_t num_cols,
-    dataType values );
+    dataType values,
+    data_order_t major = MagmaColMajor );
 
 int
 data_z_csr_compressor(
