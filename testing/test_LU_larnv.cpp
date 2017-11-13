@@ -10,6 +10,8 @@
 #include "sparse_types.h"
 #include "container_tests.h"
 
+#include "test_cmd_line.h"
+
 class LUTest: public
   ::testing::Test
 {
@@ -20,7 +22,27 @@ protected:
   static void SetUpTestCase() {
     printf("seting up\n");
     fflush(stdout);
+
+    printf("my_argc = %d\n", my_argc);
+    for (int i=0; i< my_argc; ++i) {
+      printf("my_agv[%d] = %s\n", i, my_argv[i]);
+    }
+    fflush(stdout);
+
     int dim = 1000;
+    if (my_argc>1) {
+      int count = 1;
+      while (count <= my_argc) {
+        if ( (strcmp(my_argv[count], "--dim") == 0)
+            && count+1 < my_argc ) {
+          dim = atoi(my_argv[count+1]);
+          count = count + 2;
+        }
+        count++;
+      }
+    }
+    printf("A is a %dx%d LARNV matrix\n", dim, dim);
+    fflush(stdout);
     A = new data_d_matrix;
     Amkldiff = new dataType;
     A->storage_type = Magma_DENSE;
