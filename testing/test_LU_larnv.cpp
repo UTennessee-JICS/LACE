@@ -44,20 +44,10 @@ protected:
     printf("A is a %dx%d LARNV matrix\n", dim, dim);
     fflush(stdout);
     A = new data_d_matrix;
-    Amkldiff = new dataType;
-    A->storage_type = Magma_DENSE;
-    A->num_rows = dim;
-    A->num_cols = dim;
-    A->pad_rows = 0;
-    A->pad_cols = 0;
-    A->nnz = dim*dim;
-    A->true_nnz = A->nnz;
-    A->ld = dim;
-    A->major = MagmaRowMajor;
+    CHECK( data_zvinit( A, dim, dim, 0.0, MagmaRowMajor ) );
+
     int ione = 1;
     int ISEED[4] = {0,0,0,1};
-    //A->val = (dataType*) calloc( A->nnz, sizeof(dataType) );
-    LACE_CALLOC( A->val, A->nnz );
     CHECK( LAPACKE_dlarnv( ione, ISEED, A->nnz, A->val ) );
     for ( int i = 0; i<A->num_rows; i++ ) {
       A->val[ i*A->ld + i ] += 1.0e3;
@@ -79,6 +69,7 @@ protected:
     dataType wend = omp_get_wtime();
     printf("%% MKL LU with no pivoting required %f wall clock seconds as measured by omp_get_wtime()\n", wend-wstart );
 
+    Amkldiff = new dataType;
     (*Amkldiff) = 0.0;
     // Check ||A-LU||_Frobenius
     data_zfrobenius_inplaceLUresidual((*A), Amkl, Amkldiff);
