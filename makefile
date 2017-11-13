@@ -5,14 +5,14 @@ CXX			 	 = icpc
 CXXFLAGS	 = -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
 #
 #
-# Mac compiler overide to use OpenMP
+# Mac compiler override to use OpenMP
 #CXX				 = g++-6
 #CXXFLAGS	 = -std=c++11 -Wall -g -O3 -fopenmp -pthread
 #
 #
 #
 CPPFLAGS  += -I$(GTEST_DIR)/include -I$(GMOCK_DIR)/include \
-	-I$(MKLROOT)/include
+	-I$(MKLROOT)/include -I./include
 LIBDIR		?= -L$(MKLROOT)/lib
 LIB 			?= -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl
 LIBS			 = $(LIBDIR) $(LIB)
