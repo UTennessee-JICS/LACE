@@ -33,7 +33,8 @@ TESTS = \
   testing/test_LU_ops \
 	testing/test_LU_larnv \
 	testing/test_LU \
-	testing/test_iLU_ops
+	testing/test_iLU_ops \
+	testing/test_iLU
 
 TARGETS = $(TESTS)
 
@@ -102,15 +103,25 @@ testing/test_LU_OBJS = testing/test_LU.o \
 	src/parlu_v3_0.o src/parlu_v3_1.o \
   testing/test_cmd_line_main.o libgmock.a
 
-	testing/test_iLU_ops_OBJS = testing/test_iLU_operations.o \
-		control/constants.o control/magma_zmio.o \
-		control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
-		control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
-		control/sparse_sub.o control/sparse_tilepattern.o \
-		blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
-		blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
-		src/parilu_v0_0.o src/parilu_v3_0.o \
-		testing/test_cmd_line_main.o libgmock.a
+testing/test_iLU_ops_OBJS = testing/test_iLU_operations.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	control/sparse_sub.o control/sparse_tilepattern.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+	src/parilu_v0_0.o src/parilu_v3_0.o \
+	testing/test_cmd_line_main.o libgmock.a
+
+testing/test_iLU_OBJS = testing/test_iLU.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	control/init.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+	src/parilu_v0_0.o \
+  testing/test_cmd_line_main.o libgmock.a
 
 define generateTester
 
