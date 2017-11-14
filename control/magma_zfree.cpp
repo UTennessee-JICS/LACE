@@ -9,7 +9,7 @@
        @author Hartwig Anzt
        @author Stephen Wood
 */
-#include "../include/sparse.h"
+#include "sparse.h"
 
 
 /**
