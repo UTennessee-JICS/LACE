@@ -11,7 +11,7 @@ CXX			 	 ?= icpc
 CXXFLAGS	 ?= -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
 
 
-CPPFLAGS  += -I$(GTEST_DIR)/include -I$(GMOCK_DIR)/include \
+override CPPFLAGS  += -I$(GTEST_DIR)/include -I$(GMOCK_DIR)/include \
 	-I$(MKLROOT)/include -I./include
 
 LACE_HEADERS = include/*.h
@@ -122,6 +122,8 @@ testing/test_iLU_OBJS = testing/test_iLU.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
 	src/parilu_v0_0.o src/parilu_v0_3.o \
   testing/test_cmd_line_main.o libgmock.a
+# Note: to see detailed output from parilu_v0_3 set debug mode:
+# $ make -f makefile_autodepend testing/test_iLU CPPFLAGS+=-DDEBUG_PARILU -B
 
 define generateTester
 
