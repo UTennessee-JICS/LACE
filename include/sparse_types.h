@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-typedef struct data_d_matrix
+typedef struct alignas(DEV_ALIGN) data_d_matrix
 {
     data_storage_t     storage_type;            // matrix format - CSR, ELL, SELL-P
     data_symmetry_t    sym;                     // opt: indicate symmetry
