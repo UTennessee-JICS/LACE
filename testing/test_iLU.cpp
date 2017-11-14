@@ -7,7 +7,7 @@
 #include <omp.h>
 
 #include "mmio.h"
-#include "sparse_types.h"
+#include "sparse.h"
 #include "container_tests.h"
 
 #include "test_cmd_line.h"
@@ -29,7 +29,6 @@ protected:
     }
     fflush(stdout);
 
-    int dim = 1000;
     char default_matrix[] = "matrices/Trefethen_20.mtx";
     char* matrix_name = NULL;
     tile_size = new int();
@@ -148,7 +147,6 @@ TEST_F(iLUTest, PariLUv0_0) {
 
   data_d_matrix L = {Magma_CSRL};
   data_d_matrix U = {Magma_CSRU};
-  dataType Adiff = 0.0;
   // Separate the strictly lower and upper elements
   // into L, and U respectively.
   data_PariLU_v0_0( A, &L, &U);
@@ -160,6 +158,46 @@ TEST_F(iLUTest, PariLUv0_0) {
   data_zilures((*A), L, U, &LU, &Ares, &Anonlinres);
   printf("PariLUv0_0-5_csrilu0_res = %e\n", Ares);
   printf("PariLUv0_0-5_csrilu0_nonlinres = %e\n", Anonlinres);
+
+  fflush(stdout);
+
+  EXPECT_LE( Ares, (*Amklres)*10.0 );
+  EXPECT_LE( Anonlinres, (*Amklnonlinres)*10.0 );
+
+  data_zmfree( &L );
+  data_zmfree( &U );
+  data_zmfree( &LU );
+  // =========================================================================
+}
+
+TEST_F(iLUTest, PariLUv0_3) {
+  // =========================================================================
+  // PariLU v0.0
+  // =========================================================================
+  printf("%% PariLU v0.3\n");
+
+  data_d_matrix L = {Magma_CSRL};
+  data_d_matrix U = {Magma_CSRU};
+  dataType reduction = 1.0e-15;
+  data_d_preconditioner_log parilu_log;
+  // Separate the strictly lower and upper elements
+  // into L, and U respectively.
+  data_PariLU_v0_3( A, &L, &U, reduction, &parilu_log );
+  // Check ||A-LU||_Frobenius
+  dataType Ares = 0.0;
+  dataType Anonlinres = 0.0;
+  data_d_matrix LU = {Magma_CSR};
+  data_zmconvert((*A), &LU, Magma_CSR, Magma_CSR);
+  data_zilures((*A), L, U, &LU, &Ares, &Anonlinres);
+  printf("PariLU_v0_3_omp_num_threads = %d\n", parilu_log.omp_num_threads );
+  printf("PariLU_v0_3_sweeps = %d\n", parilu_log.sweeps );
+  printf("PariLU_v0_3_tol = %e\n", parilu_log.tol );
+  printf("PariLU_v0_3_A_Frobenius = %e\n", parilu_log.A_Frobenius );
+  printf("PariLU_v0_3_generation_time = %e\n", parilu_log.precond_generation_time );
+  printf("PariLU_v0_3_initial_residual = %e\n", parilu_log.initial_residual );
+  printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
+  printf("PariLUv0_3_csrilu0_res = %e\n", Ares);
+  printf("PariLUv0_3_csrilu0_nonlinres = %e\n", Anonlinres);
 
   fflush(stdout);
 

@@ -120,7 +120,7 @@ testing/test_iLU_OBJS = testing/test_iLU.o \
 	control/init.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
-	src/parilu_v0_0.o \
+	src/parilu_v0_0.o src/parilu_v0_3.o \
   testing/test_cmd_line_main.o libgmock.a
 
 define generateTester
