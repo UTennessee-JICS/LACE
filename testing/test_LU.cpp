@@ -32,7 +32,7 @@ protected:
     int dim = 1000;
     char default_matrix[] = "LARNV";
     char* matrix_name = NULL;
-    tile_size = new int;
+    tile_size = new int();
     (*tile_size) = 8;
 
     // parse command line arguments
@@ -67,7 +67,7 @@ protected:
     if ( (strcmp(matrix_name, "LARNV") == 0) ) {
       printf("A will be a generated %d x %d LARNV matrix\n", dim, dim);
       fflush(stdout);
-      A = new data_d_matrix;
+      A = new data_d_matrix();
       CHECK( data_zvinit( A, dim, dim, 0.0, MagmaRowMajor ) );
 
       int ione = 1;
@@ -81,7 +81,7 @@ protected:
       printf("A will be read from %s and converted to a dense matrix\n", matrix_name);
       data_d_matrix Asparse = {Magma_CSR};
       CHECK( data_z_csr_mtx( &Asparse, matrix_name ) );
-      A = new data_d_matrix;
+      A = new data_d_matrix();
       data_zmconvert( Asparse, A, Asparse.storage_type, Magma_DENSE );
       data_zmfree( &Asparse );
     }
@@ -102,7 +102,7 @@ protected:
     dataType wend = omp_get_wtime();
     printf("%% MKL LU with no pivoting required %f wall clock seconds as measured by omp_get_wtime()\n", wend-wstart );
 
-    Amkldiff = new dataType;
+    Amkldiff = new dataType();
     (*Amkldiff) = 0.0;
     // Check ||A-LU||_Frobenius
     data_zfrobenius_inplaceLUresidual((*A), Amkl, Amkldiff);
@@ -115,6 +115,7 @@ protected:
   static void TearDownTestCase() {
     data_zmfree( A );
     free( Amkldiff );
+    free( tile_size );
   }
 
   // per-test set-up and tear-down
