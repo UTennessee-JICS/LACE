@@ -112,10 +112,13 @@ protected:
     data_zmfree( A );
     data_zmfree( Lmkl );
     data_zmfree( Umkl );
-    free( Amklres );
-    free( Amklnonlinres );
+    delete A;
+    delete Lmkl;
+    delete Umkl;
+    delete Amklres;
+    delete Amklnonlinres;
     if (tile_size != NULL ) {
-      free( tile_size );
+      delete tile_size;
     }
   }
 

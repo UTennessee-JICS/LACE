@@ -114,8 +114,9 @@ protected:
   // per-test-case tear-down
   static void TearDownTestCase() {
     data_zmfree( A );
-    free( Amkldiff );
-    free( tile_size );
+    delete A;
+    delete Amkldiff;
+    delete tile_size;
   }
 
   // per-test set-up and tear-down
