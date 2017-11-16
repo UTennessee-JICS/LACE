@@ -159,8 +159,8 @@ TEST_F(iLUTest, PariLUv0_0) {
   data_d_matrix LU = {Magma_CSR};
   data_zmconvert((*A), &LU, Magma_CSR, Magma_CSR);
   data_zilures((*A), L, U, &LU, &Ares, &Anonlinres);
-  printf("PariLUv0_0-5_csrilu0_res = %e\n", Ares);
-  printf("PariLUv0_0-5_csrilu0_nonlinres = %e\n", Anonlinres);
+  printf("PariLU_v0_0-5_csrilu0_res = %e\n", Ares);
+  printf("PariLU_v0_0-5_csrilu0_nonlinres = %e\n", Anonlinres);
 
   fflush(stdout);
 
@@ -199,8 +199,8 @@ TEST_F(iLUTest, PariLUv0_3) {
   printf("PariLU_v0_3_generation_time = %e\n", parilu_log.precond_generation_time );
   printf("PariLU_v0_3_initial_residual = %e\n", parilu_log.initial_residual );
   printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
-  printf("PariLUv0_3_csrilu0_res = %e\n", Ares);
-  printf("PariLUv0_3_csrilu0_nonlinres = %e\n", Anonlinres);
+  printf("PariLU_v0_3_csrilu0_res = %e\n", Ares);
+  printf("PariLU_v0_3_csrilu0_nonlinres = %e\n", Anonlinres);
 
   fflush(stdout);
 
