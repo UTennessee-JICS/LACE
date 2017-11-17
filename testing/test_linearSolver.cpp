@@ -43,7 +43,7 @@ protected:
     char* initialGuess_name = NULL;
 
     tolerance = new dataType();
-    (*tolerance) = 0.0;
+    (*tolerance) = 1.0e-3;
 
     // parse command line arguments
     if (my_argc>1) {
@@ -105,9 +105,9 @@ protected:
     initialGuess_vector = new data_d_matrix();
     initialGuess_vector->storage_type = Magma_DENSE;
   	initialGuess_vector->major = MagmaRowMajor;
-    if ( strcmp( initialGuess_name, "ONES" ) == 0 ) {
-      printf("%% creating a vector of %d ones for the rhs.\n", A->num_rows);
-      CHECK( data_zvinit( initialGuess_vector, A->num_rows, 1, one ) );
+    if ( strcmp( initialGuess_name, "ZEROS" ) == 0 ) {
+      printf("%% creating a vector of %d zeros for the initial guess.\n", A->num_rows);
+      CHECK( data_zvinit( initialGuess_vector, A->num_rows, 1, zero ) );
     }
     else {
       printf("%% initial guess will be read from %s\n", initialGuess_name);
@@ -148,8 +148,16 @@ TEST_F(LinearSolverTest, MKLFGMRESnonPreconditioned) {
   data_d_matrix solution_vector = {Magma_DENSE};
   CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
 
+  data_z_gmres_param solverParam;
+
+  solverParam.search_max = 2000;
+  solverParam.restart_max = 2000;
+  solverParam.tol_type = 0;
+  solverParam.rtol = (*LinearSolverTest::tolerance);
+  solverParam. precondition = 0;
+
   // solve
-  data_MKL_FGMRES( A, solution_vector, rhs_vector, preconditioner, solverParam );
+  data_MKL_FGMRES( A, &solution_vector, rhs_vector, &solverParam );
 
   // print solver summary
 
@@ -158,6 +166,7 @@ TEST_F(LinearSolverTest, MKLFGMRESnonPreconditioned) {
   dataType residual = 0.0;
   data_d_matrix r={Magma_DENSE};
   data_zvinit( &r, A->num_rows, 1, zero );
+
   data_z_spmv( negone, A, &solution_vector, zero, &r );
   data_zaxpy( A->num_rows, one, rhs_vector->val, 1, r.val, 1);
   for (int i=0; i<A->num_rows; ++i) {

@@ -935,6 +935,11 @@ data_inverse_bcsr(
 //======================================
 
 int
+data_MKL_FGMRES(
+    data_d_matrix *A, data_d_matrix *x0, data_d_matrix *b,
+    data_d_gmres_param *solverParam );
+
+int
 data_gmres_basic(
     data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
     data_d_gmres_param *gmres_par,

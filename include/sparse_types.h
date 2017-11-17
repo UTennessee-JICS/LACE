@@ -154,6 +154,7 @@ typedef struct data_z_gmres_log
 
 typedef struct data_z_gmres_param
 {
+
     data_int_t             search_max;	   // max search directions per restart
     data_int_t             tol_type;	     // 0 -- absolute; 1 -- relative
     dataType               rtol;	         // relative residual reduction factor
@@ -165,6 +166,9 @@ typedef struct data_z_gmres_param
     data_int_t             monitorOrthog;  // 0 -- do not monitor
                                            // 1 -- monitor
     data_int_t             restart_max;    // max restarts
+    data_int_t             precondition;   // 0 -- do not precondition
+                                           // 1 -- apply preconditioner
+    dataType               parilu_reduction;    
 } data_d_gmres_param;
 
 
