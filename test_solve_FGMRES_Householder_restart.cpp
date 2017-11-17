@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
     numprocs = omp_get_num_procs();
   }
   printf("maxthreads = %d numprocs = %d\n", maxthreads, numprocs );
-  data_fgmres_householder( &Asparse, &rhs_vector, &x, &L, &Ucsr, &gmres_param, &gmres_log );
+  data_fgmres_householder_restart( &Asparse, &rhs_vector, &x, &L, &Ucsr, &gmres_param, &gmres_log );
 
   for (int i=0; i<Asparse.num_rows; i++) {
     GMRESDBG("x.val[%d] = %.16e\n", i, x.val[i]);
