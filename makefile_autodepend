@@ -133,8 +133,10 @@ testing/test_linearSolver_OBJS = testing/test_linearSolver.o \
 	control/init.o control/magma_zmlumerge.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zaxpy.o blas/zspmv.o blas/zspmm.o blas/zcsrilu0.o \
-	src/parilu_v0_2.o \
-	src/mkl_fgmres.o \
+	src/parilu_v0_2.o src/parilu_v0_3.o \
+	src/mkl_fgmres.o src/fgmres.o src/fgmres_restart.o \
+	src/trisolve.cpp \
+	src/orthogonality_error.cpp \
   testing/test_cmd_line_main.o libgmock.a
 
 define generateTester
