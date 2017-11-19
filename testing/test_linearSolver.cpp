@@ -578,16 +578,19 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditionedRestart) {
 
   // store initial guess in solution_vector
   data_d_matrix solution_vector = {Magma_DENSE};
-  CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
+  CHECK( data_zmconvert((*LinearSolverTest::initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
 
   data_z_gmres_param solverParam;
 	data_d_gmres_log gmresLog;
 
-  solverParam.search_max = 20;
-  solverParam.restart_max = 2;
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
+  solverParam.search_max = 20;
+  solverParam.restart_max = 20;
+  solverParam.reorth = 0;
   solverParam.precondition = 1;
+  solverParam.parilu_reduction = 1.0e-15;
+  solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 0;
 
   gmresLog.restarts = 0;
@@ -609,7 +612,7 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditionedRestart) {
 
   // PariLU is efficient when L is CSRL and U is CSCU
   // data_PariLU_v0_3 is hard coded to expect L is CSRL and U is CSCU
-  data_PariLU_v0_3( A, &L, &U, solverParam.parilu_reduction, &parilu_log );
+  data_PariLU_v0_3( LinearSolverTest::A, &L, &U, solverParam.parilu_reduction, &parilu_log );
   printf("PariLU_v0_3_sweeps = %d\n", parilu_log.sweeps );
   printf("PariLU_v0_3_tol = %e\n", parilu_log.tol );
   printf("PariLU_v0_3_A_Frobenius = %e\n", parilu_log.A_Frobenius );
@@ -630,7 +633,7 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditionedRestart) {
     numprocs = omp_get_num_procs();
   }
   printf("maxthreads = %d numprocs = %d\n", maxthreads, numprocs );
-  data_fgmres_householder_restart( A, rhs_vector, &solution_vector, &L, &Ucsr, &solverParam, &gmresLog );
+  data_fgmres_householder_restart( LinearSolverTest::A, LinearSolverTest::rhs_vector, &solution_vector, &L, &Ucsr, &solverParam, &gmresLog );
 
   for (int i=0; i<A->num_rows; i++) {
     GMRESDBG("x.val[%d] = %.16e\n", i, x.val[i]);

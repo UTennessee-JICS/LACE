@@ -60,14 +60,14 @@
 
 extern "C"
 int
-data_fgmres_householder(
+data_fgmres_householder_restart(
     data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
     data_d_matrix *L, data_d_matrix *U,
     data_d_gmres_param *gmres_par,
     data_d_gmres_log *gmres_log )
 {
 
-    printf("%% data_fgmres_householder begin\n");
+    printf("%% data_fgmres_householder_restart begin\n");
     dataType wstart = omp_get_wtime();
     dataType zero = 0.0;
     dataType one = 1.0;

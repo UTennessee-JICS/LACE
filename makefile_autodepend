@@ -135,7 +135,7 @@ testing/test_linearSolver_OBJS = testing/test_linearSolver.o \
 	blas/zaxpy.o blas/zspmv.o blas/zspmm.o blas/zcsrilu0.o \
 	src/parilu_v0_2.o src/parilu_v0_3.o \
 	src/mkl_fgmres.o src/fgmres.o src/fgmres_restart.o \
-	src/fgmres_householder_opt4.o src/fgmres_householder_opt4_restart.o \
+	src/fgmres_householder_opt4.o src/fgmres_householder_restart.o \
 	src/trisolve.cpp \
 	src/gram_schmidt.cpp \
 	src/givens.cpp \

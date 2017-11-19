@@ -10,7 +10,8 @@
 extern "C" {
 #endif
 
-typedef struct alignas(DEV_ALIGN) data_d_matrix
+//typedef struct alignas(DEV_ALIGN) data_d_matrix
+typedef struct data_d_matrix
 {
     data_storage_t     storage_type;            // matrix format - CSR, ELL, SELL-P
     data_symmetry_t    sym;                     // opt: indicate symmetry
@@ -168,7 +169,7 @@ typedef struct data_z_gmres_param
     data_int_t             restart_max;    // max restarts
     data_int_t             precondition;   // 0 -- do not precondition
                                            // 1 -- apply preconditioner
-    dataType               parilu_reduction;    
+    dataType               parilu_reduction;
 } data_d_gmres_param;
 
 
