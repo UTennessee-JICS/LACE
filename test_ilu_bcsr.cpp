@@ -9,7 +9,7 @@
 #include <string.h>
 #include <vector>
 #include <omp.h>
-#include <float.h> 
+#include <float.h>
 #include "math.h"
 
 #define size 128
@@ -50,7 +50,7 @@ EXPECT_TRUE( tarIter == _target.end() ) \
            "differ at index " << i; \
   } \
 }
-//+++++++ 
+//+++++++
 
 //+++++++
 #define EXPECT_ARRAY_INT_EQ( length, ref, target) \
@@ -62,12 +62,12 @@ EXPECT_TRUE( tarIter == _target.end() ) \
            "differ at index " << i; \
   } \
 }
-//+++++++ 
+//+++++++
 
 
 int main(int argc, char* argv[])
 {
-  
+
   // begin with a square matrix A
   char* sparse_filename;
   char* rhs_filename;
@@ -77,12 +77,12 @@ int main(int argc, char* argv[])
   char output_basename[256];
   char output_L[256];
   char output_U[256];
-  
+
   // for PariLU0
   //dataType user_precond_reduction = 1.0e-15;
   dataType user_precond_reduction = 1.0e-1;
   data_d_preconditioner_log parilu_log;
-  
+
   if (argc < 3) {
     printf("Usage %s <matrix> <output directory>\n", argv[0] );
     return 1;
@@ -94,20 +94,20 @@ int main(int argc, char* argv[])
     char *ext;
     ext = strrchr( sparse_basename, '.');
     strncpy( sparse_name, sparse_basename, int(ext - sparse_basename) );
-    printf("File %s basename %s name %s \n", 
+    printf("File %s basename %s name %s \n",
       sparse_filename, sparse_basename, sparse_name );
     printf("Output directory is %s\n", output_dir );
     strcpy( output_basename, output_dir );
     strcat( output_basename, sparse_name );
     printf("Output file base name is %s\n", output_basename );
   }
-	data_d_matrix Asparse = {Magma_CSR};
-  CHECK( data_z_csr_mtx( &Asparse, sparse_filename ) ); 
-	
+  data_d_matrix Asparse = {Magma_CSR};
+  CHECK( data_z_csr_mtx( &Asparse, sparse_filename ) );
+
   DEV_CHECKPT
-  
+
   data_d_matrix A = {Magma_CSR};
-  data_zmconvert( Asparse, &A, Magma_CSR, Magma_CSR ); 
+  data_zmconvert( Asparse, &A, Magma_CSR, Magma_CSR );
   //data_zdisplay_dense( &A );
   //data_zmfree( &Asparse );
 
@@ -117,13 +117,13 @@ int main(int argc, char* argv[])
   printf("%% MKL csrilu0 (Benchmark)\n");
   data_d_matrix Amkl = {Magma_CSR};
   data_zmconvert(Asparse, &Amkl, Magma_CSR, Magma_CSR);
-  
+
   dataType wstart = omp_get_wtime();
   CHECK( data_dcsrilu0_mkl( &Amkl ) );
   dataType wend = omp_get_wtime();
   printf("%% MKL csrilu0 required %f wall clock seconds as measured by omp_get_wtime()\n", wend-wstart );
-  
-  
+
+
   data_d_matrix Lmkl = {Magma_CSRL};
   Lmkl.diagorder_type = Magma_UNITY;
   data_zmconvert(Amkl, &Lmkl, Magma_CSR, Magma_CSRL);
@@ -138,11 +138,11 @@ int main(int argc, char* argv[])
   printf(" done.\n");
   data_d_matrix LUmkl = {Magma_CSR};
   data_zmconvert(Amkl, &LUmkl, Magma_CSR, Magma_CSR);
-  
+
   dataType Amklres = 0.0;
   dataType Amklnonlinres = 0.0;
   data_zilures( A, Lmkl, Umkl, &LUmkl, &Amklres, &Amklnonlinres);
-  
+
   printf("MKL_csrilu0_res = %e\n", Amklres);
   printf("MKL_csrilu0_nonlinres = %e\n", Amklnonlinres);
   strcpy( output_L, output_basename );
@@ -154,14 +154,14 @@ int main(int argc, char* argv[])
   data_zmfree( &Amkl );
   //data_zmfree( &Lmkl );
   //data_zmfree( &Umkl );
-  fflush(stdout); 
+  fflush(stdout);
   // =========================================================================
 
   // =========================================================================
   // PariLU v0.0
   // =========================================================================
   //printf("%% PariLU v0.0 to 5 sweeps\n");
-  //// Separate the strictly lower and upper elements 
+  //// Separate the strictly lower and upper elements
   //// into L, and U respectively.
   //data_d_matrix L5 = {Magma_CSRL};
   //data_d_matrix U5 = {Magma_CSCU};
@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
   ////data_zmfree( &L );
   ////data_zmfree( &U );
   ////data_zmfree( &LU );
-  //fflush(stdout); 
+  //fflush(stdout);
   //
   //data_d_matrix Ldiff = {Magma_CSRL};
   //dataType Lres = 0.0;
@@ -193,7 +193,7 @@ int main(int argc, char* argv[])
   ////data_zwrite_csr( &Ldiff );
   //printf("L_res = %e\n", Lres);
   //printf("L_nonlinres = %e\n", Lnonlinres);
-  //fflush(stdout); 
+  //fflush(stdout);
   //
   //data_d_matrix Udiff = {Magma_CSRU};
   //dataType Ures = 0.0;
@@ -202,7 +202,7 @@ int main(int argc, char* argv[])
   ////data_zwrite_csr( &Udiff );
   //printf("U_res = %e\n", Ures);
   //printf("U_nonlinres = %e\n", Unonlinres);
-  //fflush(stdout); 
+  //fflush(stdout);
   //dataType vmaxA = 0.0;
   //int imaxA = 0;
   //int jmaxA = 0;
@@ -236,18 +236,18 @@ int main(int argc, char* argv[])
   ////data_zmfree( &L );
   ////data_zmfree( &U );
   //data_zmfree( &LU );
-  
+
   // =========================================================================
   // PariLU v0.3
   // =========================================================================
   printf("%% PariLU v0.3 BCSR\n");
-  
+
   data_d_matrix A_BCSR = {Magma_BCSR};
   A_BCSR.blocksize = 5;
-  data_zmconvert( Asparse, &A_BCSR, Magma_CSR, Magma_BCSR ); 
+  data_zmconvert( Asparse, &A_BCSR, Magma_CSR, Magma_BCSR );
   //data_zprint_bcsr( &A_BCSR );
-  
-  // Separate the strictly lower and upper elements 
+
+  // Separate the strictly lower and upper elements
   // into L, and U respectively.
   data_d_matrix L = {Magma_BCSRL};
   //L = {Magma_BCSRL};
@@ -266,24 +266,24 @@ int main(int argc, char* argv[])
   LU = {Magma_CSR};
   DEV_CHECKPT
   data_zmconvert(A_BCSR, &LU, Magma_BCSR, Magma_CSR);
-  
+
   data_zilures_bcsr(Asparse, L, U, &LU, &Ares, &Anonlinres);
   DEV_CHECKPT
   printf("PariLUv0_3_csrilu0_res = %e\n", Ares);
   printf("PariLUv0_3_csrilu0_nonlinres = %e\n", Anonlinres);
-  fflush(stdout); 
-  
+  fflush(stdout);
+
   data_zmfree( &LU );
-  
-  
+
+
   strcpy( output_L, output_basename );
   strcat( output_L, "_Lbcsr.mtx" );
   strcpy( output_U, output_basename );
   strcat( output_U, "_Ubcsr.mtx" );
   data_zwrite_csr_mtx( L, L.major, output_L );
   data_zwrite_csr_mtx( U, U.major, output_U );
-	
-  
+
+
   data_zmfree( &Asparse );
   data_zmfree( &A );
   data_zmfree( &A_BCSR );
@@ -292,14 +292,14 @@ int main(int argc, char* argv[])
   data_zmfree( &Amkl );
   data_zmfree( &Lmkl );
   data_zmfree( &Umkl );
-  
-  
+
+
   //testing::InitGoogleTest(&argc, argv);
   //return RUN_ALL_TESTS();
-  
-  
+
+
   printf("done\n");
-  fflush(stdout); 
+  fflush(stdout);
   return 0;
-  
+
 }

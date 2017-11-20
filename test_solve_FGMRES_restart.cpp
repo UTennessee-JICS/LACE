@@ -53,33 +53,33 @@ int main(int argc, char* argv[])
     strcat( output_basename, "_solution.mtx" );
     printf("%% Output file base name is %s\n", output_basename );
   }
-	data_d_matrix Asparse = {Magma_CSR};
+  data_d_matrix Asparse = {Magma_CSR};
   CHECK( data_z_csr_mtx( &Asparse, sparse_filename ) );
-	data_d_matrix rhs_vector = {Magma_DENSE};
-	rhs_vector.major = MagmaRowMajor;
+  data_d_matrix rhs_vector = {Magma_DENSE};
+  rhs_vector.major = MagmaRowMajor;
 
-	//data_d_matrix A_org = {Magma_CSR};
-	//CHECK( data_zmconvert( Asparse, &A_org, Magma_CSR, Magma_CSR ) );
+  //data_d_matrix A_org = {Magma_CSR};
+  //CHECK( data_zmconvert( Asparse, &A_org, Magma_CSR, Magma_CSR ) );
 
-	// Setup rhs
-	if ( strcmp( rhs_filename, "ONES" ) == 0 ) {
-	  printf("%% creating a vector of %d ones for the rhs.\n", Asparse.num_rows);
+  // Setup rhs
+  if ( strcmp( rhs_filename, "ONES" ) == 0 ) {
+    printf("%% creating a vector of %d ones for the rhs.\n", Asparse.num_rows);
     CHECK( data_zvinit( &rhs_vector, Asparse.num_rows, 1, one ) );
-	}
-	else {
-	  CHECK( data_z_dense_mtx( &rhs_vector, rhs_vector.major, rhs_filename ) );
+  }
+  else {
+    CHECK( data_z_dense_mtx( &rhs_vector, rhs_vector.major, rhs_filename ) );
   }
   //data_d_matrix rhs_org = {Magma_DENSE};
-	//rhs_org.major = MagmaRowMajor;
-	//CHECK( data_zmconvert( rhs_vector, &rhs_org, Magma_DENSE, Magma_DENSE ) );
+  //rhs_org.major = MagmaRowMajor;
+  //CHECK( data_zmconvert( rhs_vector, &rhs_org, Magma_DENSE, Magma_DENSE ) );
 
-	data_d_matrix x = {Magma_DENSE};
-	CHECK( data_zvinit( &x, Asparse.num_rows, 1, zero ) );
+  data_d_matrix x = {Magma_DENSE};
+  CHECK( data_zvinit( &x, Asparse.num_rows, 1, zero ) );
 
-	data_d_gmres_param gmres_param;
-	data_d_gmres_log gmres_log;
+  data_d_gmres_param gmres_param;
+  data_d_gmres_log gmres_log;
 
-	// Set type of tolerance for stopping citeria for FGMRES
+  // Set type of tolerance for stopping citeria for FGMRES
   if ( argc >= 5 ) {
     gmres_param.tol_type = atoi( argv[4] );
     printf("gmres_param_tol_type = %d\n", gmres_param.tol_type);
@@ -205,9 +205,9 @@ int main(int argc, char* argv[])
   printf("%% ################################################################################\n");
   printf("\n\n");
   printf("%% Done.\n");
-	fflush(stdout);
+  fflush(stdout);
 
-	data_zmfree( &Asparse );
+  data_zmfree( &Asparse );
   data_zmfree( &x );
   data_zmfree( &rhs_vector );
   data_zmfree( &r );
@@ -215,5 +215,5 @@ int main(int argc, char* argv[])
   data_zmfree( &L );
   data_zmfree( &U );
   data_zmfree( &Ucsr );
-	return 0;
+  return 0;
 }
