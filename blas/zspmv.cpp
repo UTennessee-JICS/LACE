@@ -4,12 +4,12 @@
 #include <mkl_spblas.h>
 
 #define CALL_AND_CHECK_STATUS(function, error_message) do { \
-	if(function != SPARSE_STATUS_SUCCESS)                     \
-	{                                                         \
-	printf(error_message); fflush(0);                         \
-	info = 1;                                                 \
-	goto cleanup;                                             \
-	}                                                         \
+  if(function != SPARSE_STATUS_SUCCESS)                     \
+  {                                                         \
+  printf(error_message); fflush(0);                         \
+  info = 1;                                                 \
+  goto cleanup;                                             \
+  }                                                         \
 } while(0)
 /*******************************************************************************
     Purpose
@@ -32,7 +32,7 @@
     @param[in]
     x           data_d_matrix
                 input vector x
-                
+
     @param[in]
     beta        dataType
                 scalar beta
@@ -43,7 +43,7 @@
     @ingroup datasparse_zblas
 *******************************************************************************/
 
-extern "C" 
+extern "C"
 int
 data_z_spmv(
     dataType alpha,
@@ -65,14 +65,14 @@ data_z_spmv(
          }
          else {
              printf("error: format not supported.\n");
-             info = DEV_ERR_NOT_SUPPORTED; 
+             info = DEV_ERR_NOT_SUPPORTED;
          }
     }
     else {
         printf("error: dimensions not matched A->num_cols=%d x->num_rows=%d.\n",
           A->num_cols, x->num_rows);
-        info = DEV_ERR_NOT_SUPPORTED; 
+        info = DEV_ERR_NOT_SUPPORTED;
     }
-    
+
     return info;
 }
