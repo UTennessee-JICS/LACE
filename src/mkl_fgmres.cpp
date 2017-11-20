@@ -47,18 +47,18 @@ data_MKL_FGMRES(
 /*---------------------------------------------------------------------------
    Allocate storage for the ?par parameters and the solution/rhs/residual vectors
   ---------------------------------------------------------------------------*/
-	MKL_INT ipar[size];
-	double dpar[size];
+  MKL_INT ipar[size];
+  double dpar[size];
 
-	double* tmp;
-	double* trvec;
-	double* bilu0;
-	double* bilu0MKL;
-	double* expected_solution;
-	double* rhs;
-	double* b;
-	double* computed_solution;
-	double* residual;
+  double* tmp;
+  double* trvec;
+  double* bilu0;
+  double* bilu0MKL;
+  double* expected_solution;
+  double* rhs;
+  double* b;
+  double* computed_solution;
+  double* residual;
 
   tmp = (double*) calloc( ( N*(2*solverParam->restart_max+1)+(solverParam->restart_max*(solverParam->restart_max+9))/2+1 ), sizeof(double) );
   trvec = (double*) calloc( N, sizeof(double) );
@@ -70,9 +70,9 @@ data_MKL_FGMRES(
   computed_solution = (double*) calloc( N, sizeof(double) );
   residual = (double*) calloc( N, sizeof(double) );
 
-	MKL_INT matsize=A->nnz, incx=1;
-	double ref_norm2, nrm2;
-	double final_residual_nrm2;
+  MKL_INT matsize=A->nnz, incx=1;
+  double ref_norm2, nrm2;
+  double final_residual_nrm2;
   dataType Ares = 0.0;
   dataType Anonlinres = 0.0;
   double dvar_bad = 0.0;
@@ -80,7 +80,7 @@ data_MKL_FGMRES(
 /*---------------------------------------------------------------------------
    Some additional variables to use with the RCI (P)FGMRES solver
   ---------------------------------------------------------------------------*/
-	MKL_INT itercount,ierr=0;
+	MKL_INT itercount=0, ierr=0;
 	MKL_INT RCI_request, i, ivar;
 	double dvar;
 	char cvar,cvar1,cvar2;
@@ -149,9 +149,9 @@ data_MKL_FGMRES(
   ---------------------------------------------------------------------------*/
   ipar[1] = 6;
   ipar[5] = 1;
-	ipar[30]=1;
-	dpar[30]=1.E-20;
-	dpar[31]=1.E-16;
+  ipar[30]=1;
+  dpar[30]=1.E-20;
+  dpar[31]=1.E-16;
 
 	//MKL's iLU0
   dcsrilu0(&ivar, A->val, ia, ja, bilu0MKL, ipar, dpar, &ierr);
@@ -440,21 +440,21 @@ COMPLETE:   ipar[12]=0;
 	  // printf("C example of FGMRES with ILU0 preconditioner \n");
 	  // printf("has successfully PASSED all stages of computations\n");
 	  // printf("--------------------------------------------------------\n");
-    free( ia );
-	  free( ja );
-    free( tmp );
-	  free( trvec );
-	  free( bilu0 );
-	  free( bilu0MKL );
-	  free( expected_solution );
-	  free( rhs );
-	  free( b );
-	  free( computed_solution );
-	  free( residual );
-	  data_zmfree( &L );
-	  data_zmfree( &U );
-	  data_zmfree( &LU );
-	  return 0;
+  free( ia );
+  free( ja );
+  free( tmp );
+  free( trvec );
+  free( bilu0 );
+  free( bilu0MKL );
+  free( expected_solution );
+  free( rhs );
+  free( b );
+  free( computed_solution );
+  free( residual );
+  data_zmfree( &L );
+  data_zmfree( &U );
+  data_zmfree( &LU );
+  return 0;
 	// }
 	// else
 	// {
@@ -486,9 +486,9 @@ FAILED1:
 	printf("-------------------------------------------------------------------\n");
 	printf("Unfortunately, FGMRES + ParILU0 C example has FAILED\n");
 	printf("-------------------------------------------------------------------\n");
-  free( ia );
+	free( ia );
 	free( ja );
-  free( tmp );
+	free( tmp );
 	free( trvec );
 	free( bilu0 );
 	free( bilu0MKL );

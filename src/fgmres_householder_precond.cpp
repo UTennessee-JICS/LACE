@@ -735,6 +735,8 @@ data_fgmres_householder(
 
     }
 
+    fflush(stdout);
+    data_zmfree( x0 );
     data_zmconvert( x, x0, Magma_DENSE, Magma_DENSE );
 
     if (gmres_log->final_residual > rtol) {

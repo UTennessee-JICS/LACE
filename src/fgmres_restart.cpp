@@ -499,6 +499,8 @@ data_fgmres_restart(
 
     }
 
+    fflush(stdout);
+    data_zmfree( x0 );
     data_zmconvert( x, x0, Magma_DENSE, Magma_DENSE );
 
 

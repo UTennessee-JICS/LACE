@@ -480,6 +480,8 @@ data_fgmres(
         i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
     }
 
+    fflush(stdout);
+    data_zmfree( x0 );
     data_zmconvert( x, x0, Magma_DENSE, Magma_DENSE );
 
 

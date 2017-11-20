@@ -120,8 +120,10 @@ protected:
   static void TearDownTestCase() {
     data_zmfree( A );
     data_zmfree( rhs_vector );
+    data_zmfree( initialGuess_vector );
     delete A;
     delete rhs_vector;
+    delete initialGuess_vector;
     delete tolerance;
   }
 
@@ -150,11 +152,15 @@ TEST_F(LinearSolverTest, MKLFGMRESnonPreconditioned) {
 
   data_z_gmres_param solverParam;
 
-  solverParam.search_max = 2000;
-  solverParam.restart_max = 2000;
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
+  solverParam.search_max = 20;
+  solverParam.restart_max = 20;
+  solverParam.reorth = 0;
   solverParam.precondition = 0;
+  solverParam.parilu_reduction = 1.0e-15;
+  solverParam.monitorOrthog = 1;
+  solverParam.user_csrtrsv_choice = 0;
 
   // solve
   data_MKL_FGMRES( A, &solution_vector, rhs_vector, &solverParam );
@@ -193,11 +199,15 @@ TEST_F(LinearSolverTest, MKLFGMRESPreconditioned) {
 
   data_z_gmres_param solverParam;
 
-  solverParam.search_max = 2000;
-  solverParam.restart_max = 2000;
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
+  solverParam.search_max = 2000;
+  solverParam.restart_max = 2000;
+  solverParam.reorth = 0;
   solverParam.precondition = 1;
+  solverParam.parilu_reduction = 1.0e-15;
+  solverParam.monitorOrthog = 1;
+  solverParam.user_csrtrsv_choice = 0;
 
   // solve
   data_MKL_FGMRES( A, &solution_vector, rhs_vector, &solverParam );
@@ -236,11 +246,15 @@ TEST_F(LinearSolverTest, MKLFGMRESPreconditionedRestart) {
 
   data_z_gmres_param solverParam;
 
-  solverParam.search_max = 2000;
-  solverParam.restart_max = 20;
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
+  solverParam.search_max = 2000;
+  solverParam.restart_max = 20;
+  solverParam.reorth = 0;
   solverParam.precondition = 1;
+  solverParam.parilu_reduction = 1.0e-15;
+  solverParam.monitorOrthog = 1;
+  solverParam.user_csrtrsv_choice = 0;
 
   // solve
   data_MKL_FGMRES( A, &solution_vector, rhs_vector, &solverParam );
@@ -280,11 +294,14 @@ TEST_F(LinearSolverTest, FGMRESPreconditioned) {
   data_z_gmres_param solverParam;
 	data_d_gmres_log gmresLog;
 
-  solverParam.search_max = 2000;
-  solverParam.restart_max = 2000;
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
+  solverParam.search_max = 2000;
+  solverParam.restart_max = 2000;
+  solverParam.reorth = 0;
   solverParam.precondition = 1;
+  solverParam.parilu_reduction = 1.0e-15;
+  solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 0;
 
   gmresLog.restarts = 0;
@@ -368,6 +385,9 @@ TEST_F(LinearSolverTest, FGMRESPreconditioned) {
 
   data_zmfree( &solution_vector );
   data_zmfree( &r );
+  data_zmfree( &L );
+  data_zmfree( &U );
+  data_zmfree( &Ucsr );
 
 }
 
@@ -379,13 +399,16 @@ TEST_F(LinearSolverTest, FGMRESPreconditionedRestart) {
   CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
 
   data_z_gmres_param solverParam;
-	data_d_gmres_log gmresLog;
+  data_d_gmres_log gmresLog;
 
-  solverParam.search_max = 20;
-  solverParam.restart_max = 100;
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
+  solverParam.search_max = 20;
+  solverParam.restart_max = 100;
+  solverParam.reorth = 0;
   solverParam.precondition = 1;
+  solverParam.parilu_reduction = 1.0e-15;
+  solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 0;
 
   gmresLog.restarts = 0;
@@ -469,6 +492,9 @@ TEST_F(LinearSolverTest, FGMRESPreconditionedRestart) {
 
   data_zmfree( &solution_vector );
   data_zmfree( &r );
+  data_zmfree( &L );
+  data_zmfree( &U );
+  data_zmfree( &Ucsr );
 
 }
 
@@ -482,11 +508,14 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditioned) {
   data_z_gmres_param solverParam;
   data_d_gmres_log gmresLog;
 
-  solverParam.search_max = 2000;
-  solverParam.restart_max = 0;
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
+  solverParam.search_max = 2000;
+  solverParam.restart_max = 0;
+  solverParam.reorth = 0;
   solverParam.precondition = 1;
+  solverParam.parilu_reduction = 1.0e-15;
+  solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 0;
 
   gmresLog.restarts = 0;
@@ -570,6 +599,9 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditioned) {
 
   data_zmfree( &solution_vector );
   data_zmfree( &r );
+  data_zmfree( &L );
+  data_zmfree( &U );
+  data_zmfree( &Ucsr );
 
 }
 
@@ -581,7 +613,7 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditionedRestart) {
   CHECK( data_zmconvert((*LinearSolverTest::initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
 
   data_z_gmres_param solverParam;
-	data_d_gmres_log gmresLog;
+  data_d_gmres_log gmresLog;
 
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
@@ -674,5 +706,8 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditionedRestart) {
 
   data_zmfree( &solution_vector );
   data_zmfree( &r );
+  data_zmfree( &L );
+  data_zmfree( &U );
+  data_zmfree( &Ucsr );
 
 }
