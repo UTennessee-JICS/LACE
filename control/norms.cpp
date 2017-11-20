@@ -306,7 +306,7 @@ data_zilures(
     dataType *res,
     dataType *nonlinres )
 {
-	int info = 0;
+  int info = 0;
   *res = 0.0;
   *nonlinres = 0.0;
 
@@ -318,12 +318,12 @@ data_zilures(
     data_d_matrix LL={Magma_CSR}, L_d={Magma_CSR}, U_d={Magma_CSR}, LU_d={Magma_CSR};
 
     if( L.row[1]==1 ){        // lower triangular with unit diagonal
-    	//printf("L lower triangular.\n");
+      //printf("L lower triangular.\n");
         LL.diagorder_type = Magma_UNITY;
         data_zmconvert( L, &LL, Magma_CSR, Magma_CSRL );
     }
     else if ( L.row[1]==0 ){ // strictly lower triangular
-    	printf("L strictly lower triangular.\n");
+      printf("L strictly lower triangular.\n");
         data_zmconvert( L, &LL, Magma_CSR, Magma_CSR );
         free( LL.col );
         free( LL.val );
@@ -373,7 +373,7 @@ data_zilures(
 
     // compute Frobenius norm of A-LU
     for(i=0; i<A.num_rows; i++){
-    	for(j=A.row[i]; j<A.row[i+1]; j++){
+      for(j=A.row[i]; j<A.row[i+1]; j++){
             int lcol = A.col[j];
             for(k=LU->row[i]; k<LU->row[i+1]; k++){
                 if( LU->col[k] == lcol ){
@@ -414,7 +414,7 @@ data_zilures_bcsr(
     dataType *res,
     dataType *nonlinres )
 {
-	int info = 0;
+  int info = 0;
   *res = 0.0;
   *nonlinres = 0.0;
   dataType tmp;
@@ -435,7 +435,7 @@ data_zilures_bcsr(
 
   // compute Frobenius norm of A-LU
   for(i=0; i<A.num_rows; i++){
-  	for(j=A.row[i]; j<A.row[i+1]; j++){
+    for(j=A.row[i]; j<A.row[i+1]; j++){
           int lcol = A.col[j];
           for(k=LU->row[i]; k<LU->row[i+1]; k++){
               if( LU->col[k] == lcol ){

@@ -440,11 +440,11 @@ data_zmdiagadd(
 extern "C"
 int
 data_zmscale_generate(
-	  int n,
-	  data_scale_t* scaling,
-	  data_side_t* side,
-	  data_d_matrix* A,
-	  data_d_matrix* scaling_factors )
+    int n,
+    data_scale_t* scaling,
+    data_side_t* side,
+    data_d_matrix* A,
+    data_d_matrix* scaling_factors )
 {
     int info = 0;
 
@@ -598,10 +598,10 @@ data_zmscale_generate(
 extern "C"
 int
 data_zmscale_apply(
-	  int n,
-	  data_side_t* side,
-	  data_d_matrix* scaling_factors,
-	  data_d_matrix* A )
+    int n,
+    data_side_t* side,
+    data_d_matrix* scaling_factors,
+    data_d_matrix* A )
 {
     int info = 0;
 
