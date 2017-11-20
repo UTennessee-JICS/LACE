@@ -225,7 +225,7 @@ data_gmres_householder_orthog(
           }
         }
       }
-      
+
       for ( int i=0; i<n; ++i ) {
         GMRESDBG("q.val[%d] = %e\n", i, q.val[i]);
       }
