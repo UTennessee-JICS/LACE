@@ -92,7 +92,7 @@ protected:
 
     rhs_vector = new data_d_matrix();
     rhs_vector->storage_type = Magma_DENSE;
-  	rhs_vector->major = MagmaRowMajor;
+    rhs_vector->major = MagmaRowMajor;
     if ( strcmp( rhs_name, "ONES" ) == 0 ) {
       printf("%% creating a vector of %d ones for the rhs.\n", A->num_rows);
       CHECK( data_zvinit( rhs_vector, A->num_rows, 1, one ) );
@@ -104,7 +104,7 @@ protected:
 
     initialGuess_vector = new data_d_matrix();
     initialGuess_vector->storage_type = Magma_DENSE;
-  	initialGuess_vector->major = MagmaRowMajor;
+    initialGuess_vector->major = MagmaRowMajor;
     if ( strcmp( initialGuess_name, "ZEROS" ) == 0 ) {
       printf("%% creating a vector of %d zeros for the initial guess.\n", A->num_rows);
       CHECK( data_zvinit( initialGuess_vector, A->num_rows, 1, zero ) );
@@ -292,7 +292,7 @@ TEST_F(LinearSolverTest, FGMRESPreconditioned) {
   CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
 
   data_z_gmres_param solverParam;
-	data_d_gmres_log gmresLog;
+  data_d_gmres_log gmresLog;
 
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
