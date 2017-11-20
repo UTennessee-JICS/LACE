@@ -23,11 +23,11 @@ typedef struct data_d_matrix
     data_int_t         max_nnz_row;             // opt: max number of nonzeros in one row
     data_int_t         diameter;                // opt: max distance of entry from main diagonal
     data_int_t         true_nnz;                // opt: true nnz
-    dataType           *val;                    // array containing values
-    dataType           *diag;                   // opt: diagonal entries
-    data_int_t         *row;                    // row pointer CPU
-    data_int_t         *rowidx;                 // opt: array containing row
-    data_int_t         *col;                    // array containing col indices
+    dataType           *val __attribute__ ((aligned (DEV_ALIGN)));                    // array containing values
+    dataType           *diag __attribute__ ((aligned (DEV_ALIGN)));                   // opt: diagonal entries
+    data_int_t         *row __attribute__ ((aligned (DEV_ALIGN)));                    // row pointer CPU
+    data_int_t         *rowidx __attribute__ ((aligned (DEV_ALIGN)));                 // opt: array containing row
+    data_int_t         *col __attribute__ ((aligned (DEV_ALIGN)));                    // array containing col indices
     data_int_t         *list;                   // opt: linked list pointing to next element
     data_int_t         *blockinfo;              // opt: for BCSR format CPU case
     data_int_t         blocksize;               // opt: info for SELL-P/BCSR
@@ -38,7 +38,7 @@ typedef struct data_d_matrix
     data_int_t         ld;                      // opt: leading dimension for dense
     data_int_t         pad_rows;
     data_int_t         pad_cols;
-} data_d_matrix;
+} __attribute__ ((aligned (DEV_ALIGN))) data_d_matrix;
 
 struct Int3 {
   int a[3];
@@ -139,7 +139,7 @@ typedef struct data_z_preconditioner_log
     dataType               residual;
     dataType               nonlinear_residual;
     data_int_t             omp_num_threads;
-} data_d_preconditioner_log;
+} __attribute__ ((aligned (DEV_ALIGN))) data_d_preconditioner_log;
 
 
 typedef struct data_z_gmres_log
@@ -151,7 +151,7 @@ typedef struct data_z_gmres_log
     dataType               final_residual;
     dataType               scaled_residual;
     dataType               original_residual;
-} data_d_gmres_log;
+} __attribute__ ((aligned (DEV_ALIGN))) data_d_gmres_log;
 
 typedef struct data_z_gmres_param
 {
@@ -170,7 +170,7 @@ typedef struct data_z_gmres_param
     data_int_t             precondition;   // 0 -- do not precondition
                                            // 1 -- apply preconditioner
     dataType               parilu_reduction;
-} data_d_gmres_param;
+} __attribute__ ((aligned (DEV_ALIGN))) data_d_gmres_param;
 
 
 #ifdef __cplusplus

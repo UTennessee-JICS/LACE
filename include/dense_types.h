@@ -10,6 +10,7 @@
 #include <assert.h>
 
 #define DEV_ALIGN               (64)
+#define DEV_STRIP               (1024)
 
 #define DEV_D_ZERO              ( 0.0)
 #define DEV_D_ONE               ( 1.0)

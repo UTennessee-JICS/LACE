@@ -480,7 +480,7 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditioned) {
   CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
 
   data_z_gmres_param solverParam;
-	data_d_gmres_log gmresLog;
+  data_d_gmres_log gmresLog;
 
   solverParam.search_max = 2000;
   solverParam.restart_max = 0;

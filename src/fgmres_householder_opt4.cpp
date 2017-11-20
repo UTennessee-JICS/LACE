@@ -83,13 +83,16 @@ data_fgmres_householder(
     dataType residual = 0.0;
 
     // strip-mining for efficient memory access
-    const int STRIP = 1024;
+    const int STRIP = MIN(n,DEV_STRIP);
     const int BINS = (n/STRIP);
     const int endStrip = BINS*STRIP;
     int startStrip = 0;
+    printf("STRIP = %d BINS = %d endStrip = %d startStrip =%d\n",
+    		STRIP, BINS, endStrip, startStrip );
+    fflush(stdout);
     // dataType *sumTemp;
     // LACE_CALLOC( sumTemp, BINS );
-    dataType sumTemp[BINS] __attribute__((aligned(64)));
+    dataType sumTemp[BINS] __attribute__((aligned(DEV_ALIGN)));
 
     // preconditioning
     // for mkl_dcsrtrsv
@@ -159,20 +162,30 @@ data_fgmres_householder(
     #if (defined(__GNUC__) || defined(__GNUG__)) && !(defined(__clang__) || defined(__INTEL_COMPILER))
     	/* GNU GCC/G++. --------------------------------------------- */
       printf("GNU COMPILER\n");
+      r.val = (dataType*) __builtin_assume_aligned( r.val, DEV_ALIGN ); // used for initial residual,
+                                     // preconditioner application,
+                                     // and solution update
+      q.val = (dataType*) __builtin_assume_aligned( q.val, DEV_ALIGN ); // reinitialized each search direction
+      //sumTemp = (dataType*) __builtin_assume_aligned( sumTemp, DEV_ALIGN ); // strip-mining summation bins
+      krylov.val = (dataType*) __builtin_assume_aligned( krylov.val, DEV_ALIGN );  // Householder transformed search space
+      precondq.val = (dataType*) __builtin_assume_aligned( precondq.val, DEV_ALIGN ); // Search vectors
+      givens.val = (dataType*) __builtin_assume_aligned( givens.val, DEV_ALIGN ); // Residual approximation
+      givens_cos.val = (dataType*) __builtin_assume_aligned( givens_cos.val, DEV_ALIGN ); // Rotation Cosine Coefficents
+      givens_sin.val = (dataType*) __builtin_assume_aligned( givens_sin.val, DEV_ALIGN ); // Rotation Sine Coefficents
     #endif
     #if (defined(__INTEL_COMPILER) || defined(__ICC))
     	/* INTEL ICC/C++. --------------------------------------------- */
       printf("INTEL COMPILER\n");
-      __assume_aligned( r.val, 64 ); // used for initial residual,
+      __assume_aligned( r.val, DEV_ALIGN ); // used for initial residual,
                                      // preconditioner application,
                                      // and solution update
-      __assume_aligned( q.val, 64 ); // reinitialized each search direction
-      //__assume_aligned( sumTemp, 64 ); // strip-mining summation bins
-      __assume_aligned( krylov.val, 64 );  // Householder transformed search space
-      __assume_aligned( precondq.val, 64 ); // Search vectors
-      __assume_aligned( givens.val, 64 ); // Residual approximation
-      __assume_aligned( givens_cos.val, 64 ); // Rotation Cosine Coefficents
-      __assume_aligned( givens_sin.val, 64 ); // Rotation Sine Coefficents
+      __assume_aligned( q.val, DEV_ALIGN ); // reinitialized each search direction
+      //__assume_aligned( sumTemp, DEV_ALIGN ); // strip-mining summation bins
+      __assume_aligned( krylov.val, DEV_ALIGN );  // Householder transformed search space
+      __assume_aligned( precondq.val, DEV_ALIGN ); // Search vectors
+      __assume_aligned( givens.val, DEV_ALIGN ); // Residual approximation
+      __assume_aligned( givens_cos.val, DEV_ALIGN ); // Rotation Cosine Coefficents
+      __assume_aligned( givens_sin.val, DEV_ALIGN ); // Rotation Sine Coefficents
     #endif
 
     // initial residual
@@ -717,6 +730,8 @@ data_fgmres_householder(
 
     }
 
+    fflush(stdout);
+    data_zmfree( x0 );
     data_zmconvert( x, x0, Magma_DENSE, Magma_DENSE );
 
     if (gmres_log->final_residual > rtol) {
