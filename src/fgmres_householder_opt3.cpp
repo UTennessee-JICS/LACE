@@ -177,12 +177,14 @@ data_fgmres_householder(
     #if (defined(__GNUC__) || defined(__GNUG__)) && !(defined(__clang__) || defined(__INTEL_COMPILER))
     	/* GNU GCC/G++. --------------------------------------------- */
       printf("GNU COMPILER\n");
+      krylov.val = (dataType*) __builtin_assume_aligned( krylov.val, DEV_ALIGN );  // Householder transformed search space
+      q.val = (dataType*) __builtin_assume_aligned( q.val, DEV_ALIGN ); // reinitialized each search direction
     #endif
     #if (defined(__INTEL_COMPILER) || defined(__ICC))
     	/* INTEL ICC/C++. --------------------------------------------- */
       printf("INTEL COMPILER\n");
-      __assume_aligned( krylov.val, 64 );
-      __assume_aligned( q.val, 64 );
+      __assume_aligned( krylov.val, DEV_ALIGN );  // Householder transformed search space
+      __assume_aligned( q.val, DEV_ALIGN ); // reinitialized each search direction
     #endif
 
     // initial residual
@@ -567,7 +569,8 @@ data_fgmres_householder(
     //   GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n",
     //     i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
     // }
-
+    fflush(stdout);
+    data_zmfree( x0 );
     data_zmconvert( x, x0, Magma_DENSE, Magma_DENSE );
 
 

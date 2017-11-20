@@ -83,13 +83,16 @@ data_fgmres_householder(
     dataType residual = 0.0;
 
     // strip-mining for efficient memory access
-    const int STRIP = 1024;
+    const int STRIP = MIN(n,DEV_STRIP);
     const int BINS = (n/STRIP);
     const int endStrip = BINS*STRIP;
     int startStrip = 0;
+    printf("STRIP = %d BINS = %d endStrip = %d startStrip =%d\n",
+    		STRIP, BINS, endStrip, startStrip );
+    fflush(stdout);
     // dataType *sumTemp;
     // LACE_CALLOC( sumTemp, BINS );
-    dataType sumTemp[BINS] __attribute__((aligned(64)));
+    dataType sumTemp[BINS] __attribute__((aligned(DEV_ALIGN)));
 
     // preconditioning
     // for mkl_dcsrtrsv
@@ -159,20 +162,30 @@ data_fgmres_householder(
     #if (defined(__GNUC__) || defined(__GNUG__)) && !(defined(__clang__) || defined(__INTEL_COMPILER))
     	/* GNU GCC/G++. --------------------------------------------- */
       printf("GNU COMPILER\n");
+      r.val = (dataType*) __builtin_assume_aligned( r.val, DEV_ALIGN ); // used for initial residual,
+                                     // preconditioner application,
+                                     // and solution update
+      q.val = (dataType*) __builtin_assume_aligned( q.val, DEV_ALIGN ); // reinitialized each search direction
+      //sumTemp = (dataType*) __builtin_assume_aligned( sumTemp, DEV_ALIGN ); // strip-mining summation bins
+      krylov.val = (dataType*) __builtin_assume_aligned( krylov.val, DEV_ALIGN );  // Householder transformed search space
+      precondq.val = (dataType*) __builtin_assume_aligned( precondq.val, DEV_ALIGN ); // Search vectors
+      givens.val = (dataType*) __builtin_assume_aligned( givens.val, DEV_ALIGN ); // Residual approximation
+      givens_cos.val = (dataType*) __builtin_assume_aligned( givens_cos.val, DEV_ALIGN ); // Rotation Cosine Coefficents
+      givens_sin.val = (dataType*) __builtin_assume_aligned( givens_sin.val, DEV_ALIGN ); // Rotation Sine Coefficents
     #endif
     #if (defined(__INTEL_COMPILER) || defined(__ICC))
     	/* INTEL ICC/C++. --------------------------------------------- */
       printf("INTEL COMPILER\n");
-      __assume_aligned( r.val, 64 ); // used for initial residual,
+      __assume_aligned( r.val, DEV_ALIGN ); // used for initial residual,
                                      // preconditioner application,
                                      // and solution update
-      __assume_aligned( q.val, 64 ); // reinitialized each search direction
-      //__assume_aligned( sumTemp, 64 ); // strip-mining summation bins
-      __assume_aligned( krylov.val, 64 );  // Householder transformed search space
-      __assume_aligned( precondq.val, 64 ); // Search vectors
-      __assume_aligned( givens.val, 64 ); // Residual approximation
-      __assume_aligned( givens_cos.val, 64 ); // Rotation Cosine Coefficents
-      __assume_aligned( givens_sin.val, 64 ); // Rotation Sine Coefficents
+      __assume_aligned( q.val, DEV_ALIGN ); // reinitialized each search direction
+      //__assume_aligned( sumTemp, DEV_ALIGN ); // strip-mining summation bins
+      __assume_aligned( krylov.val, DEV_ALIGN );  // Householder transformed search space
+      __assume_aligned( precondq.val, DEV_ALIGN ); // Search vectors
+      __assume_aligned( givens.val, DEV_ALIGN ); // Residual approximation
+      __assume_aligned( givens_cos.val, DEV_ALIGN ); // Rotation Cosine Coefficents
+      __assume_aligned( givens_sin.val, DEV_ALIGN ); // Rotation Sine Coefficents
     #endif
 
     // initial residual
@@ -303,12 +316,12 @@ data_fgmres_householder(
           L->num_rows, L->val, L->row, L->col,
           q.val, r.val,
           ptrsv_tol, &ptrsv_iter );
-        printf("ParCSRTRSV_L(%d) = %d;\n", search+1, ptrsv_iter);
+        printf("ParCSRTRSV_L(%d) = %d;\n", search1, ptrsv_iter);
         data_parcsrtrsv( MagmaUpper, U->storage_type, U->diagorder_type,
           U->num_rows, U->val, U->row, U->col,
           r.val, &(Minvvj.val[idx(0,search,krylov.ld)]),
           ptrsv_tol, &ptrsv_iter );
-        printf("ParCSRTRSV_U(%d) = %d;\n", search+1, ptrsv_iter);
+        printf("ParCSRTRSV_U(%d) = %d;\n", search1, ptrsv_iter);
       }
 
       for ( int i=0; i<Minvvj.ld; i++ ) {
@@ -342,8 +355,8 @@ data_fgmres_householder(
         dataType sumEnd = 0.0;
         startStrip = (j/STRIP+1)*STRIP;
 
-        //printf( "n=%d, j=%d, startStrip=%d BINS=%d endStrip=%d\n",
-        //  n, j, startStrip, BINS, endStrip );
+        DEV_PRINTF( "%s %d n=%d, j=%d, startStrip=%d BINS=%d endStrip=%d\n",
+          __FILE__, __LINE__, n, j, startStrip, BINS, endStrip );
         #pragma omp parallel
         {
           #pragma omp for schedule(monotonic:static) nowait
@@ -354,7 +367,7 @@ data_fgmres_householder(
             #pragma omp simd
             #pragma vector aligned
             #pragma vector vecremainder
-	    #pragma loop_count max(STRIP)
+	    	#pragma loop_count max(STRIP)
             for ( int i=ii; i<ii+STRIP; ++i ) {
               sumTemp[b] += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
             }
@@ -366,7 +379,7 @@ data_fgmres_householder(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
-	      #pragma loop_count max(STRIP)
+	      	  #pragma loop_count max(STRIP)
               for ( int i=j; i<startStrip; ++i ) {
                 sumBegin += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
               }
@@ -376,7 +389,7 @@ data_fgmres_householder(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
-	      #pragma loop_count max(STRIP)
+	      	  #pragma loop_count max(STRIP)
               for ( int i=endStrip; i<n; ++i ) {
                 sumEnd += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
               }
@@ -384,9 +397,9 @@ data_fgmres_householder(
           }
           #pragma omp for simd schedule(simd: static) reduction(+:sum) nowait
           #pragma nounroll
-	  #pragma vector aligned
+	  	  #pragma vector aligned
           #pragma vector vecremainder
-	  for ( int b=0; b<BINS; ++b ) {
+          for ( int b=0; b<BINS; ++b ) {
             sum += sumTemp[b];
           }
           #pragma omp barrier
@@ -399,7 +412,7 @@ data_fgmres_householder(
             #pragma omp simd
             #pragma vector aligned
             #pragma vector vecremainder
-	    #pragma loop_count max(STRIP)
+	    	#pragma loop_count max(STRIP)
             for ( int jj=ii; jj < ii+STRIP; ++jj ) {
               krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
             }
@@ -411,7 +424,7 @@ data_fgmres_householder(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
-	      #pragma loop_count max(STRIP)
+	      	  #pragma loop_count max(STRIP)
               for ( int jj=j; jj<startStrip; ++jj ) {
                 krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
               }
@@ -421,7 +434,7 @@ data_fgmres_householder(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
-	      #pragma loop_count max(STRIP)
+	      	  #pragma loop_count max(STRIP)
               for ( int jj=endStrip; jj<n; ++jj ) {
                 krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
               }
@@ -450,7 +463,7 @@ data_fgmres_householder(
             #pragma omp simd
             #pragma vector aligned
             #pragma vector vecremainder
-	    #pragma loop_count max(STRIP)
+	    	#pragma loop_count max(STRIP)
             for ( int i=ii; i<ii+STRIP; ++i ) {
               krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
             }
@@ -459,7 +472,7 @@ data_fgmres_householder(
           #pragma omp simd
           #pragma vector aligned
           #pragma vector vecremainder
-	  #pragma loop_count max(STRIP)
+	  	  #pragma loop_count max(STRIP)
           for ( int i=search1; i<startStrip; ++i ) {
             krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
           }
@@ -467,7 +480,7 @@ data_fgmres_householder(
           #pragma omp simd
           #pragma vector aligned
           #pragma vector vecremainder
-	  #pragma loop_count max(STRIP)
+		  #pragma loop_count max(STRIP)
           for ( int i=endStrip; i<n; ++i ) {
             krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
           }
@@ -497,7 +510,7 @@ data_fgmres_householder(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
-	      #pragma loop_count max(STRIP)
+	      	  #pragma loop_count max(STRIP)
               for ( int i=ii; i<ii+STRIP; ++i ) {
                 sumTemp[b] += krylov.val[idx(i,j,krylov.ld)]*q.val[i];
               }
@@ -510,7 +523,7 @@ data_fgmres_householder(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
-		#pragma loop_count max(STRIP)
+				#pragma loop_count max(STRIP)
                 for ( int i=j; i<startStrip; ++i ) {
                   sumBegin += krylov.val[idx(i,j,krylov.ld)]*q.val[i];
                 }
@@ -520,7 +533,7 @@ data_fgmres_householder(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
-		#pragma loop_count max(STRIP)
+				#pragma loop_count max(STRIP)
                 for ( int i=endStrip; i<n; ++i ) {
                   sumEnd += krylov.val[idx(i,j,krylov.ld)]*q.val[i];
                 }
@@ -530,7 +543,7 @@ data_fgmres_householder(
 
             #pragma omp for simd schedule(simd: static) reduction(+:sum) nowait
             #pragma nounroll
-	    #pragma vector aligned
+			#pragma vector aligned
             #pragma vector vecremainder
             for ( int b=0; b<BINS; ++b ) {
               sum += sumTemp[b];
@@ -546,7 +559,7 @@ data_fgmres_householder(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
-	      #pragma loop_count max(STRIP)
+	      	  #pragma loop_count max(STRIP)
               for ( int jj=ii; jj < ii+STRIP; ++jj ) {
                 q.val[jj] = q.val[jj] - sum*krylov.val[idx(jj,j,krylov.ld)];
               }
@@ -558,7 +571,7 @@ data_fgmres_householder(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
-		#pragma loop_count max(STRIP)
+				#pragma loop_count max(STRIP)
                 for ( int jj=j; jj<startStrip; ++jj ) {
                   q.val[jj] = q.val[jj] - sum*krylov.val[idx(jj,j,krylov.ld)];
                 }
@@ -567,8 +580,8 @@ data_fgmres_householder(
               {
                 #pragma omp simd
                 #pragma vector aligned
-                #pragma vector vecremainder
-		#pragma loop_count max(STRIP)
+				#pragma vector vecremainder
+				#pragma loop_count max(STRIP)
                 for ( int jj=endStrip; jj<n; ++jj ) {
                   q.val[jj] = q.val[jj] - sum*krylov.val[idx(jj,j,krylov.ld)];
                 }
@@ -611,10 +624,10 @@ data_fgmres_householder(
         int imax = 0;
         data_orthogonality_error( &precondq, &ortherr, &imax, search1 );
         if ( gmres_par->user_csrtrsv_choice == 0 ) {
-          printf("FGMRES_Householders_mkltrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
+          printf("FGMRES_Householders_mkltrsv_ortherr(%d) = %.16e;\n", search1, ortherr);
         }
         else {
-          printf("FGMRES_Householders_partrsv_ortherr(%d) = %.16e;\n", search+1, ortherr);
+          printf("FGMRES_Householders_partrsv_ortherr(%d) = %.16e;\n", search1, ortherr);
         }
       }
 
@@ -668,14 +681,14 @@ data_fgmres_householder(
       }
 
       if ( gmres_par->user_csrtrsv_choice == 0 ) {
-        printf("FGMRES_Householders_mkltrsv_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));
+        printf("FGMRES_Householders_mkltrsv_search(%d) = %.16e;\n", search1, fabs(givens.val[(search1)]));
       }
       else {
-        printf("FGMRES_Householders_partrsv_search(%d) = %.16e;\n", search+1, fabs(givens.val[(search+1)]));
+        printf("FGMRES_Householders_partrsv_search(%d) = %.16e;\n", search1, fabs(givens.val[(search1)]));
       }
       // update the solution
       // solve the least squares problem
-      if ( fabs(givens.val[(search+1)]) < rtol  || (search == (search_max-1)) ) {
+      if ( fabs(givens.val[(search1)]) < rtol  || (search == (search_max-1)) ) {
         GMRESDBG(" !!!!!!! update the solution %d!!!!!!!\n",0);
         #pragma omp parallel
         #pragma omp for simd schedule(simd: static) nowait
@@ -707,16 +720,18 @@ data_fgmres_householder(
           }
         }
 
-        gmres_log->search_directions = search+1;
+        gmres_log->search_directions = search1;
         dataType wend = omp_get_wtime();
         gmres_log->solve_time = (wend-wstart);
-        gmres_log->final_residual = fabs(givens.val[(search+1)]);
+        gmres_log->final_residual = fabs(givens.val[(search1)]);
 
         break;
       }
 
     }
 
+    fflush(stdout);
+    data_zmfree( x0 );
     data_zmconvert( x, x0, Magma_DENSE, Magma_DENSE );
 
     if (gmres_log->final_residual > rtol) {

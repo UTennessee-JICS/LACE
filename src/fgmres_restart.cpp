@@ -60,7 +60,7 @@
 
 extern "C"
 int
-data_fgmres(
+data_fgmres_restart(
     data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
     data_d_matrix *L, data_d_matrix *U,
     data_d_gmres_param *gmres_par,
@@ -499,6 +499,8 @@ data_fgmres(
 
     }
 
+    fflush(stdout);
+    data_zmfree( x0 );
     data_zmconvert( x, x0, Magma_DENSE, Magma_DENSE );
 
 

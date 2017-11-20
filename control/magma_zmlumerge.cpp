@@ -10,7 +10,7 @@
        @author Stephen Wood
 
 */
-#include "../include/sparse.h"
+#include "sparse.h"
 
 /**
     Purpose
@@ -47,7 +47,7 @@ data_zmlumerge(
 {
     data_int_t info = 0;
 
-    if( L.storage_type == Magma_CSR && U.storage_type == Magma_CSR ){
+    if( L.storage_type == Magma_CSR && U.storage_type == Magma_CSR ) {
         CHECK( data_zmconvert( L, A, Magma_CSR, Magma_CSR ));
         free( A->col );
         free( A->val );
@@ -64,11 +64,7 @@ data_zmlumerge(
             }
         }
         A->nnz = z;
-        // fill A with the new structure;
-        //CHECK( magma_index_malloc_cpu( &A->col, A->nnz ));
-        //CHECK( magma_zmalloc_cpu( &A->val, A->nnz ));
-        // A->col = (int*) calloc( A->nnz, sizeof(int) );
-        // A->val = (dataType*) calloc( A->nnz, sizeof(dataType) );
+        // fill A with the new structure
         LACE_CALLOC( A->col, A->nnz );
         LACE_CALLOC( A->val, A->nnz );
         z = 0;
@@ -92,20 +88,18 @@ data_zmlumerge(
 
     }
     else {
-        printf("%% warning: %s , within %s ; matrix in wrong formats L = %d, U = %d.\n",
+    	DEV_PRINTF("%% warning: %s , within %s ; matrix in wrong formats L = %d, U = %d.\n",
           __FILE__, __FUNCTION__, L.storage_type, U.storage_type );
         data_d_matrix LL = {Magma_CSR};
         data_d_matrix UU = {Magma_CSR};
 
-        //if ( L.storage_type != Magma_CSR ) {
-          CHECK( data_zmconvert( L, &LL, L.storage_type, Magma_CSR ) );
-        //}
-        //if ( U.storage_type != Magma_CSR ) {
-          CHECK( data_zmconvert( U, &UU, U.storage_type, Magma_CSR ) );
-        //}
+        CHECK( data_zmconvert( L, &LL, L.storage_type, Magma_CSR ) );
+        CHECK( data_zmconvert( U, &UU, U.storage_type, Magma_CSR ) );
         info = data_zmlumerge( LL, UU, A );
 
-        //info = DEV_ERR_NOT_SUPPORTED;
+        data_zmfree( &LL );
+        data_zmfree( &UU );
+
     }
 //cleanup:
     if( info != 0 ){
