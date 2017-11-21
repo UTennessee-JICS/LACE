@@ -245,7 +245,7 @@ data_fgmres_householder_restart(
         for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
           #pragma omp simd
           #pragma vector aligned
-          #pragma loop_count max(STRIP)
+          #pragma loop_count max(DEV_STRIP)
           for ( int i=ii; i<ii+STRIP; ++i ) {
             krylov.val[idx(i,0,krylov.ld)] = r.val[i];
           }
@@ -253,7 +253,7 @@ data_fgmres_householder_restart(
         #pragma omp single
         #pragma omp simd
         #pragma vector aligned
-        #pragma loop_count max(STRIP)
+        #pragma loop_count max(DEV_STRIP)
         for ( int i=endStrip; i<n; ++i ) {
           krylov.val[idx(i,0,krylov.ld)] = r.val[i];
         }
@@ -270,7 +270,7 @@ data_fgmres_householder_restart(
         for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
           #pragma omp simd
           #pragma vector aligned
-          #pragma loop_count max(STRIP)
+          #pragma loop_count max(DEV_STRIP)
           for ( int i=ii; i<ii+STRIP; ++i ) {
             krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]*k1norm2;
           }
@@ -278,7 +278,7 @@ data_fgmres_householder_restart(
         #pragma omp single
         #pragma omp simd
         #pragma vector aligned
-        #pragma loop_count max(STRIP)
+        #pragma loop_count max(DEV_STRIP)
         for ( int i=endStrip; i<n; ++i ) {
           krylov.val[idx(i,0,krylov.ld)] = krylov.val[idx(i,0,krylov.ld)]*k1norm2;
         }
@@ -287,7 +287,7 @@ data_fgmres_householder_restart(
         for ( int ii=startStrip; ii<endStrip; ii+=STRIP ) {
           #pragma omp simd
           #pragma vector aligned
-          #pragma loop_count max(STRIP)
+          #pragma loop_count max(DEV_STRIP)
           for ( int i=ii; i<ii+STRIP; ++i ) {
             q.val[i] = -r.val[i]/dd;
             precondq.val[idx(i,0,precondq.ld)] = q.val[i];
@@ -296,7 +296,7 @@ data_fgmres_householder_restart(
         #pragma omp single
         #pragma omp simd
         #pragma vector aligned
-        #pragma loop_count max(STRIP)
+        #pragma loop_count max(DEV_STRIP)
         for ( int i=endStrip; i<n; ++i ) {
           q.val[i] = -r.val[i]/dd;
           precondq.val[idx(i,0,precondq.ld)] = q.val[i];
@@ -391,7 +391,7 @@ data_fgmres_householder_restart(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
-        #pragma loop_count max(STRIP)
+        #pragma loop_count max(DEV_STRIP)
               for ( int i=ii; i<ii+STRIP; ++i ) {
                 sumTemp[b] += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
               }
@@ -403,7 +403,7 @@ data_fgmres_householder_restart(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
-          #pragma loop_count max(STRIP)
+          #pragma loop_count max(DEV_STRIP)
                 for ( int i=j; i<startStrip; ++i ) {
                   sumBegin += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
                 }
@@ -413,7 +413,7 @@ data_fgmres_householder_restart(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
-          #pragma loop_count max(STRIP)
+          #pragma loop_count max(DEV_STRIP)
                 for ( int i=endStrip; i<n; ++i ) {
                   sumEnd += krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
                 }
@@ -436,7 +436,7 @@ data_fgmres_householder_restart(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
-        #pragma loop_count max(STRIP)
+        #pragma loop_count max(DEV_STRIP)
               for ( int jj=ii; jj < ii+STRIP; ++jj ) {
                 krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
               }
@@ -448,7 +448,7 @@ data_fgmres_householder_restart(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
-          #pragma loop_count max(STRIP)
+          #pragma loop_count max(DEV_STRIP)
                 for ( int jj=j; jj<startStrip; ++jj ) {
                   krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
                 }
@@ -458,7 +458,7 @@ data_fgmres_householder_restart(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
-          #pragma loop_count max(STRIP)
+          #pragma loop_count max(DEV_STRIP)
                 for ( int jj=endStrip; jj<n; ++jj ) {
                   krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - sum*krylov.val[idx(jj,j,krylov.ld)];
                 }
@@ -487,7 +487,7 @@ data_fgmres_householder_restart(
               #pragma omp simd
               #pragma vector aligned
               #pragma vector vecremainder
-        #pragma loop_count max(STRIP)
+        #pragma loop_count max(DEV_STRIP)
               for ( int i=ii; i<ii+STRIP; ++i ) {
                 krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
               }
@@ -496,7 +496,7 @@ data_fgmres_householder_restart(
             #pragma omp simd
             #pragma vector aligned
             #pragma vector vecremainder
-      #pragma loop_count max(STRIP)
+      #pragma loop_count max(DEV_STRIP)
             for ( int i=search1; i<startStrip; ++i ) {
               krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
             }
@@ -504,7 +504,7 @@ data_fgmres_householder_restart(
             #pragma omp simd
             #pragma vector aligned
             #pragma vector vecremainder
-      #pragma loop_count max(STRIP)
+      #pragma loop_count max(DEV_STRIP)
             for ( int i=endStrip; i<n; ++i ) {
               krylov.val[idx(i,search1,krylov.ld)] = krylov.val[idx(i,search1,krylov.ld)]*snrm2;
             }
@@ -534,7 +534,7 @@ data_fgmres_householder_restart(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
-          #pragma loop_count max(STRIP)
+          #pragma loop_count max(DEV_STRIP)
                 for ( int i=ii; i<ii+STRIP; ++i ) {
                   sumTemp[b] += krylov.val[idx(i,j,krylov.ld)]*q.val[i];
                 }
@@ -547,7 +547,7 @@ data_fgmres_householder_restart(
                   #pragma omp simd
                   #pragma vector aligned
                   #pragma vector vecremainder
-      #pragma loop_count max(STRIP)
+      #pragma loop_count max(DEV_STRIP)
                   for ( int i=j; i<startStrip; ++i ) {
                     sumBegin += krylov.val[idx(i,j,krylov.ld)]*q.val[i];
                   }
@@ -557,7 +557,7 @@ data_fgmres_householder_restart(
                   #pragma omp simd
                   #pragma vector aligned
                   #pragma vector vecremainder
-      #pragma loop_count max(STRIP)
+      #pragma loop_count max(DEV_STRIP)
                   for ( int i=endStrip; i<n; ++i ) {
                     sumEnd += krylov.val[idx(i,j,krylov.ld)]*q.val[i];
                   }
@@ -583,7 +583,7 @@ data_fgmres_householder_restart(
                 #pragma omp simd
                 #pragma vector aligned
                 #pragma vector vecremainder
-          #pragma loop_count max(STRIP)
+          #pragma loop_count max(DEV_STRIP)
                 for ( int jj=ii; jj < ii+STRIP; ++jj ) {
                   q.val[jj] = q.val[jj] - sum*krylov.val[idx(jj,j,krylov.ld)];
                 }
@@ -595,7 +595,7 @@ data_fgmres_householder_restart(
                   #pragma omp simd
                   #pragma vector aligned
                   #pragma vector vecremainder
-      #pragma loop_count max(STRIP)
+      #pragma loop_count max(DEV_STRIP)
                   for ( int jj=j; jj<startStrip; ++jj ) {
                     q.val[jj] = q.val[jj] - sum*krylov.val[idx(jj,j,krylov.ld)];
                   }
@@ -605,7 +605,7 @@ data_fgmres_householder_restart(
                   #pragma omp simd
                   #pragma vector aligned
                   #pragma vector vecremainder
-      #pragma loop_count max(STRIP)
+      #pragma loop_count max(DEV_STRIP)
                   for ( int jj=endStrip; jj<n; ++jj ) {
                     q.val[jj] = q.val[jj] - sum*krylov.val[idx(jj,j,krylov.ld)];
                   }
