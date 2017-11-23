@@ -2,6 +2,6 @@
 #define TEST_CMD_LINE_H
 
 extern int my_argc;
-extern char** my_argv;
+extern char ** my_argv;
 
 #endif

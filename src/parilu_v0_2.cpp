@@ -1,10 +1,10 @@
 /*
-    -- LACE (version 0.0) --
-       Univ. of Tennessee, Knoxville
-
-       @author Stephen Wood
-
-*/
+ *  -- LACE (version 0.0) --
+ *     Univ. of Tennessee, Knoxville
+ *
+ *     @author Stephen Wood
+ *
+ */
 #include "../include/sparse.h"
 #include <mkl.h>
 #include <float.h>
@@ -13,12 +13,13 @@
 
 extern "C"
 void
-data_PariLU_v0_2( data_d_matrix* A,
-  data_d_matrix* L,
-  data_d_matrix* U,
-  dataType reduction )
+data_PariLU_v0_2(data_d_matrix * A,
+  data_d_matrix *                L,
+  data_d_matrix *                U,
+  dataType                       reduction)
 {
-  data_d_matrix Atmp = {Magma_CSRCOO};
+  data_d_matrix Atmp = { Magma_CSRCOO };
+
   // TODO: avoid the duplication of the entire csr format.  All that is needed is a rowidx array.
   data_zmconvert(*A, &Atmp, Magma_CSR, Magma_CSRCOO);
 
@@ -30,9 +31,9 @@ data_PariLU_v0_2( data_d_matrix* A,
   data_zmconvert(*A, U, Magma_CSR, Magma_CSCU);
 
 
-  dataType Ares = 0.0;
+  dataType Ares       = 0.0;
   dataType Anonlinres = 0.0;
-  data_d_matrix LU = {Magma_CSR};
+  data_d_matrix LU    = { Magma_CSR };
   data_zmconvert(*A, &LU, Magma_CSR, Magma_CSR);
   data_zilures(*A, *L, *U, &LU, &Ares, &Anonlinres);
   printf("PariLUv0_2_csrilu0_init_res = %e\n", Ares);
@@ -42,25 +43,25 @@ data_PariLU_v0_2( data_d_matrix* A,
   int i, j;
   int il, iu, jl, ju;
 
-  int iter = 0;
+  int iter     = 0;
   dataType tol = 1.0e-1;
-  tol = reduction*Ares;
+  tol = reduction * Ares;
   printf("tol = %e\n", tol);
   int num_threads = 0;
 
   dataType s = 0.0;
-  dataType sp = 0.0;
-  dataType tmp = 0.0;
-  dataType step = FLT_MAX;
-  dataType Anorm = 0.0;
+  dataType sp         = 0.0;
+  dataType tmp        = 0.0;
+  dataType step       = FLT_MAX;
+  dataType Anorm      = 0.0;
   dataType recipAnorm = 0.0;
 
   data_zfrobenius(*A, &Anorm);
   printf("Anorm = %e\n", Anorm);
-  recipAnorm = 1.0/Anorm;
+  recipAnorm = 1.0 / Anorm;
 
   dataType wstart = omp_get_wtime();
-  while ( step > tol ) {
+  while (step > tol) {
     step = 0.0;
 
     sp = 0.0;
@@ -68,57 +69,55 @@ data_PariLU_v0_2( data_d_matrix* A,
     #pragma omp parallel
     {
       #pragma omp for private(i, j, il, iu, jl, ju, s, sp, tmp) reduction(+:step) nowait
-      for (int k=0; k<A->nnz; k++ ) {
-          i = Atmp.rowidx[k];
-          j = A->col[k];
-          s = A->val[k];
+      for (int k = 0; k < A->nnz; k++) {
+        i = Atmp.rowidx[k];
+        j = A->col[k];
+        s = A->val[k];
 
-          il = L->row[i];
-          iu = U->row[j];
-          while (il < L->row[i+1] && iu < U->row[j+1])
-          {
-              sp = 0.0;
-              jl = L->col[il];
-              ju = U->col[iu];
+        il = L->row[i];
+        iu = U->row[j];
+        while (il < L->row[i + 1] && iu < U->row[j + 1]) {
+          sp = 0.0;
+          jl = L->col[il];
+          ju = U->col[iu];
 
-              // avoid branching
-              sp = ( jl == ju ) ? L->val[il] * U->val[iu] : sp;
-              s = ( jl == ju ) ? s-sp : s;
-              il = ( jl <= ju ) ? il+1 : il;
-              iu = ( jl >= ju ) ? iu+1 : iu;
-          }
-          // undo the last operation (it must be the last)
-          s += sp;
+          // avoid branching
+          sp = ( jl == ju ) ? L->val[il] * U->val[iu] : sp;
+          s  = ( jl == ju ) ? s - sp : s;
+          il = ( jl <= ju ) ? il + 1 : il;
+          iu = ( jl >= ju ) ? iu + 1 : iu;
+        }
+        // undo the last operation (it must be the last)
+        s += sp;
 
-          if ( i > j ) {     // modify l entry
-              tmp = s / U->val[U->row[j+1]-1];
-              step += pow( L->val[il-1] - tmp, 2 );
-              L->val[il-1] = tmp;
-          }
-          else {            // modify u entry
-              tmp = s;
-              step += pow( U->val[iu-1] - tmp, 2 );
-              U->val[iu-1] = tmp;
-          }
+        if (i > j) { // modify l entry
+          tmp   = s / U->val[U->row[j + 1] - 1];
+          step += pow(L->val[il - 1] - tmp, 2);
+          L->val[il - 1] = tmp;
+        } else { // modify u entry
+          tmp   = s;
+          step += pow(U->val[iu - 1] - tmp, 2);
+          U->val[iu - 1] = tmp;
+        }
       }
     }
     step *= recipAnorm;
     iter++;
     printf("%% iteration = %d step = %e\n", iter, step);
   }
-  dataType wend = omp_get_wtime();
-  dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
+  dataType wend     = omp_get_wtime();
+  dataType ompwtime = (dataType) (wend - wstart) / ((dataType) iter);
 
   #pragma omp parallel
   {
     num_threads = omp_get_num_threads();
   }
 
-  printf("%% PariLU v0.2 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n",
-    num_threads, iter, wend-wstart, ompwtime );
+  printf(
+    "%% PariLU v0.2 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n",
+    num_threads, iter, wend - wstart, ompwtime);
   printf("PariLUv0_2_OpenMP = %d \nPariLUv0_2_iter = %d \nPariLUv0_2_wall = %e \nPariLUv0_2_avgWall = %e \n",
-    num_threads, iter, wend-wstart, ompwtime );
-  data_zmfree( &Atmp );
-  data_zmfree( &LU );
-
-}
+    num_threads, iter, wend - wstart, ompwtime);
+  data_zmfree(&Atmp);
+  data_zmfree(&LU);
+} // data_PariLU_v0_2
