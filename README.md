@@ -1,6 +1,6 @@
 # README #
 
-This README documents the steps necessary to make lace after pulling from this git repository.
+This README documents the steps necessary to make LACE after pulling from this git repository.
 
 ### What is this repository for? ###
 
