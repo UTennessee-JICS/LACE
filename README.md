@@ -40,7 +40,6 @@ Make from project root
 * How to run tests
 	* lace $ make -f makefile_autodepend runTests
 	* lace/testing $ ./test_matrix_io
-* Deployment instructions
 
 ### Contribution guidelines ###
 
