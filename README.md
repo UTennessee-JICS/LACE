@@ -1,6 +1,6 @@
 # README #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+This README documents the steps necessary to make lace after pulling from this git repository.
 
 ### What is this repository for? ###
 
@@ -44,12 +44,8 @@ Make from project root
 
 ### Contribution guidelines ###
 
-* Writing tests
-* Code review
-* Other guidelines
 * [Notes on Clean Code](https://bitbucket.org/swood20/lace/wiki/Notes%20on%20Clean%20Code)
 
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+* [Stephen Wood](swood@utk.edu)
