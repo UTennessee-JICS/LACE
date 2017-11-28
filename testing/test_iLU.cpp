@@ -12,6 +12,8 @@
 
 #include "test_cmd_line.h"
 
+#define USE_CUDA 0
+
 class iLUTest: public
   ::testing::Test
 {
@@ -212,3 +214,39 @@ TEST_F(iLUTest, PariLUv0_3) {
   data_zmfree( &LU );
   // =========================================================================
 }
+
+#if USE_CUDA
+TEST_F(iLUTest, PariLUv0_3_gpu) {
+  // =========================================================================
+  // PariLU v0.3 GPU
+  // =========================================================================
+  printf("%% PariLU v0.3 GPU\n");
+  data_d_matrix L = {Magma_CSRL};
+  //data_d_matrix U = {Magma_CSRU};
+  data_d_matrix U = {Magma_CSCU};
+  dataType reduction = 1.0e-15;
+  data_d_preconditioner_log parilu_log;
+  data_PariLU_v0_3_gpu( A, &L, &U, reduction, &parilu_log, *tile_size);
+  // Check ||A-LU||_Frobenius
+  dataType Ares = 0.0;
+  dataType Anonlinres = 0.0;
+  data_d_matrix LU = {Magma_CSR};
+  data_zmconvert((*A), &LU, Magma_CSR, Magma_CSR);
+  data_zilures((*A), L, U, &LU, &Ares, &Anonlinres);
+  printf("PariLU_v0_3_omp_num_threads = %d\n", parilu_log.omp_num_threads );
+  printf("PariLU_v0_3_sweeps = %d\n", parilu_log.sweeps );
+  printf("PariLU_v0_3_tol = %e\n", parilu_log.tol );
+  printf("PariLU_v0_3_A_Frobenius = %e\n", parilu_log.A_Frobenius );
+  printf("PariLU_v0_3_generation_time = %e\n", parilu_log.precond_generation_time );
+  printf("PariLU_v0_3_initial_residual = %e\n", parilu_log.initial_residual );
+  printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
+  fflush(stdout);
+
+  EXPECT_LE( Ares, (*Amklres)*10.0 );
+  EXPECT_LE( Anonlinres, (*Amklnonlinres)*10.0 );
+  data_zmfree( &L );
+  data_zmfree( &U );
+  data_zmfree( &LU );
+  // =========================================================================
+}
+#endif
