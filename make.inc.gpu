@@ -1,0 +1,9 @@
+#
+#
+# ACF compiler selection
+CXX	         = nvcc -x cu
+#CXXFLAGS	 = -std=c++11 -Wall -g -O3 -qopenmp \
+#  -qopt-assume-safe-padding -qopt-report=5 -xAVX
+
+#for nvcc
+CXXFLAGS	 = -std=c++11 -g -O3 
