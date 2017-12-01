@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  bool equivalent = true;
+  bool comparison = true;
   data_d_matrix A = {Magma_CSR};
   data_zmconvert( Asparse, &A, Magma_CSR, Magma_CSR );
   data_d_matrix B = {Magma_CSR};
@@ -153,8 +153,8 @@ int main(int argc, char* argv[])
   //data_zmfree( &LU );
   fflush(stdout);
 
-  EXPECT_DOUBLE_EQ(Amklres, Ares, equivalent);
-  EXPECT_DOUBLE_EQ(Amklnonlinres, Anonlinres, equivalent);
+  EXPECT_LE(Ares, (Amklres*10.0), comparison);
+  EXPECT_LE(Anonlinres, (Amklnonlinres*10.0), comparison);
 /*
   data_d_matrix Ldiff = {Magma_CSRL};
   dataType Lres = 0.0;
@@ -380,8 +380,8 @@ int main(int argc, char* argv[])
   //data_zmfree( &U );
   //data_zmfree( &LU );
   fflush(stdout);
-  EXPECT_DOUBLE_EQ(Amklres, Ares, equivalent);
-  EXPECT_DOUBLE_EQ(Amklnonlinres, Anonlinres, equivalent);
+  EXPECT_LE(Ares, (Amklres*10.0), comparison);
+  EXPECT_LE(Anonlinres, (Amklnonlinres*10.0), comparison);
 
     data_zmfree( &LU );
 
@@ -408,8 +408,9 @@ int main(int argc, char* argv[])
   printf("PariLU_v0_3_initial_residual = %e\n", parilu_log.initial_residual );
   printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
   fflush(stdout);
-  EXPECT_DOUBLE_EQ(Amklres, Ares, equivalent);
-  EXPECT_DOUBLE_EQ(Amklnonlinres, Anonlinres, equivalent);
+
+  EXPECT_LE(Ares, (Amklres*10.0), comparison);
+  EXPECT_LE(Anonlinres, (Amklnonlinres*10.0), comparison);
 
   //data_zmfree( &L );
   //data_zmfree( &U );
