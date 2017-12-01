@@ -8,11 +8,11 @@ CFLAGS=-std=c++11 -g -O3 -Xcompiler -fopenmp
 LDFLAGS =
 override CPPFLAGS  += -I$(MKLROOT)/include -I./include
 
-all: testing/test_iLU_gpu
+all: testing/test_iLU_gpu testing/gpu_testFramework
 
 testing/test_iLU_gpu: testing/test_iLU_gpu.cpp 
 	$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) \
-	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	-L${MKLROOT}/lib \
 	testing/test_iLU_gpu.cpp control/constants.cpp control/magma_zmio.cpp \
 	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
 	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
@@ -29,7 +29,8 @@ testing/test_iLU_gpu: testing/test_iLU_gpu.cpp
 	-lgomp \
 	-o $@
 
-
+testing/gpu_testFramework: testing/gpu_testing_dev.cpp
+	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@
 
 clean:
 	rm testing/test_iLU_gpu
