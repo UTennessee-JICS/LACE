@@ -26,25 +26,25 @@ main(int argc, char * argv[])
   // begin with a square matrix A
   char * sparse_filename = NULL;
   char * sparse_basename = NULL;
-  char * sparse_name = NULL;
-  char * output_dir = NULL;
-  char * output_basename = NULL;
-  char * output_L = NULL;
-  char * output_U = NULL;
+  char * output_dir      = NULL;
+  char sparse_name[256];
+  char output_basename[256];
+  char output_L[256];
+  char output_U[256];
 
   char default_matrix[] = "matrices/Trefethen_20.mtx";
   char * matrix_name    = NULL;
 
-  char default_output_basename[] = "out_";
-  char * rhs_name = NULL;
+  char default_output_dir[] = "out_";
 
   data_d_preconditioner_log p03_log;
+
   p03_log.maxSweeps = 1;
 
   if (argc < 7) {
     printf("Usage %s --matrix <name> --sweeps <#> --outDir <name>\n", argv[0]);
     return 1;
-  } 
+  }
 
   if (argc > 1) {
     int count = 1;
@@ -62,7 +62,7 @@ main(int argc, char * argv[])
       } else if ( (strcmp(argv[count], "--outDir") == 0) &&
         count + 1 < argc)
       {
-        output_basename = argv[count + 1];
+        output_dir = argv[count + 1];
         count = count + 2;
       } else {
         count++;
@@ -74,8 +74,8 @@ main(int argc, char * argv[])
   if (matrix_name == NULL) {
     matrix_name = default_matrix;
   }
-  if (rhs_name == NULL) {
-    output_basename = default_output_basename;
+  if (output_dir == NULL) {
+    output_dir = default_output_dir;
   }
 
   data_d_matrix Asparse = { Magma_CSR };
@@ -110,10 +110,39 @@ main(int argc, char * argv[])
   printf("PariLU_v0_3_csrilu0_nonlinres = %e\n", Anonlinres);
   printf("PariLU_v0_3_omp_num_threads = %d\n", p03_log.omp_num_threads);
 
-  fflush(stdout);
+
+  std::string s1(matrix_name);
+  std::cout << s1.substr(0, s1.find_last_of("\\/")) << std::endl;
+  sparse_basename = basename(matrix_name);
+  std::cout << sparse_basename << std::endl;
+  char * ext;
+  ext = strrchr(sparse_basename, '.');
+  strncpy(sparse_name, sparse_basename, int(ext - sparse_basename) );
+  printf("File %s basename %s name %s \n",
+    matrix_name, sparse_basename, sparse_name);
+
+  printf("Output directory is %s\n", output_dir);
+  strcpy(output_basename, output_dir);
+  strcat(output_basename, "/");
+  strcat(output_basename, sparse_name);
+  printf("Output file base name is %s\n", output_basename);
+
+  strcpy(output_L, output_basename);
+  char suffixBuffer[256];
+  sprintf( suffixBuffer, "_LpariLUv03_%dsweeps_%dthreads.mtx", p03_log.sweeps, p03_log.omp_num_threads);
+  strcat(output_basename, sparse_name);
+  strcat(output_L, suffixBuffer);
+  strcpy(output_U, output_basename);
+  sprintf( suffixBuffer, "_UpariLUv03_%dsweeps_%dthreads.mtx", p03_log.sweeps, p03_log.omp_num_threads);
+  //strcat(output_U, "_UpariLUv0_3.mtx");
+  strcat(output_U, suffixBuffer);
+  data_zwrite_csr_mtx(L, L.major, output_L);
+  data_zwrite_csr_mtx(U, U.major, output_U);
 
   data_zmfree(&LU);
   data_zmfree(&Asparse);
 
   return 0;
 } // main
+
+// main
