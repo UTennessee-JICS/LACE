@@ -56,7 +56,7 @@ protected:
         }
         else if ( (strcmp(my_argv[count], "--rhs") == 0)
             && count+1 < my_argc ) {
-          matrix_name = my_argv[count+1];
+          rhs_name = my_argv[count+1];
           count = count + 2;
         }
         else if ( (strcmp(my_argv[count], "--initialGuess") == 0)

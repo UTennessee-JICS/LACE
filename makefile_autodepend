@@ -15,7 +15,7 @@ override CPPFLAGS  += -I$(GTEST_DIR)/include -I$(GMOCK_DIR)/include \
 	-I$(MKLROOT)/include -I./include
 
 LACE_HEADERS = include/*.h
-SRCDIRS = control blas src testing
+SRCDIRS = control blas src testing drivers
 SRCFILES = $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.cpp))
 SRCS = *.cpp $(SRCFILES) $(LACE_HEADERS)
 OBJS = $(SRCFILES:%.cpp=%.o)
@@ -37,7 +37,10 @@ TESTS = \
 	testing/test_iLU \
 	testing/test_linearSolver
 
-TARGETS = $(TESTS)
+DRIVERS = \
+	drivers/generate_iLU
+
+TARGETS = $(TESTS) $(DRIVERS)
 
 all: $(EXAMPLES) $(TARGETS)
 
@@ -161,6 +164,22 @@ runTests :
 	./test_LU --matrix matrices/Trefethen_20.mtx --tile 2
 
 #
+# Make Drivers
+#
+
+
+drivers/generate_iLU_OBJS = drivers/generate_iLU.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	control/init.o control/magma_zmscale.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+	src/parilu_v0_3_prescribedSweeps.o
+
+$(foreach i, $(DRIVERS), $(eval $(call generateTester,$(i))))
+
+#
 # Incorporate Google Testing & Mocking Framework
 #
 GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
@@ -233,6 +252,11 @@ src/%.o : src/%.cpp $(DEPDIR)/%.d
 
 testing/%.o : testing/%.cpp
 testing/%.o : testing/%.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+drivers/%.o : drivers/%.cpp
+drivers/%.o : drivers/%.cpp $(DEPDIR)/%.d
 	$(COMPILE.cc) $(OUTPUT_OPTION) $<
 	$(POSTCOMPILE)
 

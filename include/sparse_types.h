@@ -131,7 +131,9 @@ typedef struct data_z_preconditioner
 typedef struct data_z_preconditioner_log
 {
     data_int_t             sweeps;
+    data_int_t             maxSweeps;
     dataType               tol;
+    dataType               finalStep;
     dataType               A_Frobenius;
     dataType               precond_generation_time;
     dataType               initial_residual;
