@@ -130,7 +130,6 @@ main(int argc, char * argv[])
   strcpy(output_L, output_basename);
   char suffixBuffer[256];
   sprintf( suffixBuffer, "_LpariLUv03_%dsweeps_%dthreads.mtx", p03_log.sweeps, p03_log.omp_num_threads);
-  strcat(output_basename, sparse_name);
   strcat(output_L, suffixBuffer);
   strcpy(output_U, output_basename);
   sprintf( suffixBuffer, "_UpariLUv03_%dsweeps_%dthreads.mtx", p03_log.sweeps, p03_log.omp_num_threads);
