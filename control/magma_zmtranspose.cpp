@@ -117,12 +117,12 @@ z_transpose_csr(
         #pragma omp parallel
         {
         #pragma omp for nowait
-        #pragma omp simd
+        //#pragma omp simd
 	for (data_int_t i=0; i<A.nnz; i++) {
             A.col[i] -= 1;
         }
         #pragma omp for nowait
-	#pragma omp simd
+	//#pragma omp simd
         for (data_int_t i=0; i<rowlimit+1; i++) {
             A.row[i] -= 1;
         }
@@ -156,7 +156,7 @@ z_transpose_csr(
     #pragma omp parallel private (j)
     {
     #pragma omp for nowait
-    #pragma omp simd
+    //#pragma omp simd
     for( j=0; j < rowlimit+1; j++ ) {
         B->row[ j ] = 0;
     }
@@ -214,13 +214,13 @@ z_transpose_csr(
         #pragma omp parallel
         {
         #pragma omp for nowait
-	#pragma omp simd
+	//#pragma omp simd
         for (data_int_t it=0; it<B->nnz; it++) {
             A.col[it] += 1;
             B->col[it] += 1;
         }
         #pragma omp for nowait
-	#pragma omp simd
+	//#pragma omp simd
         for (data_int_t it=0; it<rowlimit+1; it++) {
             A.row[it] += 1;
             B->row[it] += 1;
@@ -276,12 +276,12 @@ z_transpose_bcsr(
         #pragma omp parallel
         {
         #pragma omp for nowait
-	#pragma omp simd
+	//#pragma omp simd
         for (data_int_t i=0; i<A.numblocks; i++) {
             A.col[i] -= 1;
         }
         #pragma omp for nowait
-	#pragma omp simd
+	//#pragma omp simd
         for (data_int_t i=0; i<rowlimit+1; i++) {
             A.row[i] -= 1;
         }
@@ -315,7 +315,7 @@ z_transpose_bcsr(
     #pragma omp parallel private (j)
     {
     #pragma omp for nowait
-    #pragma omp simd
+    //#pragma omp simd
     for( j=0; j < rowlimit+1; j++ ) {
         B->row[ j ] = 0;
     }
@@ -386,13 +386,13 @@ z_transpose_bcsr(
         #pragma omp parallel
         {
         #pragma omp for nowait
-	#pragma omp simd
+	//#pragma omp simd
         for (data_int_t it=0; it<B->numblocks; it++) {
             A.col[it] += 1;
             B->col[it] += 1;
         }
         #pragma omp for nowait
-	#pragma omp simd
+	//#pragma omp simd
         for (data_int_t it=0; it<rowlimit+1; it++) {
             A.row[it] += 1;
             B->row[it] += 1;
