@@ -29,6 +29,29 @@ testing/test_iLU_gpu: testing/test_iLU_gpu.cpp
 	-lgomp \
 	-o $@
 
+drivers/generate_iLU_gpu: drivers/generate_iLU_gpu.cpp 
+	$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) \
+	-L${MKLROOT}/lib \
+	drivers/generate_iLU_gpu.cpp control/constants.cpp control/magma_zmio.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/magma_zmscale.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	src/parilu_v0_3_gpu.cpp \
+	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
+	-lgomp \
+	-o $@
+
+testing/gpu_testFramework: testing/gpu_testing_dev.cpp
+	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@
+
+clean:
+	rm testing/test_iLU_gpu
+
+cleanall:
+	rm *.o blas/*.o control/*.o src/*.o testing/test_iLU_gpu
+
 testing/gpu_testFramework: testing/gpu_testing_dev.cpp
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@
 
