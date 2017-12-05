@@ -24,7 +24,7 @@ int
 main(int argc, char * argv[])
 {
   // begin with a square matrix A
-  char * sparse_filename = NULL;
+  //char * sparse_filename = NULL;
   char * sparse_basename = NULL;
   char * output_dir      = NULL;
   char sparse_name[256];

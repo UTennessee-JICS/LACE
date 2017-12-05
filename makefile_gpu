@@ -8,7 +8,7 @@ CFLAGS=-std=c++11 -g -O3 -Xcompiler -fopenmp
 LDFLAGS =
 override CPPFLAGS  += -I$(MKLROOT)/include -I./include
 
-all: testing/test_iLU_gpu testing/gpu_testFramework
+all: testing/test_iLU_gpu testing/gpu_testFramework drivers/generate_iLU_gpu
 
 testing/test_iLU_gpu: testing/test_iLU_gpu.cpp 
 	$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) \
@@ -38,7 +38,7 @@ drivers/generate_iLU_gpu: drivers/generate_iLU_gpu.cpp
 	control/magma_zmscale.cpp \
 	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
 	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
-	src/parilu_v0_3_gpu.cpp \
+	src/parilu_v0_3_gpu_prescribedSweeps.cpp \
 	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
 	-lgomp \
 	-o $@
@@ -56,8 +56,8 @@ testing/gpu_testFramework: testing/gpu_testing_dev.cpp
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@
 
 clean:
-	rm testing/test_iLU_gpu
+	rm testing/test_iLU_gpu testing/test_iLU_gpu drivers/generate_iLU_gpu
 
 cleanall:
-	rm *.o blas/*.o control/*.o src/*.o testing/test_iLU_gpu
+	rm *.o blas/*.o control/*.o src/*.o testing/test_iLU_gpu testing/test_iLU_gpu drivers/generate_iLU_gpu
 
