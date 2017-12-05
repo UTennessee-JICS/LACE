@@ -63,7 +63,7 @@ main(int argc, char * argv[])
         count + 1 < argc)
       {
         output_dir = argv[count + 1];
-        count = count + 2;
+        count      = count + 2;
       } else {
         count++;
       }
@@ -129,11 +129,10 @@ main(int argc, char * argv[])
 
   strcpy(output_L, output_basename);
   char suffixBuffer[256];
-  sprintf( suffixBuffer, "_LpariLUv03_%dsweeps_%dthreads.mtx", p03_log.sweeps, p03_log.omp_num_threads);
+  sprintf(suffixBuffer, "_LpariLUv03_%02dsweeps_%04dthreads.mtx", p03_log.sweeps, p03_log.omp_num_threads);
   strcat(output_L, suffixBuffer);
   strcpy(output_U, output_basename);
-  sprintf( suffixBuffer, "_UpariLUv03_%dsweeps_%dthreads.mtx", p03_log.sweeps, p03_log.omp_num_threads);
-  //strcat(output_U, "_UpariLUv0_3.mtx");
+  sprintf(suffixBuffer, "_UpariLUv03_%02dsweeps_%04dthreads.mtx", p03_log.sweeps, p03_log.omp_num_threads);
   strcat(output_U, suffixBuffer);
   data_zwrite_csr_mtx(L, L.major, output_L);
   data_zwrite_csr_mtx(U, U.major, output_U);
