@@ -120,9 +120,7 @@ main(int argc, char * argv[])
       p03_log.precond_generation_time, p03_log.initial_residual, p03_log.initial_nonlinear_residual, Ares, Anonlinres );
 
   std::string s1(matrix_name);
-  std::cout << s1.substr(0, s1.find_last_of("\\/")) << std::endl;
   sparse_basename = basename(matrix_name);
-  std::cout << sparse_basename << std::endl;
   char * ext;
   ext = strrchr(sparse_basename, '.');
   strncpy(sparse_name, sparse_basename, int(ext - sparse_basename) );
