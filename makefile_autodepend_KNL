@@ -179,7 +179,7 @@ drivers/generate_iLU_KNL_OBJS = drivers/generate_iLU.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
 	src/parilu_v0_3_prescribedSweeps.o
 
-drivers/solver_OBJS = drivers/solver_interface.o \
+drivers/solver_KNL_OBJS = drivers/solver_interface.o \
 	control/constants.o control/magma_zmio.o \
 	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
 	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
