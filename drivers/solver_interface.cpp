@@ -66,7 +66,7 @@ main(int argc, char * argv[])
       if ( (strcmp(argv[count], "--solver") == 0) &&
         count + 1 < argc)
       {
-        matrix_name = argv[count + 1];
+        solver_name = argv[count + 1];
         count       = count + 2;
       } else if ( (strcmp(argv[count], "--matrix") == 0) &&
         count + 1 < argc)
