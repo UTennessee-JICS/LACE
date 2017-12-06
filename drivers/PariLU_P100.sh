@@ -14,9 +14,8 @@ sweeps=(1 2 3 4 5 10 20 40 60)
 mkdir -p ${DIR}
 
 for t in ${threads[@]}; do
-  export OMP_NUM_THREADS=${t}
-  echo OMP_NUM_THREADS = $OMP_NUM_THREADS
+  echo GPU threads = ${t}
   for s in ${sweeps[@]}; do
-    ./generate_iLU --matrix ${MATRIX} --sweeps ${s} --outDir ${DIR} > ${DIR}/log_P100_${MATRIXNAME}_${s}sweeps_${t}threads.m 2>&1
+    ./generate_iLU_gpu --matrix ${MATRIX} --sweeps ${s} --threads ${t} --outDir ${DIR} > ${DIR}/log_P100_${MATRIXNAME}_${s}sweeps_${t}threads.m 2>&1
   done
 done
