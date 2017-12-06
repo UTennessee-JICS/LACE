@@ -6,6 +6,7 @@
 
 */
 #include "../include/sparse.h"
+#include <limits>
 #include <mkl.h>
 #include <float.h>
 #include <stdlib.h>
@@ -136,7 +137,7 @@ data_PariLU_v0_3_gpu_prescribedSweeps( data_d_matrix* A,
   dataType tol = reduction*Ares;
   PARILUDBG("GPU PariLU_v0_3_tol = %e\n", tol);
   //printf("GPU PariLU_v0_3_tol = %e\n", tol);
-  int num_threads = log.omp_num_threads;
+  int num_threads = log->omp_num_threads;
   
   dataType step[1];
   step[0] = FLT_MAX;
@@ -195,7 +196,8 @@ data_PariLU_v0_3_gpu_prescribedSweeps( data_d_matrix* A,
   cudaMemcpy(dU_col,U->col,(U->nnz+1)*sizeof(int),cudaMemcpyHostToDevice);
   cudaMemcpy(dU_val,U->val,U->nnz*sizeof(dataType),cudaMemcpyHostToDevice);
 
-  while ( step[0] > tol){
+  //while ( step[0] > tol){
+  while ( iter < log->maxSweeps && step[0] > (std::numeric_limits<dataType>::epsilon()*4.0) ){
     //reset sweep residual
     step[0]=0.0;
 
@@ -233,9 +235,10 @@ data_PariLU_v0_3_gpu_prescribedSweeps( data_d_matrix* A,
   
   log->sweeps = iter;
   log->tol = tol;
+  log->finalStep = step[0];
   log->A_Frobenius = Anorm;
   log->precond_generation_time = wend-wstart;
   log->initial_residual = Ares;
   log->initial_nonlinear_residual = Anonlinres;
-  //log->omp_num_threads = num_threads;
+  log->omp_num_threads = num_threads;
 }
