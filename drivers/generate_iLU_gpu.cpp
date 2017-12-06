@@ -105,6 +105,7 @@ main(int argc, char * argv[])
   data_zilures(Asparse, L, U, &LU, &Ares, &Anonlinres);
   printf("PariLU_v0_3_maxSweeps = %d\n", p03_log.maxSweeps);
   printf("PariLU_v0_3_sweeps = %d\n", p03_log.sweeps);
+  printf("PariLU_v0_3_omp_num_threads = %d\n", p03_log.omp_num_threads);
   printf("PariLU_v0_3_tol = %e\n", p03_log.tol);
   printf("PariLU_v0_3_finalStep = %e\n", p03_log.finalStep);
   printf("PariLU_v0_3_A_Frobenius = %e\n", p03_log.A_Frobenius);
@@ -113,8 +114,10 @@ main(int argc, char * argv[])
   printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", p03_log.initial_nonlinear_residual);
   printf("PariLU_v0_3_csrilu0_res = %e\n", Ares);
   printf("PariLU_v0_3_csrilu0_nonlinres = %e\n", Anonlinres);
-  printf("PariLU_v0_3_omp_num_threads = %d\n", p03_log.omp_num_threads);
 
+  printf("%% %d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",
+      p03_log.maxSweeps, p03_log.sweeps, p03_log.omp_num_threads, p03_log.tol, p03_log.finalStep, p03_log.A_Frobenius,
+      p03_log.precond_generation_time, p03_log.initial_residual, p03_log.initial_nonlinear_residual, Ares, Anonlinres );
 
   std::string s1(matrix_name);
   std::cout << s1.substr(0, s1.find_last_of("\\/")) << std::endl;
@@ -123,14 +126,10 @@ main(int argc, char * argv[])
   char * ext;
   ext = strrchr(sparse_basename, '.');
   strncpy(sparse_name, sparse_basename, int(ext - sparse_basename) );
-  printf("File %s basename %s name %s \n",
-    matrix_name, sparse_basename, sparse_name);
 
-  printf("Output directory is %s\n", output_dir);
   strcpy(output_basename, output_dir);
   strcat(output_basename, "/");
   strcat(output_basename, sparse_name);
-  printf("Output file base name is %s\n", output_basename);
 
   strcpy(output_L, output_basename);
   char suffixBuffer[256];
