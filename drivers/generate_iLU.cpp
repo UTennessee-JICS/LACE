@@ -110,10 +110,10 @@ main(int argc, char * argv[])
   printf("PariLU_v0_3_csrilu0_res = %e\n", Ares);
   printf("PariLU_v0_3_csrilu0_nonlinres = %e\n", Anonlinres);
 
-  printf("%% %d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",
-      p03_log.maxSweeps, p03_log.sweeps, p03_log.omp_num_threads, p03_log.tol, p03_log.finalStep, p03_log.A_Frobenius, 
-      p03_log.precond_generation_time, p03_log.initial_residual, p03_log.initial_nonlinear_residual, Ares, Anonlinres );
-      
+  printf("%% %d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",
+    p03_log.maxSweeps, p03_log.sweeps, p03_log.omp_num_threads, p03_log.tol, p03_log.finalStep, p03_log.A_Frobenius,
+    p03_log.precond_generation_time, p03_log.initial_residual, p03_log.initial_nonlinear_residual, Ares, Anonlinres);
+
   std::string s1(matrix_name);
   sparse_basename = basename(matrix_name);
   char * ext;
