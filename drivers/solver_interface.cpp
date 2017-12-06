@@ -49,9 +49,10 @@ main(int argc, char * argv[])
 
   // set default GMRES prameters
   gmres_param.tol_type = 0;
-  gmres_param.rtol     = 1.0e-6;
+  gmres_param.rtol     = 1.0e-3;
   gmres_param.user_csrtrsv_choice = 1;
   gmres_param.monitorOrthog       = 0;
+  gmres_param.reorth = 0;
 
   if (argc < 7) {
     printf("Usage %s --solver <name> --matrix <name> --L <name> --U <name> --RHS <name> --outDir <name> ", argv[0]);
@@ -123,6 +124,8 @@ main(int argc, char * argv[])
     }
   }
 
+  printf("gmres_param.monitorOrthog = %d\n", gmres_param.monitorOrthog);
+
   if (solver_name == NULL) {
     solver_name = default_solver;
   }
@@ -153,12 +156,12 @@ main(int argc, char * argv[])
 
   data_d_matrix L = { Magma_CSR };
   CHECK(data_z_csr_mtx(&L, L_name) );
-  
+
   data_d_matrix U = { Magma_CSR };
   CHECK(data_z_csr_mtx(&U, U_name) );
 
-  //data_zprint_csr( L );
-  //data_zprint_csr( U );
+  // data_zprint_csr( L );
+  // data_zprint_csr( U );
 
   data_d_matrix rhs_vector = { Magma_DENSE };
   rhs_vector.major = MagmaRowMajor;
@@ -227,7 +230,7 @@ main(int argc, char * argv[])
   char suffixBuffer[256];
   sprintf(suffixBuffer, "_%s.mtx", solver_name);
   strcat(output_x, suffixBuffer);
-  data_zwrite_csr_mtx(x, x.major, output_x);
+  data_zwrite_dense(x, output_x);
 
   data_zmfree(&Asparse);
   data_zmfree(&x);

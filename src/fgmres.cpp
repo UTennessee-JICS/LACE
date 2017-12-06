@@ -312,7 +312,7 @@ data_fgmres(
       // Reorthogonalize?
       hr = (normav + 0.001*normav2) - normav;
       if ( ( gmres_par->reorth == 0 && hr <= eps ) || gmres_par->reorth == 2 ) {
-        printf("Reorthogonalize %d\n", search);
+        printf("Reorthogonalize(%d) = 1;\n", search);
         for ( int j=0; j <= search; j++ ) {
           hr = 0.0;
           #pragma omp parallel
