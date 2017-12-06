@@ -390,6 +390,8 @@ data_fgmres_restart(
           printf("FGMRES_partrsv_ortherr(%d) = %.16e;\n", search1, ortherr);
         }
 
+        // !!!! EXPERIMENTAL !!!! NOT FOR PRUDUCTION !!!!
+        /*
         data_orthogonality_error_incremental( &krylov, &ortherr, &imax, (search+2) );
         if ( gmres_par->user_csrtrsv_choice == 0 ) {
           printf("FGMRES_mkltrsv_ortherr_inc(%d) = %.16e;\n", search1, ortherr);
@@ -397,6 +399,7 @@ data_fgmres_restart(
         else {
           printf("FGMRES_partrsv_ortherr_inc(%d) = %.16e;\n", search1, ortherr);
         }
+        */
 
       }
 
