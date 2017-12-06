@@ -132,8 +132,15 @@ main(int argc, char * argv[])
   sprintf(suffixBuffer, "_UpariLUv03_%02dsweeps_%04dthreads.mtx", p03_log.sweeps, p03_log.omp_num_threads);
   strcat(output_U, suffixBuffer);
   data_zwrite_csr_mtx(L, L.major, output_L);
-  data_zwrite_csr_mtx(U, U.major, output_U);
+  data_d_matrix Ucsr = { Magma_CSRU };
+  CHECK(data_zmconvert(U, &Ucsr, Magma_CSC, Magma_CSR) );
+  Ucsr.storage_type = Magma_CSRU;
+  Ucsr.fill_mode    = MagmaUpper;
+  data_zwrite_csr_mtx(Ucsr, Ucsr.major, output_U);
 
+  data_zmfree(&L);
+  data_zmfree(&U);
+  data_zmfree(&Ucsr);
   data_zmfree(&LU);
   data_zmfree(&Asparse);
 
