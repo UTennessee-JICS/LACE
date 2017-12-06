@@ -432,13 +432,13 @@ CBLAS_SIDE      cblas_side_const   ( data_side_t  side  );
 static inline void lace_calloc(void **ptr, const size_t nmemb, const size_t size,
                        const char *name, const char *file, const int line)
 {
-  int ns = (nmemb*size)/DEV_ALIGN;
+  size_t ns = (nmemb*size)/DEV_ALIGN;
   if ( posix_memalign( ptr, DEV_ALIGN, (ns+1)*DEV_ALIGN ) != 0 )
   {
     fprintf(stderr,
-            "ERROR (memory): Unable to allocate memory [%d bytes for %d elements] for %s (%s, line %d)\n",
-            (ns+1)*DEV_ALIGN, int(nmemb),
-            name, file, line);
+            "ERROR (memory): Unable to allocate memory [%lu bytes for %lu elements] for %s (%s, line %d) ns = %lu DEV_ALIGN = %d\n",
+            (ns+1)*DEV_ALIGN, (long int)(nmemb),
+            name, file, line, (long int)(ns), DEV_ALIGN);
 #ifdef USING_MPI
     MPI_Abort(MPI_COMM_WORLD, -1);
 #else
