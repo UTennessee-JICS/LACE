@@ -38,7 +38,8 @@ TESTS = \
 	testing/test_linearSolver
 
 DRIVERS = \
-	drivers/generate_iLU_KNL
+	drivers/generate_iLU_KNL \
+	drivers/solver_KNL
 
 TARGETS = $(TESTS) $(DRIVERS)
 
@@ -177,6 +178,21 @@ drivers/generate_iLU_KNL_OBJS = drivers/generate_iLU.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
 	src/parilu_v0_3_prescribedSweeps.o
+
+drivers/solver_OBJS = drivers/solver_interface.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	control/init.o control/magma_zmlumerge.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zaxpy.o blas/zspmv.o blas/zspmm.o blas/zcsrilu0.o \
+	src/parilu_v0_2.o src/parilu_v0_3.o \
+	src/mkl_fgmres.o src/fgmres.o src/fgmres_restart.o \
+	src/fgmres_householder_opt4.o src/fgmres_householder_restart.o \
+	src/trisolve.cpp \
+	src/gram_schmidt.cpp \
+	src/givens.cpp \
+	src/orthogonality_error.cpp
 
 $(foreach i, $(DRIVERS), $(eval $(call generateTester,$(i))))
 
