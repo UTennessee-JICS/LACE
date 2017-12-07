@@ -124,8 +124,6 @@ main(int argc, char * argv[])
     }
   }
 
-  printf("gmres_param.monitorOrthog = %d\n", gmres_param.monitorOrthog);
-
   if (solver_name == NULL) {
     solver_name = default_solver;
   }
@@ -216,7 +214,6 @@ main(int argc, char * argv[])
   printf("%% Done.\n");
   fflush(stdout);
 
-  std::string s1(matrix_name);
   sparse_basename = basename(matrix_name);
   char * ext;
   ext = strrchr(sparse_basename, '.');
@@ -227,8 +224,11 @@ main(int argc, char * argv[])
   strcat(output_basename, sparse_name);
 
   strcpy(output_x, output_basename);
+  std::string l1(L_name);
+  std::size_t pos = l1.find("sweeps");
+  std::string l2 = l1.substr(pos-2, 20);
   char suffixBuffer[256];
-  sprintf(suffixBuffer, "_%s.mtx", solver_name);
+  sprintf(suffixBuffer, "_%s_%s.mtx", solver_name, l2.c_str());
   strcat(output_x, suffixBuffer);
   data_zwrite_dense(x, output_x);
 
