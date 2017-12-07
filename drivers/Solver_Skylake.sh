@@ -26,7 +26,7 @@ IFS=' ' read -r -a precond_U <<< $Ufiles
 
 echo length of precond_L is ${#precond_L[@]}
 
-for s in ${SOLVERS}; do
+for s in ${SOLVERS[@]}; do
   for ((i=0; i<${#precond_L[@]}; i++)); do
     outfile=$(printf '%s/log_%s_%s_%s_%02d.m' "${OUTDIR}" "${s}" "${MACHINE}" "${MATRIXNAME}" "${i}")
     echo ${outfile}
