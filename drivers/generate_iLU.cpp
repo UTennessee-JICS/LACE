@@ -118,7 +118,8 @@ main(int argc, char * argv[])
   sparse_basename = basename(matrix_name);
   char * ext;
   ext = strrchr(sparse_basename, '.');
-  strncpy(sparse_name, sparse_basename, int(ext - sparse_basename) );
+  strncpy(sparse_name, sparse_basename, size_t(ext - sparse_basename) );
+  sparse_name[ size_t(ext - sparse_basename) ] = '\0';
 
   strcpy(output_basename, output_dir);
   strcat(output_basename, "/");
