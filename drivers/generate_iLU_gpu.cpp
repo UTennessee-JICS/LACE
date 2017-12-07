@@ -142,7 +142,7 @@ main(int argc, char * argv[])
     CHECK( data_zmconvert( U, &Ucsr, Magma_CSC, Magma_CSR ) );
       Ucsr.storage_type = Magma_CSRU;
         Ucsr.fill_mode = MagmaUpper;
-  data_zwrite_csr_mtx(U, U.major, output_U);
+  data_zwrite_csr_mtx(Ucsr, Ucsr.major, output_U);
 
   data_zmfree(&L);
   data_zmfree(&U);
