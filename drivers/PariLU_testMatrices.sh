@@ -3,8 +3,8 @@
 #./PariLU_laptop_testMatrices.sh airfoil_2d ../testing/matrices/airfoil_2d/ PariLU_laptop/ 
 
 GENERATOR=(./PariLU_testMatrix.sh)
-MATRIXNAMES=(airfoil_2d DK01R GT01R olafu raefsky3 young3c)
-MATRIXPATHS=(../testing/matrices/airfoil_2d/ ../testing/matrices/DK01R/ ../testing/matrices/GT01R/ ../testing/matrices/olafu/ ../testing/matrices/raefsky3/ ../testing/matrices/young3c/)
+MATRIXNAMES=(airfoil_2d DK01R GT01R olafu raefsky3 young3c dRdQ_sm)
+MATRIXPATHS=(../testing/matrices/airfoil_2d/ ../testing/matrices/DK01R/ ../testing/matrices/GT01R/ ../testing/matrices/olafu/ ../testing/matrices/raefsky3/ ../testing/matrices/young3c/ ../testing/matrices/)
 OUTPUTDIR=PariLU_laptop/
 
 
