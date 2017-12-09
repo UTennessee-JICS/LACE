@@ -14,12 +14,12 @@ OUTDIR=Solver_${MACHINE}
 
 SOLVERS=(FGMRES FGMRESH)
 TOL=(1.0e-10)
-SEARCHMAX=(2000)
+SEARCHMAX=(1000)
 
 mkdir -p ${OUTDIR}
 
-Lfiles=("$( ls ${PRECONDIR}/*_L*.mtx )")
-Ufiles=("$( ls ${PRECONDIR}/*_U*.mtx )")
+Lfiles=("$( ls ${PRECONDIR}/${MATRIXNAME}*_L*_0?sweep*.mtx )")
+Ufiles=("$( ls ${PRECONDIR}/${MATRIXNAME}*_U*_0?sweep*.mtx )")
 
 IFS=' ' read -r -a precond_L <<< $Lfiles
 IFS=' ' read -r -a precond_U <<< $Ufiles
