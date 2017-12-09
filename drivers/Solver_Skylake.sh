@@ -32,6 +32,7 @@ for s in ${SOLVERS[@]}; do
     echo ${outfile}
     echo % ${precond_L[${i}]} > ${outfile} 
     echo % ${precond_U[${i}]} >> ${outfile}
+    echo "./solver --solver ${s} --matrix ${MATRIX} --L ${precond_L[${i}]} --U ${precond_U[${i}]} --RHS ${RHSNAME} --outDir ${OUTDIR} --tolType 0 --tol ${TOL} --searchMax ${SEARCHMAX} --csrtrsvType 0 --monitorOrthog 1 >> ${outfile} 2>&1"
     ./solver --solver ${s} --matrix ${MATRIX} --L ${precond_L[${i}]} --U ${precond_U[${i}]} --RHS ${RHSNAME} --outDir ${OUTDIR} --tolType 0 --tol ${TOL} --searchMax ${SEARCHMAX} --csrtrsvType 0 --monitorOrthog 1 >> ${outfile} 2>&1
   echo ${i}
   done

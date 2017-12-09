@@ -431,6 +431,8 @@ data_fgmres(
       else {
         printf("FGMRES_partrsv_search(%d) = %.16e;\n", search1, fabs(givens.val[(search1)]));
       }
+      fflush(stdout);
+
       // update the solution
       // solve the least squares problem
       if ( fabs(givens.val[(search1)]) < rtol  || (search == (search_max-1)) ) {
