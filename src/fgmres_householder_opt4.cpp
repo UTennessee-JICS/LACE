@@ -87,7 +87,7 @@ data_fgmres_householder(
     const int BINS = (n/STRIP);
     const int endStrip = BINS*STRIP;
     int startStrip = 0;
-    printf("STRIP = %d BINS = %d endStrip = %d startStrip =%d\n",
+    printf("%% STRIP = %d BINS = %d endStrip = %d startStrip =%d\n",
         STRIP, BINS, endStrip, startStrip );
     fflush(stdout);
     // dataType *sumTemp;
@@ -161,7 +161,7 @@ data_fgmres_householder(
     // Memory alignment hints for optimized access
     #if (defined(__GNUC__) || defined(__GNUG__)) && !(defined(__clang__) || defined(__INTEL_COMPILER))
       /* GNU GCC/G++. --------------------------------------------- */
-      printf("GNU COMPILER\n");
+      printf("%% GNU COMPILER\n");
       r.val = (dataType*) __builtin_assume_aligned( r.val, DEV_ALIGN ); // used for initial residual,
                                      // preconditioner application,
                                      // and solution update
@@ -175,7 +175,7 @@ data_fgmres_householder(
     #endif
     #if (defined(__INTEL_COMPILER) || defined(__ICC))
       /* INTEL ICC/C++. --------------------------------------------- */
-      printf("INTEL COMPILER\n");
+      printf("%% INTEL COMPILER\n");
       __assume_aligned( r.val, DEV_ALIGN ); // used for initial residual,
                                      // preconditioner application,
                                      // and solution update

@@ -227,9 +227,14 @@ main(int argc, char * argv[])
   strcpy(output_x, output_basename);
   std::string l1(L_name);
   std::size_t pos = l1.find("sweeps");
-  std::string l2 = l1.substr(pos-2, 20);
+  printf("%% pos = %lu\n", pos );
   char suffixBuffer[256];
-  sprintf(suffixBuffer, "_%s_%s.mtx", solver_name, l2.c_str());
+  if (pos !=std::string::npos) {
+    std::string l2 = l1.substr(pos-2, 20);
+    sprintf(suffixBuffer, "_%s_%s.mtx", solver_name, l2.c_str());
+  } else {
+    sprintf(suffixBuffer, "_%s_GE.mtx", solver_name);
+  }
   strcat(output_x, suffixBuffer);
   data_zwrite_dense(x, output_x);
 
