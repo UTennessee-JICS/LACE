@@ -39,6 +39,7 @@ TESTS = \
 
 DRIVERS = \
 	drivers/generate_iLU \
+	drivers/generate_GE \
 	drivers/solver
 
 TARGETS = $(TESTS) $(DRIVERS)
@@ -177,6 +178,14 @@ drivers/generate_iLU_OBJS = drivers/generate_iLU.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
 	src/parilu_v0_3_prescribedSweeps.o
+
+drivers/generate_GE_OBJS = drivers/generate_GE.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	control/init.o control/magma_zmscale.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o
 
 drivers/solver_OBJS = drivers/solver_interface.o \
 	control/constants.o control/magma_zmio.o \

@@ -2,6 +2,7 @@
 #include "../include/sparse.h"
 #include <mkl.h>
 #include <math.h>
+#include <limits>
 #include <float.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -337,7 +338,7 @@ data_fgmres(
       }
 
       // Watch out for happy breakdown
-      if ( fabs(h.val[idx((search1),search,h.ld)]) > 0 ) {
+      if ( fabs(h.val[idx((search1),search,h.ld)]) > std::numeric_limits<double>::epsilon() ) {
         #pragma omp parallel
         #pragma omp for simd schedule(static,chunk) nowait
         #pragma vector aligned
