@@ -31,8 +31,8 @@ SEARCHMAX=(1000)
 
 mkdir -p ${OUTDIR}
 
-Lfiles=("$( ls ${PRECONDIR}/${MATRIXNAME}*_L*.mtx )")
-Ufiles=("$( ls ${PRECONDIR}/${MATRIXNAME}*_U*.mtx )")
+Lfiles=("$( ls ${PRECONDIR}/${MATRIXNAME}_L*.mtx )")
+Ufiles=("$( ls ${PRECONDIR}/${MATRIXNAME}_U*.mtx )")
 
 IFS=' ' read -r -a precond_L <<< $Lfiles
 IFS=' ' read -r -a precond_U <<< $Ufiles
