@@ -56,7 +56,9 @@ data_orthogonality_error( data_d_matrix* krylov,
   data_d_matrix eye={Magma_DENSE};
   data_zvinit( &eye, search, search, zero );
   #pragma omp parallel
-  #pragma omp for simd schedule(monotonic:static) nowait
+  //#pragma omp for schedule(monotonic:static) nowait
+  #pragma omp for schedule(static) nowait
+  #pragma simd  
   #pragma vector aligned
   for (int e=0; e<eye.ld; e++) {
     eye.val[idx(e,e,eye.ld)] = 1.0;
@@ -64,7 +66,9 @@ data_orthogonality_error( data_d_matrix* krylov,
 
 
   #pragma omp parallel
-  #pragma omp for collapse(2) schedule(monotonic:static) nowait
+  //#pragma omp for collapse(2) schedule(monotonic:static) nowait
+  #pragma omp for collapse(2) schedule(static) nowait
+  #pragma simd
   #pragma vector aligned
   for (int i=0; i<eye.num_rows; i++) {
     for (int j=0; j<eye.num_cols; j++) {
@@ -100,7 +104,9 @@ data_orthogonality_error_incremental( data_d_matrix* krylov,
   dataType inorm = 0.0;
 
   #pragma omp parallel
-  #pragma omp for schedule(monotonic:static) reduction(+:inorm) nowait
+  #pragma omp for schedule(static) reduction(+:inorm) nowait
+  //#pragma omp for schedule(monotonic:static) reduction(+:inorm) nowait
+  #pragma simd
   #pragma vector aligned
   for (int i=0; i<eye.num_rows; ++i) {
     dataType sum = data_zdot_mkl( krylov->num_rows,
