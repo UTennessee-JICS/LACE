@@ -7,7 +7,7 @@ This README would normally document whatever steps are necessary to get your app
 * Quick summary
 Linear Algebra for Computational Engineering
 * Version
-0.0
+0.1.0
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
 ### How do I get set up? ###
