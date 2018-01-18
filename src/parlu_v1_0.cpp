@@ -1,7 +1,7 @@
 /*
     -- LACE (version 0.0) --
        Univ. of Tennessee, Knoxville
-       
+
        @author Stephen Wood
 
 */
@@ -10,39 +10,39 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-extern "C" 
+extern "C"
 void
-data_ParLU_v1_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U ) 
+data_ParLU_v1_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U )
 {
   // Separate the strictly lower and upper elements into L, and U respectively.
   //L->diagorder_type = Magma_NODIAG;
   L->diagorder_type = Magma_UNITY;
   data_zmconvert(*A, L, Magma_DENSE, Magma_DENSEL);
-  
+
   U->diagorder_type = Magma_VALUE;
   data_zmconvert(*A, U, Magma_DENSE, Magma_DENSEU);
-  
+
   int row_limit = A->num_rows;
   int col_limit = A->num_cols;
   if (A->pad_rows > 0 && A->pad_cols > 0) {
     row_limit = A->pad_rows;
     col_limit = A->pad_cols;
   }
-  
+
   // ParLU element wise
   dataType sumL = 0.0;
   dataType sumU = 0.0;
   int iter = 0;
   dataType tmp = 0.0;
   dataType step = 1.0;
-  dataType tol = 1.0e-15;
+  dataType tol = 1.0e-20;
   dataType Anorm = 0.0;
- 
+
   int num_threads = 0;
-  
+
   data_zfrobenius(*A, &Anorm);
-  DEV_PRINTF("%% Anorm = %e\n", Anorm);
-  
+  printf("%% Anorm = %e\n", Anorm);
+
   dataType wstart = omp_get_wtime();
   while ( step > tol ) {
     step = 0.0;
@@ -77,10 +77,10 @@ data_ParLU_v1_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U )
     }
     step /= Anorm;
     iter++;
-    DEV_PRINTF("%% iteration = %d step = %e\n", iter, step);
+    printf("%% iteration = %d step = %e\n", iter, step);
   }
   dataType wend = omp_get_wtime();
   dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
-  DEV_PRINTF("%% ParLU v1.0 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
+  printf("%% ParLU v1.0 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n",
     num_threads, iter, wend-wstart, ompwtime );
 }

@@ -10,6 +10,7 @@
 extern "C" {
 #endif
 
+//typedef struct alignas(DEV_ALIGN) data_d_matrix
 typedef struct data_d_matrix
 {
     data_storage_t     storage_type;            // matrix format - CSR, ELL, SELL-P
@@ -22,11 +23,11 @@ typedef struct data_d_matrix
     data_int_t         max_nnz_row;             // opt: max number of nonzeros in one row
     data_int_t         diameter;                // opt: max distance of entry from main diagonal
     data_int_t         true_nnz;                // opt: true nnz
-    dataType           *val;                    // array containing values
-    dataType           *diag;                   // opt: diagonal entries
-    data_int_t         *row;                    // row pointer CPU
-    data_int_t         *rowidx;                 // opt: array containing row
-    data_int_t         *col;                    // array containing col indices
+    dataType           *val __attribute__ ((aligned (DEV_ALIGN)));                    // array containing values
+    dataType           *diag __attribute__ ((aligned (DEV_ALIGN)));                   // opt: diagonal entries
+    data_int_t         *row __attribute__ ((aligned (DEV_ALIGN)));                    // row pointer CPU
+    data_int_t         *rowidx __attribute__ ((aligned (DEV_ALIGN)));                 // opt: array containing row
+    data_int_t         *col __attribute__ ((aligned (DEV_ALIGN)));                    // array containing col indices
     data_int_t         *list;                   // opt: linked list pointing to next element
     data_int_t         *blockinfo;              // opt: for BCSR format CPU case
     data_int_t         blocksize;               // opt: info for SELL-P/BCSR
@@ -37,7 +38,7 @@ typedef struct data_d_matrix
     data_int_t         ld;                      // opt: leading dimension for dense
     data_int_t         pad_rows;
     data_int_t         pad_cols;
-} data_d_matrix;
+} __attribute__ ((aligned (DEV_ALIGN))) data_d_matrix;
 
 struct Int3 {
   int a[3];
@@ -72,8 +73,8 @@ typedef struct data_d_solver_par
     //---------------------------------
     // the input for verbose is:
     // 0 = production mode
-    // k>0 = convergence and timing is monitored in *res_vec and *timeing every  
-    // k-th iteration 
+    // k>0 = convergence and timing is monitored in *res_vec and *timeing every
+    // k-th iteration
     //
     // the output of info is:
     //  0 = convergence (stopping criterion met)
@@ -94,12 +95,12 @@ typedef struct data_z_preconditioner
     data_int_t             bsize;
     data_int_t             offset;
     data_precision         format;
-    dataType               atol;                
-    dataType               rtol;    
+    dataType               atol;
+    dataType               rtol;
     data_int_t             maxiter;
-    data_int_t             restart; 
+    data_int_t             restart;
     data_int_t             numiter;
-    data_int_t             spmv_count;  
+    data_int_t             spmv_count;
     dataType               init_res;
     dataType               final_res;
     real_Double_t          runtime;                 // feedback: preconditioner runtime needed
@@ -119,7 +120,7 @@ typedef struct data_z_preconditioner
     data_d_matrix          work2;
     data_int_t*            int_array_1;
     data_int_t*            int_array_2;
-    
+
 #if defined(HAVE_PASTIX)
     pastix_data_t*         pastix_data;
     data_int_t*            iparm;
@@ -129,39 +130,49 @@ typedef struct data_z_preconditioner
 
 typedef struct data_z_preconditioner_log
 {
-    data_int_t             sweeps;	
+    data_int_t             sweeps;
+    data_int_t             maxSweeps;
     dataType               tol;
+    dataType               finalStep;
     dataType               A_Frobenius;
     dataType               precond_generation_time;
     dataType               initial_residual;
     dataType               initial_nonlinear_residual;
-    dataType               residual;	
+    dataType               residual;
     dataType               nonlinear_residual;
-    data_int_t             omp_num_threads;	  
-} data_d_preconditioner_log;
+    data_int_t             omp_num_threads;
+} __attribute__ ((aligned (DEV_ALIGN))) data_d_preconditioner_log;
 
 
 typedef struct data_z_gmres_log
 {
-    data_int_t             search_directions;	
-    dataType               solve_time;	
+    data_int_t             restarts;
+    data_int_t             search_directions;
+    dataType               solve_time;
     dataType               initial_residual;
     dataType               final_residual;
-    dataType               scaled_residual;	
-    dataType               original_residual;  
-} data_d_gmres_log;
+    dataType               scaled_residual;
+    dataType               original_residual;
+} __attribute__ ((aligned (DEV_ALIGN))) data_d_gmres_log;
 
 typedef struct data_z_gmres_param
 {
-    data_int_t             search_max;	   // max sear directions
-    data_int_t             tol_type;	     // 0 -- absolute; 1 -- relative
-    dataType               rtol;	         // relative residual reduction factor
+
+    data_int_t             search_max;     // max search directions per restart
+    data_int_t             tol_type;       // 0 -- absolute; 1 -- relative
+    dataType               rtol;           // relative residual reduction factor
     data_int_t             reorth;         // 0 -- Brown/Hindmarsh condition (default)
                                            // 1 -- Never reorthogonalize (not recommended)
                                            // 2 -- Always reorthogonalize (not cheap!)
     data_int_t             user_csrtrsv_choice; // 0 -- MKL CSRTRSV
                                                 // 1 -- ParCSRTRSV
-} data_d_gmres_param;
+    data_int_t             monitorOrthog;  // 0 -- do not monitor
+                                           // 1 -- monitor
+    data_int_t             restart_max;    // max restarts
+    data_int_t             precondition;   // 0 -- do not precondition
+                                           // 1 -- apply preconditioner
+    dataType               parilu_reduction;
+} __attribute__ ((aligned (DEV_ALIGN))) data_d_gmres_param;
 
 
 #ifdef __cplusplus

@@ -148,7 +148,8 @@ data_zvinit(
     data_d_matrix *x,
     data_int_t num_rows,
     data_int_t num_cols,
-    dataType values );
+    dataType values,
+    data_order_t major = MagmaColMajor );
 
 int
 data_z_csr_compressor(
@@ -350,18 +351,18 @@ data_zmdiagadd(
 
 int
 data_zmscale_generate(
-	  int n,
-	  data_scale_t* scaling,
-	  data_side_t* side,
-	  data_d_matrix* A,
-	  data_d_matrix* scaling_factors );
+    int n,
+    data_scale_t* scaling,
+    data_side_t* side,
+    data_d_matrix* A,
+    data_d_matrix* scaling_factors );
 
 int
 data_zmscale_apply(
-	  int n,
-	  data_side_t* side,
-	  data_d_matrix* scaling_factors,
-	  data_d_matrix* A );
+    int n,
+    data_side_t* side,
+    data_d_matrix* scaling_factors,
+    data_d_matrix* A );
 
 int
 data_zdimv(
@@ -763,6 +764,31 @@ data_PariLU_v0_3(
   data_d_preconditioner_log* log );
 
 void
+data_PariLU_v0_3_prescribedSweeps(
+  data_d_matrix* A,
+  data_d_matrix* L,
+  data_d_matrix* U,
+  dataType reduction,
+  data_d_preconditioner_log* log );
+
+void
+data_PariLU_v0_3_gpu( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U, 
+  dataType reduction,
+  data_d_preconditioner_log* log,
+  int nthreads);
+
+void
+data_PariLU_v0_3_gpu_prescribedSweeps(
+  data_d_matrix* A,
+  data_d_matrix* L,
+  data_d_matrix* U,
+  dataType reduction,
+  data_d_preconditioner_log* log );
+
+void
 data_PariLU_v0_4(
   data_d_matrix* A,
   data_d_matrix* L,
@@ -934,6 +960,11 @@ data_inverse_bcsr(
 //======================================
 
 int
+data_MKL_FGMRES(
+    data_d_matrix *A, data_d_matrix *x0, data_d_matrix *b,
+    data_d_gmres_param *solverParam );
+
+int
 data_gmres_basic(
     data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
     data_d_gmres_param *gmres_par,
@@ -985,7 +1016,21 @@ data_fgmres(
     data_d_gmres_log *gmres_log );
 
 int
+data_fgmres_restart(
+    data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
+    data_d_matrix *L, data_d_matrix *U,
+    data_d_gmres_param *gmres_par,
+    data_d_gmres_log *gmres_log );
+
+int
 data_fgmres_householder(
+    data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
+    data_d_matrix *L, data_d_matrix *U,
+    data_d_gmres_param *gmres_par,
+    data_d_gmres_log *gmres_log );
+
+int
+data_fgmres_householder_restart(
     data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
     data_d_matrix *L, data_d_matrix *U,
     data_d_gmres_param *gmres_par,
@@ -1045,6 +1090,12 @@ givens_rotation( dataType a,
 
 void
 data_orthogonality_error( data_d_matrix* krylov,
+  dataType* ortherr,
+  int* imax,
+  int search );
+
+void
+data_orthogonality_error_incremental( data_d_matrix* krylov,
   dataType* ortherr,
   int* imax,
   int search );

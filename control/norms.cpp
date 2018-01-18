@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "../include/sparse.h"
 
-extern "C" 
+extern "C"
 dataType
 data_dnrm2(
     data_int_t n,
@@ -14,7 +14,7 @@ data_dnrm2(
 
 
 
-extern "C" 
+extern "C"
 int
 data_zfrobenius_csr(
     data_d_matrix A,
@@ -22,7 +22,7 @@ data_zfrobenius_csr(
 {
     int i,j;
     *res = 0.0;
-    
+
     for (i=0; i<A.num_rows; i++) {
         for (j=A.row[i]; j<A.row[i+1]; j++) {
             (*res) = (*res) + A.val[j] * A.val[j];
@@ -35,7 +35,7 @@ data_zfrobenius_csr(
 }
 
 
-extern "C" 
+extern "C"
 int
 data_zfrobenius_dense(
     data_d_matrix A,
@@ -43,7 +43,7 @@ data_zfrobenius_dense(
 {
     int i,j;
     *res = 0.0;
-    
+
     if (A.major == MagmaRowMajor ) {
       for (i=0; i<A.num_rows; i++) {
         for (j=0; j<A.num_cols; j++) {
@@ -64,35 +64,35 @@ data_zfrobenius_dense(
     return DEV_SUCCESS;
 }
 
-extern "C" 
+extern "C"
 int
 data_zfrobenius(
     data_d_matrix A,
     dataType *res )
 {
   int info = 0;
-  if ( A.storage_type == Magma_CSR 
+  if ( A.storage_type == Magma_CSR
       || A.storage_type == Magma_CSRD
-      || A.storage_type == Magma_CSRL 
-      || A.storage_type == Magma_CSRU 
+      || A.storage_type == Magma_CSRL
+      || A.storage_type == Magma_CSRU
       || A.storage_type == Magma_CSRCOO
       || A.storage_type == Magma_CSCD
-      || A.storage_type == Magma_CSCL 
-      || A.storage_type == Magma_CSCU 
+      || A.storage_type == Magma_CSCL
+      || A.storage_type == Magma_CSCU
       || A.storage_type == Magma_CSCCOO ) {
-    info = data_zfrobenius_csr(A, res); 
+    info = data_zfrobenius_csr(A, res);
   }
   else if ( A.storage_type == Magma_DENSE
       || A.storage_type == Magma_DENSEL
       || A.storage_type == Magma_DENSEU ) {
-    info = data_zfrobenius_dense(A, res);    
+    info = data_zfrobenius_dense(A, res);
   }
-  
+
   return info;
 }
 
 
-extern "C" 
+extern "C"
 int
 data_zfrobenius_diff_csr(
     data_d_matrix A,
@@ -102,7 +102,7 @@ data_zfrobenius_diff_csr(
     dataType tmp2;
     int i,j,k;
     *res = 0.0;
-    
+
     for (i=0; i<A.num_rows; i++) {
         for (j=A.row[i]; j<A.row[i+1]; j++) {
             int localcol = A.col[j];
@@ -120,7 +120,7 @@ data_zfrobenius_diff_csr(
     return DEV_SUCCESS;
 }
 
-extern "C" 
+extern "C"
 int
 data_zfrobenius_diff_dense(
     data_d_matrix A,
@@ -130,7 +130,7 @@ data_zfrobenius_diff_dense(
     dataType tmp2;
     int i,j;
     *res = 0.0;
-    
+
     if (A.major == MagmaRowMajor ) {
       for (i=0; i<A.num_rows; i++) {
         for (j=0; j<A.num_cols; j++) {
@@ -153,7 +153,7 @@ data_zfrobenius_diff_dense(
     return DEV_SUCCESS;
 }
 
-extern "C" 
+extern "C"
 int
 data_zfrobenius_diff(
     data_d_matrix A,
@@ -161,51 +161,51 @@ data_zfrobenius_diff(
     dataType *res )
 {
   int info = 0;
-  if ( A.storage_type == Magma_CSR 
+  if ( A.storage_type == Magma_CSR
       || A.storage_type == Magma_CSRD
-      || A.storage_type == Magma_CSRL 
-      || A.storage_type == Magma_CSRU 
+      || A.storage_type == Magma_CSRL
+      || A.storage_type == Magma_CSRU
       || A.storage_type == Magma_CSRCOO
       || A.storage_type == Magma_CSCD
-      || A.storage_type == Magma_CSCL 
-      || A.storage_type == Magma_CSCU 
+      || A.storage_type == Magma_CSCL
+      || A.storage_type == Magma_CSCU
       || A.storage_type == Magma_CSCCOO ) {
-    info = data_zfrobenius_diff_csr(A, B, res); 
+    info = data_zfrobenius_diff_csr(A, B, res);
   }
   else if ( A.storage_type == Magma_DENSE
       || A.storage_type == Magma_DENSEL
       || A.storage_type == Magma_DENSEU ) {
-    info = data_zfrobenius_diff_dense(A, B, res);    
+    info = data_zfrobenius_diff_dense(A, B, res);
   }
-  
+
   return info;
 }
 
-extern "C" 
+extern "C"
 int
-data_zfrobenius_LUresidual( 
+data_zfrobenius_LUresidual(
   data_d_matrix A,
   data_d_matrix L,
   data_d_matrix U,
   dataType *res)
 {
-  
+
   int rowlimit = A.num_rows;
   int collimit = A.num_cols;
   if (A.pad_rows > 0 && A.pad_cols > 0) {
      rowlimit = A.pad_rows;
      collimit = A.pad_cols;
   }
-  
+
   // fill diagonal of L
   if (L.diagorder_type == Magma_NODIAG) {
-    #pragma omp parallel  
+    #pragma omp parallel
     #pragma omp for nowait
     for (int i=0; i<rowlimit; i++) {
       L.val[ i*A.ld + i ] = 1.0;
     }
   }
-  
+
   // Check ||A-LU||_Frobenius
   dataType alpha = 1.0;
   dataType beta = 0.0;
@@ -216,11 +216,12 @@ data_zfrobenius_LUresidual(
   B.pad_cols = A.pad_cols;
   B.ld = A.ld;
   B.nnz = A.nnz;
-  B.val = (dataType*) calloc( rowlimit*collimit, sizeof(dataType) );
+  // B.val = (dataType*) calloc( rowlimit*collimit, sizeof(dataType) );
+  LACE_CALLOC( B.val, (rowlimit*collimit) );
   if (U.major == MagmaRowMajor) {
-    data_dgemm_mkl( L.major, MagmaNoTrans, MagmaNoTrans, 
-      rowlimit, rowlimit, collimit, 
-      alpha, L.val, L.ld, U.val, U.ld, 
+    data_dgemm_mkl( L.major, MagmaNoTrans, MagmaNoTrans,
+      rowlimit, rowlimit, collimit,
+      alpha, L.val, L.ld, U.val, U.ld,
       beta, B.val, B.ld );
   }
   else {
@@ -234,43 +235,43 @@ data_zfrobenius_LUresidual(
     //data_zmconvert(U, &C, Magma_DENSE, Magma_DENSE);
     //printf("after data_zmconvert(U, &C, Magma_DENSEU, Magma_DENSEU);\n");
     //data_zdisplay_dense( &C );
-    data_dgemm_mkl( L.major, MagmaNoTrans, MagmaNoTrans, 
-      rowlimit, rowlimit, collimit, 
-      alpha, L.val, L.ld, C.val, C.ld, 
+    data_dgemm_mkl( L.major, MagmaNoTrans, MagmaNoTrans,
+      rowlimit, rowlimit, collimit,
+      alpha, L.val, L.ld, C.val, C.ld,
       beta, B.val, B.ld );
       data_zmfree( &C );
   }
   data_zfrobenius_diff(A, B, res);
-  
+
   data_zmfree( &B );
   return DEV_SUCCESS;
 }
 
-extern "C" 
+extern "C"
 int
-data_zfrobenius_inplaceLUresidual( 
+data_zfrobenius_inplaceLUresidual(
   data_d_matrix A,
   data_d_matrix LU,
   dataType *res)
 {
-  
+
   int rowlimit = A.num_rows;
   int collimit = A.num_cols;
   if (A.pad_rows > 0 && A.pad_cols > 0) {
      rowlimit = A.pad_rows;
      collimit = A.pad_cols;
   }
-  
+
   // Separate L and U
   data_d_matrix L = {Magma_DENSEL};
   L.diagorder_type = Magma_UNITY;
   data_zmconvert(LU, &L, Magma_DENSE, Magma_DENSEL);
   //data_zdisplay_dense( &L );
-  
+
   data_d_matrix U = {Magma_DENSEU};
   U.diagorder_type = Magma_VALUE;
   data_zmconvert(LU, &U, Magma_DENSE, Magma_DENSEU);
-  
+
   // Check ||A-LU||_Frobenius
   dataType alpha = 1.0;
   dataType beta = 0.0;
@@ -281,13 +282,14 @@ data_zfrobenius_inplaceLUresidual(
   B.pad_cols = A.pad_cols;
   B.ld = A.ld;
   B.nnz = A.nnz;
-  B.val = (dataType*) calloc( B.num_rows*B.num_cols, sizeof(dataType) );
-  data_dgemm_mkl( L.major, MagmaNoTrans, MagmaNoTrans, 
-    rowlimit, rowlimit, collimit, 
-    alpha, L.val, L.ld, U.val, U.ld, 
+  // B.val = (dataType*) calloc( B.num_rows*B.num_cols, sizeof(dataType) );
+  LACE_CALLOC( B.val, (rowlimit*collimit) );
+  data_dgemm_mkl( L.major, MagmaNoTrans, MagmaNoTrans,
+    rowlimit, rowlimit, collimit,
+    alpha, L.val, L.ld, U.val, U.ld,
     beta, B.val, B.ld );
   data_zfrobenius_diff(A, B, res);
-  
+
   data_zmfree( &L );
   data_zmfree( &U );
   data_zmfree( &B );
@@ -304,30 +306,32 @@ data_zilures(
     dataType *res,
     dataType *nonlinres )
 {
-	int info = 0;
+  int info = 0;
   *res = 0.0;
   *nonlinres = 0.0;
 
     dataType tmp;
     int i, j, k;
-    
+
     dataType one = 1.0;
 
     data_d_matrix LL={Magma_CSR}, L_d={Magma_CSR}, U_d={Magma_CSR}, LU_d={Magma_CSR};
-    
+
     if( L.row[1]==1 ){        // lower triangular with unit diagonal
-    	//printf("L lower triangular.\n");
+      //printf("L lower triangular.\n");
         LL.diagorder_type = Magma_UNITY;
         data_zmconvert( L, &LL, Magma_CSR, Magma_CSRL );
     }
     else if ( L.row[1]==0 ){ // strictly lower triangular
-    	printf("L strictly lower triangular.\n");
+      printf("L strictly lower triangular.\n");
         data_zmconvert( L, &LL, Magma_CSR, Magma_CSR );
         free( LL.col );
         free( LL.val );
         LL.nnz = L.nnz+L.num_rows;
-        LL.val = (dataType*) malloc( LL.nnz*sizeof(dataType) );
-        LL.col = (int*) malloc( LL.nnz*sizeof(int) );
+        // LL.val = (dataType*) malloc( LL.nnz*sizeof(dataType) );
+        // LL.col = (int*) malloc( LL.nnz*sizeof(int) );
+        LACE_CALLOC( LL.val, LL.nnz );
+        LACE_CALLOC( LL.col, LL.nnz );
         int z=0;
         for (i=0; i < L.num_rows; i++) {
             LL.row[i] = z;
@@ -357,19 +361,19 @@ data_zilures(
         data_zmconvert( U, &U_d, Magma_CSC, Magma_CSR );
     }
     data_zmfree( &LL );
-    
+
     data_z_spmm( one, L_d, U_d, &LU_d );
     data_zmconvert( LU_d, LU, Magma_CSR, Magma_CSR );
     data_zrowentries( LU );
     data_zdiameter( LU );
-    
+
     data_zmfree( &L_d );
     data_zmfree( &U_d );
     data_zmfree( &LU_d );
 
     // compute Frobenius norm of A-LU
     for(i=0; i<A.num_rows; i++){
-    	for(j=A.row[i]; j<A.row[i+1]; j++){
+      for(j=A.row[i]; j<A.row[i+1]; j++){
             int lcol = A.col[j];
             for(k=LU->row[i]; k<LU->row[i+1]; k++){
                 if( LU->col[k] == lcol ){
@@ -383,6 +387,7 @@ data_zilures(
     }
 
     for(i=0; i<LU->num_rows; i++){
+        #pragma nounroll
         for(j=LU->row[i]; j<LU->row[i+1]; j++){
             tmp = LU->val[j];
             (*res) = (*res) + tmp * tmp;
@@ -399,7 +404,7 @@ data_zilures(
     return info;
 }
 
-extern "C" 
+extern "C"
 int
 data_zilures_bcsr(
     data_d_matrix A,
@@ -409,13 +414,13 @@ data_zilures_bcsr(
     dataType *res,
     dataType *nonlinres )
 {
-	int info = 0;
+  int info = 0;
   *res = 0.0;
   *nonlinres = 0.0;
   dataType tmp;
   int i, j, k;
   dataType one = 1.0;
-  
+
   DEV_CHECKPT
   data_d_matrix Lcsr = {Magma_CSR};
   data_zmconvert(L, &Lcsr, Magma_BCSR, Magma_CSR);
@@ -424,13 +429,13 @@ data_zilures_bcsr(
   data_zmconvert(U, &Ucsr, Magma_BCSR, Magma_CSR);
   Ucsr.storage_type = Magma_CSR;
   DEV_CHECKPT
-  
+
   //data_zmcopy( A, LU );
   data_z_spmm( one, Lcsr, Ucsr, LU );
-  
+
   // compute Frobenius norm of A-LU
   for(i=0; i<A.num_rows; i++){
-  	for(j=A.row[i]; j<A.row[i+1]; j++){
+    for(j=A.row[i]; j<A.row[i+1]; j++){
           int lcol = A.col[j];
           for(k=LU->row[i]; k<LU->row[i+1]; k++){
               if( LU->col[k] == lcol ){
@@ -442,17 +447,17 @@ data_zilures_bcsr(
           }
       }
   }
-  
+
   for(i=0; i<LU->num_rows; i++){
       for(j=LU->row[i]; j<LU->row[i+1]; j++){
           tmp = LU->val[j];
           (*res) = (*res) + tmp * tmp;
       }
   }
-  
+
   (*res) =  sqrt((*res));
   (*nonlinres) =  sqrt((*nonlinres));
-  
+
 //cleanup:
   if( info !=0 ){
     data_zmfree( LU );
@@ -463,7 +468,7 @@ data_zilures_bcsr(
 }
 
 
-extern "C" 
+extern "C"
 int
 data_infinity_norm(
   data_d_matrix *A,
@@ -473,7 +478,7 @@ data_infinity_norm(
   int i,j;
   *max = 0.0;
   dataType tmp = 0.0;
-  
+
   for (i=0; i<A->num_rows; i++) {
     tmp = 0.0;
     for (j=0; j<A->num_cols; j++) {
@@ -484,11 +489,11 @@ data_infinity_norm(
       (*imax) = i;
     }
   }
-  
+
   return DEV_SUCCESS;
 }
 
-extern "C" 
+extern "C"
 int
 data_maxfabs_csr(
     data_d_matrix A,
@@ -499,7 +504,7 @@ data_maxfabs_csr(
     int i,j;
     *max = 0.0;
     dataType tmp = 0.0;
-    
+
     for (i=0; i<A.num_rows; i++) {
         for (j=A.row[i]; j<A.row[i+1]; j++) {
             tmp = fabs( A.val[j] );
@@ -515,7 +520,7 @@ data_maxfabs_csr(
 }
 
 
-extern "C" 
+extern "C"
 int
 data_norm_diff_vec(
   data_d_matrix* A,
@@ -526,9 +531,16 @@ data_norm_diff_vec(
   assert(A->nnz == B->nnz);
   for (int i=0; i<A->nnz; i++) {
     (*norm) = (*norm) + pow( (A->val[i] - B->val[i]), 2 );
-    //printf("data_norm_diff_vec %d %e %e %e\n", i, A->val[i], B->val[i], (A->val[i] - B->val[i]) ); 
+    //printf("data_norm_diff_vec %d %e %e %e\n", i, A->val[i], B->val[i], (A->val[i] - B->val[i]) );
   }
   (*norm) = sqrt((*norm));
-  
+
   return info;
 }
+
+//extern "C"
+// template <class T>
+// inline int
+// sgn(T v) {
+//     return (v > T(0)) - (v < T(0));
+// }
