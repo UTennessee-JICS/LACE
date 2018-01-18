@@ -36,7 +36,7 @@ main(int argc, char * argv[])
   if (argc < 4) {
     printf("Usage %s <matrix> <tile size> <output directory>\n", argv[0]);
     return 1;
-  } else   {
+  } else {
     sparse_filename = argv[1];
     tile            = atoi(argv[2]);
     output_dir      = argv[3];
@@ -152,8 +152,8 @@ main(int argc, char * argv[])
   printf("%% PariLU v0.3\n");
   // Separate the strictly lower and upper elements
   // into L, and U respectively.
-  data_d_matrix L = { Magma_CSRL };
-  data_d_matrix U = { Magma_CSCU };
+  data_d_matrix L    = { Magma_CSRL };
+  data_d_matrix U    = { Magma_CSCU };
   dataType reduction = 1.0e-10;
   data_d_preconditioner_log p03_log;
   data_PariLU_v0_3(&A, &L, &U, reduction, &p03_log);
@@ -206,4 +206,4 @@ main(int argc, char * argv[])
   data_zmfree(&Umkl);
 
   return 0;
-}
+} // main

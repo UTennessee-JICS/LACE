@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <gtest/gtest.h>
@@ -12,30 +11,33 @@
 
 #include "test_cmd_line.h"
 
-class LUTest: public
+class LUTest : public
   ::testing::Test
 {
 protected:
-  LUTest() {}
+  LUTest(){ }
 
   // per-test-case set-up
-  static void SetUpTestCase() {
+  static void
+  SetUpTestCase()
+  {
     printf("seting up\n");
     fflush(stdout);
 
     printf("my_argc = %d\n", my_argc);
-    for (int i=0; i< my_argc; ++i) {
+    for (int i = 0; i < my_argc; ++i) {
       printf("my_agv[%d] = %s\n", i, my_argv[i]);
     }
     fflush(stdout);
 
     int dim = 1000;
-    if (my_argc>1) {
+    if (my_argc > 1) {
       int count = 1;
       while (count <= my_argc) {
-        if ( (strcmp(my_argv[count], "--dim") == 0)
-            && count+1 < my_argc ) {
-          dim = atoi(my_argv[count+1]);
+        if ( (strcmp(my_argv[count], "--dim") == 0) &&
+          count + 1 < my_argc)
+        {
+          dim   = atoi(my_argv[count + 1]);
           count = count + 2;
         }
         count++;
@@ -44,133 +46,138 @@ protected:
     printf("A is a %dx%d LARNV matrix\n", dim, dim);
     fflush(stdout);
     A = new data_d_matrix;
-    CHECK( data_zvinit( A, dim, dim, 0.0, MagmaRowMajor ) );
+    CHECK(data_zvinit(A, dim, dim, 0.0, MagmaRowMajor) );
 
-    int ione = 1;
-    int ISEED[4] = {0,0,0,1};
-    CHECK( LAPACKE_dlarnv( ione, ISEED, A->nnz, A->val ) );
-    for ( int i = 0; i<A->num_rows; i++ ) {
-      A->val[ i*A->ld + i ] += 1.0e3;
+    int ione     = 1;
+    int ISEED[4] = { 0, 0, 0, 1 };
+    CHECK(LAPACKE_dlarnv(ione, ISEED, A->nnz, A->val) );
+    for (int i = 0; i < A->num_rows; i++) {
+      A->val[ i * A->ld + i ] += 1.0e3;
     }
 
-    //data_zdisplay_dense( &A );
-    //data_d_matrix B = {Magma_DENSE};
-    //data_zmconvert( A, &B, Magma_DENSE, Magma_DENSE );
+    // data_zdisplay_dense( &A );
+    // data_d_matrix B = {Magma_DENSE};
+    // data_zmconvert( A, &B, Magma_DENSE, Magma_DENSE );
 
     // =========================================================================
     // MKL LU with no pivoting (Benchmark)
     // =========================================================================
     printf("%% MKL LU with no pivoting (Benchmark)\n");
-    data_d_matrix Amkl = {Magma_DENSE};
+    data_d_matrix Amkl = { Magma_DENSE };
     data_zmconvert((*A), &Amkl, Magma_DENSE, Magma_DENSE);
 
     dataType wstart = omp_get_wtime();
-    data_LUnp_mkl( &Amkl );
+    data_LUnp_mkl(&Amkl);
     dataType wend = omp_get_wtime();
-    printf("%% MKL LU with no pivoting required %f wall clock seconds as measured by omp_get_wtime()\n", wend-wstart );
+    printf("%% MKL LU with no pivoting required %f wall clock seconds as measured by omp_get_wtime()\n", wend - wstart);
 
-    Amkldiff = new dataType;
+    Amkldiff    = new dataType;
     (*Amkldiff) = 0.0;
     // Check ||A-LU||_Frobenius
     data_zfrobenius_inplaceLUresidual((*A), Amkl, Amkldiff);
     printf("MKL_LUnp_res = %e\n", (*Amkldiff));
-    data_zmfree( &Amkl );
+    data_zmfree(&Amkl);
     fflush(stdout);
-  }
+  } // SetUpTestCase
 
   // per-test-case tear-down
-  static void TearDownTestCase() {
-    data_zmfree( A );
-    free( Amkldiff );
+  static void
+  TearDownTestCase()
+  {
+    data_zmfree(A);
+    free(Amkldiff);
   }
 
   // per-test set-up and tear-down
-  virtual void SetUp() {}
-  virtual void TearDown() {}
+  virtual void
+  SetUp(){ }
+
+  virtual void
+  TearDown(){ }
 
   // shared by all tests
-  static data_d_matrix* A;// = {Magma_DENSE};
-  static dataType* Amkldiff;
+  static data_d_matrix * A;// = {Magma_DENSE};
+  static dataType * Amkldiff;
 };
 
-data_d_matrix* LUTest::A = NULL;
-dataType* LUTest::Amkldiff = NULL;
+data_d_matrix * LUTest::A   = NULL;
+dataType * LUTest::Amkldiff = NULL;
 
-TEST_F(LUTest, ParLUv0_0) {
+TEST_F(LUTest, ParLUv0_0){
   // =========================================================================
   // ParLU v0.0
   // =========================================================================
   printf("%% ParLU v0.0\n");
-  data_d_matrix L = {Magma_DENSEL};
-  data_d_matrix U = {Magma_DENSEU};
-  dataType Adiff = 0.0;
+  data_d_matrix L = { Magma_DENSEL };
+  data_d_matrix U = { Magma_DENSEU };
+  dataType Adiff  = 0.0;
   // Separate the strictly lower and upper elements
   // into L, and U respectively.
-  L = {Magma_DENSEL};
-  U = {Magma_DENSEU};
-  data_ParLU_v0_0( A, &L, &U);
+  L = { Magma_DENSEL };
+  U = { Magma_DENSEU };
+  data_ParLU_v0_0(A, &L, &U);
   // Check ||A-LU||_Frobenius
   data_zfrobenius_LUresidual((*A), L, U, &Adiff);
   printf("ParLUv0_0_res = %e\n", Adiff);
   fflush(stdout);
 
-  EXPECT_LE( Adiff, (*Amkldiff)*10.0 );
+  EXPECT_LE(Adiff, (*Amkldiff) * 10.0);
 
-  data_zmfree( &L );
-  data_zmfree( &U );
+  data_zmfree(&L);
+  data_zmfree(&U);
   // =========================================================================
 }
 
-TEST_F(LUTest, ParLUv0_1) {
+TEST_F(LUTest, ParLUv0_1){
   // =========================================================================
   // ParLU v0.1
   // =========================================================================
   printf("%% ParLU v0.1\n");
-  data_d_matrix L = {Magma_DENSEL};
-  data_d_matrix U = {Magma_DENSEU};
-  dataType Adiff = 0.0;
+  data_d_matrix L = { Magma_DENSEL };
+  data_d_matrix U = { Magma_DENSEU };
+  dataType Adiff  = 0.0;
   // Separate the strictly lower and upper, elements
   // into L, U respectively.
   // Convert U to column major storage.
   printf("%% ParLU v0.1\n");
-  L = {Magma_DENSEL};
-  U = {Magma_DENSEU};
-  data_ParLU_v0_1( A, &L, &U);
+  L = { Magma_DENSEL };
+  U = { Magma_DENSEU };
+  data_ParLU_v0_1(A, &L, &U);
   // Check ||A-LU||_Frobenius
   data_zfrobenius_LUresidual((*A), L, U, &Adiff);
   printf("ParLUv0_1_res = %e\n", Adiff);
   fflush(stdout);
 
-  EXPECT_LE( Adiff, (*Amkldiff)*10.0 );
+  EXPECT_LE(Adiff, (*Amkldiff) * 10.0);
 
-  data_zmfree( &L );
-  data_zmfree( &U );
+  data_zmfree(&L);
+  data_zmfree(&U);
   // =========================================================================
 }
 
-TEST_F(LUTest, ParLUv1_0) {
+TEST_F(LUTest, ParLUv1_0){
   // =========================================================================
   // ParLU v1.0
   // =========================================================================
   printf("%% ParLU v1.0\n");
-  data_d_matrix L = {Magma_DENSEL};
-  data_d_matrix U = {Magma_DENSEU};
-  dataType Adiff = 0.0;
+  data_d_matrix L = { Magma_DENSEL };
+  data_d_matrix U = { Magma_DENSEU };
+  dataType Adiff  = 0.0;
   // Separate the strictly lower, upper elements
   // into L and U respectively.
   printf("%% ParLU v1.0\n");
-  L = {Magma_DENSEL};
-  U = {Magma_DENSEU};
+  L = { Magma_DENSEL };
+  U = { Magma_DENSEU };
   // ParLU with dot products replacing summations
-  data_ParLU_v1_0( A, &L, &U);
+  data_ParLU_v1_0(A, &L, &U);
   // Check ||A-LU||_Frobenius
   data_zfrobenius_LUresidual((*A), L, U, &Adiff);
   printf("ParLUv1_0_res = %e\n", Adiff);
   fflush(stdout);
 
-  EXPECT_LE( Adiff, (*Amkldiff)*10.0 );
+  EXPECT_LE(Adiff, (*Amkldiff) * 10.0);
 
-  data_zmfree( &L );
-  data_zmfree( &U );
+  data_zmfree(&L);
+  data_zmfree(&U);
   // =========================================================================
 }

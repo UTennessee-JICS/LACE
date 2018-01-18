@@ -59,7 +59,7 @@ main(int argc, char * argv[])
       {
         output_dir = argv[count + 1];
         count      = count + 2;
-      } else                                   {
+      } else {
         count++;
       }
     }
@@ -135,16 +135,16 @@ main(int argc, char * argv[])
   sprintf(suffixBuffer, "_UGE.mtx");
   strcat(output_U, suffixBuffer);
   data_zwrite_csr_mtx(Lmkl, Lmkl.major, output_L);
-  //data_d_matrix Ucsr = { Magma_CSRU };
-  //CHECK(data_zmconvert(Umkl, &Ucsr, Magma_CSC, Magma_CSR) );
-  //Ucsr.storage_type = Magma_CSRU;
-  //Ucsr.fill_mode    = MagmaUpper;
-  //data_zwrite_csr_mtx(Ucsr, Ucsr.major, output_U);
+  // data_d_matrix Ucsr = { Magma_CSRU };
+  // CHECK(data_zmconvert(Umkl, &Ucsr, Magma_CSC, Magma_CSR) );
+  // Ucsr.storage_type = Magma_CSRU;
+  // Ucsr.fill_mode    = MagmaUpper;
+  // data_zwrite_csr_mtx(Ucsr, Ucsr.major, output_U);
   data_zwrite_csr_mtx(Umkl, Umkl.major, output_U);
 
   data_zmfree(&Lmkl);
   data_zmfree(&Umkl);
-  //data_zmfree(&Ucsr);
+  // data_zmfree(&Ucsr);
   data_zmfree(&LUmkl);
   data_zmfree(&A);
   data_zmfree(&Asparse);

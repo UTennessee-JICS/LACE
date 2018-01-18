@@ -24,7 +24,7 @@ int
 main(int argc, char * argv[])
 {
   // begin with a square matrix A
-  //char * sparse_filename = NULL;
+  // char * sparse_filename = NULL;
   char * sparse_basename = NULL;
   char * output_dir      = NULL;
   char sparse_name[256];
@@ -116,8 +116,8 @@ main(int argc, char * argv[])
   printf("PariLU_v0_3_csrilu0_nonlinres = %e\n", Anonlinres);
 
   printf("%% %d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",
-      p03_log.maxSweeps, p03_log.sweeps, p03_log.omp_num_threads, p03_log.tol, p03_log.finalStep, p03_log.A_Frobenius,
-      p03_log.precond_generation_time, p03_log.initial_residual, p03_log.initial_nonlinear_residual, Ares, Anonlinres );
+    p03_log.maxSweeps, p03_log.sweeps, p03_log.omp_num_threads, p03_log.tol, p03_log.finalStep, p03_log.A_Frobenius,
+    p03_log.precond_generation_time, p03_log.initial_residual, p03_log.initial_nonlinear_residual, Ares, Anonlinres);
 
   std::string s1(matrix_name);
   sparse_basename = basename(matrix_name);
@@ -138,10 +138,10 @@ main(int argc, char * argv[])
   sprintf(suffixBuffer, "_UpariLUv03_%02dsweeps_%04dthreads.mtx", p03_log.sweeps, p03_log.omp_num_threads);
   strcat(output_U, suffixBuffer);
   data_zwrite_csr_mtx(L, L.major, output_L);
-  data_d_matrix Ucsr = {Magma_CSRU};
-    CHECK( data_zmconvert( U, &Ucsr, Magma_CSC, Magma_CSR ) );
-      Ucsr.storage_type = Magma_CSRU;
-        Ucsr.fill_mode = MagmaUpper;
+  data_d_matrix Ucsr = { Magma_CSRU };
+  CHECK(data_zmconvert(U, &Ucsr, Magma_CSC, Magma_CSR) );
+  Ucsr.storage_type = Magma_CSRU;
+  Ucsr.fill_mode    = MagmaUpper;
   data_zwrite_csr_mtx(Ucsr, Ucsr.major, output_U);
 
   data_zmfree(&L);
