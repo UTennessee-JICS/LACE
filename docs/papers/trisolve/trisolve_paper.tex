@@ -1,0 +1,56 @@
+
+\documentclass[12pt,preprint]{article}
+\begin{document}
+\title{Parallel preconditioning}
+\author{Stephen Wood}
+
+\maketitle
+
+Solve a linear system $Ax = b$ of dimensions $(m \times m)$ by generating an incomplete factorization 
+to be used as a preconditioner to GMRES. 
+Generate an LU factorization in parallel by utilizing PariLU [Chow 2015].
+Apply the LU factorization in parallel with the parallel algorithm below that follows directly from 
+Chow's parallel factorization. 
+Note: the L matrix contains $1$s on the major diagonal. \\
+
+%\begin{equation}
+%Ax = b\,,
+%\end{equation}
+%by first computing an LU factorization. \\
+ 
+PariLU:
+\begin{eqnarray}
+l_{ij} &=& \frac{1}{u_{jj}} \left ( a_{ij}-\sum\limits_{k=1}^{j-1} l_{ik} u_{ki} \right ) \\
+u_{ij} &=& a_{ij}-\sum\limits_{k=1}^{i-1} l_{ik} u_{ki} 
+\end{eqnarray}
+
+PariLU convergence metric:
+\begin{equation}
+step^{n+1} = \frac{1}{||A||} \sum\limits_{ij \in S} |l_{ij}^{n+1}-l_{ij}^n| + |u_{ij}^{n+1}-u_{ij}^n|
+\end{equation}
+
+forward solve (Parcsrtrsv): 
+\begin{equation}
+%y_i = \frac{1}{ l_{ii} } \left ( b_i-\sum\limits_{k=0}^{i-1} l_{ik} y_k \right ) 
+y_i = b_i-\sum\limits_{k=0}^{i-1} l_{ik} y_k
+\end{equation}
+
+backward solve (Parcsrtrsv): 
+\begin{equation}
+x_i = \frac{1}{ u_{ii} } \left ( y_i-\sum\limits_{k=i+1}^{m} u_{ik} x_k \right ) 
+\end{equation}
+
+Parcsrtrsv convergence metric for separate forward and backward solves:
+\begin{equation}
+step^{n+1} = \frac{1}{||b||} \sum\limits_{i} |z_{i}^{n+1}-z_{i}^n|\quad,\quad z\in[y,\,x]
+\end{equation}
+
+Convergence :
+
+
+
+Experimental results :
+
+
+
+\end{document}

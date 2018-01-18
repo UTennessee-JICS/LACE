@@ -1,4 +1,4 @@
-/* 
+/*
 *   Matrix Market I/O library for ANSI C
 *
 *   See http://math.nist.gov/MatrixMarket for details.
@@ -23,12 +23,12 @@ typedef char MM_typecode[4];
 void mm_snprintf_typecode( char *buffer, size_t buflen, MM_typecode matcode );
 
 int mm_read_banner(FILE *f, MM_typecode *matcode);
-int mm_read_mtx_crd_size(FILE *f, data_index_t *M, data_index_t *N, 
+int mm_read_mtx_crd_size(FILE *f, data_index_t *M, data_index_t *N,
                                                     data_index_t *nz);
 int mm_read_mtx_array_size(FILE *f, data_index_t *M, data_index_t *N);
 
 int mm_write_banner(FILE *f, MM_typecode matcode);
-int mm_write_mtx_crd_size(FILE *f, data_index_t M, data_index_t N, 
+int mm_write_mtx_crd_size(FILE *f, data_index_t M, data_index_t N,
                                                     data_index_t nz);
 int mm_write_mtx_array_size(FILE *f, data_index_t M, data_index_t N);
 
@@ -96,7 +96,7 @@ int mm_is_valid(MM_typecode matcode);    /* too complex for a macro */
 
    MM_matrix_typecode: 4-character sequence
 
-                     object     sparse/      data         storage 
+                     object     sparse/      data         storage
                                 dense        type         scheme
 
    string position:  [0]        [1]          [2]          [3]
@@ -114,7 +114,7 @@ int mm_is_valid(MM_typecode matcode);    /* too complex for a macro */
 
 #define MM_ARRAY_STR      "array"
 #define MM_DENSE_STR      "array"
-#define MM_COORDINATE_STR "coordinate" 
+#define MM_COORDINATE_STR "coordinate"
 #define MM_SPARSE_STR     "coordinate"
 
 #define MM_COMPLEX_STR    "complex"
@@ -130,15 +130,15 @@ int mm_is_valid(MM_typecode matcode);    /* too complex for a macro */
 
 /*  high level routines */
 
-int mm_write_mtx_crd(char fname[], data_index_t M, data_index_t N, data_index_t nz, 
+int mm_write_mtx_crd(char fname[], data_index_t M, data_index_t N, data_index_t nz,
       data_index_t I[], data_index_t J[], dataType val[], MM_typecode matcode);
-int mm_read_mtx_crd_data(FILE *f, data_index_t M, data_index_t N, data_index_t nz, 
+int mm_read_mtx_crd_data(FILE *f, data_index_t M, data_index_t N, data_index_t nz,
       data_index_t I[], data_index_t J[], dataType val[], MM_typecode matcode);
-int mm_read_mtx_crd_entry(FILE *f, data_index_t *I, data_index_t *J, 
+int mm_read_mtx_crd_entry(FILE *f, data_index_t *I, data_index_t *J,
         dataType *real, dataType *img, MM_typecode matcode);
 
-int mm_read_unsymmetric_sparse(const char *fname, data_index_t *M_, 
-        data_index_t *N_, data_index_t *nz_, 
+int mm_read_unsymmetric_sparse(const char *fname, data_index_t *M_,
+        data_index_t *N_, data_index_t *nz_,
         dataType **val_, data_index_t **I_, data_index_t **J_);
 
 

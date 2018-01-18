@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
   char output_U[256];
   int dim = 20;
   int tile = 100;
-  
+
   if (argc < 4) {
     printf("Usage %s <mdim> <tile size> <output directory>\n", argv[0] );
     return 1;
@@ -37,8 +37,8 @@ int main(int argc, char* argv[])
     tile = atoi( argv[2] );
     //output_dir = argv[3];
     strcpy( output_dir, argv[3] );
-    printf("Matrix dim is %d \n", dim ); 
-    printf("tile size is %d \n", tile ); 
+    printf("Matrix dim is %d \n", dim );
+    printf("tile size is %d \n", tile );
     printf("Output directory is %s\n", output_dir );
     strcpy( output_basename, output_dir );
     strcat( output_basename, "LU_larnv_" );
@@ -51,12 +51,12 @@ int main(int argc, char* argv[])
   //data_d_matrix Asparse = {Magma_CSR};
   //data_z_csr_mtx( &Asparse, sparse_filename );
   //data_d_matrix A = {Magma_DENSE};
-  //data_zmconvert( Asparse, &A, Magma_CSR, Magma_DENSE ); 
+  //data_zmconvert( Asparse, &A, Magma_CSR, Magma_DENSE );
   //data_d_matrix B = {Magma_DENSE};
-  //data_zmconvert( Asparse, &B, Magma_CSR, Magma_DENSE ); 
+  //data_zmconvert( Asparse, &B, Magma_CSR, Magma_DENSE );
   ////data_zdisplay_dense( &A );
   //data_zmfree( &Asparse );
-  
+
   data_d_matrix A = {Magma_DENSE};
   //lapack_int LAPACKE_dlarnv (lapack_int idist , lapack_int * iseed , lapack_int n , double * x );
   A.num_rows = dim;
@@ -72,23 +72,23 @@ int main(int argc, char* argv[])
   for ( int i = 0; i<A.num_rows; i++ ) {
     for ( int j = 0; j<A.num_cols; j++ ) {
       if (i == j) {
-        A.val[ i*A.ld + j ] += 1.0e3; 
+        A.val[ i*A.ld + j ] += 1.0e3;
       }
     }
   }
-  
+
   // =========================================================================
   // MKL LU with no pivoting (Benchmark)
   // =========================================================================
   printf("%% MKL LU with no pivoting (Benchmark)\n");
   data_d_matrix Amkl = {Magma_DENSE};
   data_zmconvert(A, &Amkl, Magma_DENSE, Magma_DENSE);
-  
+
   dataType wstart = omp_get_wtime();
   data_LUnp_mkl( &Amkl );
   dataType wend = omp_get_wtime();
   printf("%% MKL LU with no pivoting required %f wall clock seconds as measured by omp_get_wtime()\n", wend-wstart );
-  
+
   dataType Amkldiff = 0.0;
   data_zfrobenius_inplaceLUresidual(A, Amkl, &Amkldiff);
   printf("MKL_LUnp_res = %e\n", Amkldiff);
@@ -99,14 +99,14 @@ int main(int argc, char* argv[])
   data_zwrite_dense( Amkl, output_L );
   //data_zwrite_dense( Umkl, output_U );
   data_zmfree( &Amkl );
-  fflush(stdout); 
+  fflush(stdout);
   // =========================================================================
 
   data_zmfree( &A );
   //data_zmfree( &B );
-  
+
   //testing::InitGoogleTest(&argc, argv);
   //return RUN_ALL_TESTS();
   return 0;
-  
+
 }

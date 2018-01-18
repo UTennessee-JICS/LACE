@@ -1,0 +1,289 @@
+
+# Users should make all changes in make.inc
+# Example files for the ACF clusters make.inc.ACF
+# and for MacOS make.inc.Mac are useful starting points for customization.
+# It should not be necessary to change anything in here.
+
+-include make.inc
+
+# defaults if nothing else is given in make.inc
+CXX               = icpc
+CXXFLAGS	  = -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xMIC-AVX512
+
+
+override CPPFLAGS  += -I$(GTEST_DIR)/include -I$(GMOCK_DIR)/include \
+	-I$(MKLROOT)/include -I./include
+
+LACE_HEADERS = include/*.h
+SRCDIRS = control blas src testing drivers
+SRCFILES = $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.cpp))
+SRCS = *.cpp $(SRCFILES) $(LACE_HEADERS)
+OBJS = $(SRCFILES:%.cpp=%.o)
+
+LIBDIR		?= -L$(MKLROOT)/lib
+LIB 			?= -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl
+LIBS			 = $(LIBDIR) $(LIB)
+
+EXAMPLES = testing/exampleGoogleTest_01 testing/exampleGoogleTest_02
+
+TESTS = \
+  testing/test_vector_io \
+  testing/test_matrix_io \
+  testing/test_matrix_ops \
+  testing/test_LU_ops \
+	testing/test_LU_larnv \
+	testing/test_LU \
+	testing/test_iLU_ops \
+	testing/test_iLU \
+	testing/test_linearSolver
+
+DRIVERS = \
+	drivers/generate_iLU_KNL \
+	drivers/solver_KNL
+
+TARGETS = $(TESTS) $(DRIVERS)
+
+#all: $(EXAMPLES) $(TARGETS)
+all: $(DRIVERS)
+
+#
+# Google Test and Mock examples
+#
+testing/exampleGoogleTest_01: testing/example_01.o libgtest.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+testing/exampleGoogleTest_02: testing/example_02.o libgmock.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+#
+# Generate LACE Unit Testers for TDD
+#
+#   explicitly list prerequisite objects for each object
+#   to ensure lean re-makes.
+#   Prerequisite objects for a target A must be named A_OBJS
+#
+testing/test_matrix_io_OBJS = testing/test_matrix_io.o \
+  control/magma_zmio.o control/mmio.o \
+  control/magma_zmconverter.o control/magma_zmtranspose.o \
+  control/magma_zfree.o testing/test_main.o libgmock.a
+
+testing/test_vector_io_OBJS = testing/test_vector_io.o \
+  control/magma_zmio.o control/mmio.o \
+  control/magma_zmconverter.o control/magma_zmtranspose.o \
+  control/magma_zfree.o testing/test_main.o libgmock.a
+
+testing/test_matrix_ops_OBJS = testing/test_matrix_operations.o \
+  control/constants.o control/magma_zmio.o \
+  control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+  control/magma_zfree.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+  testing/test_main.o libgmock.a
+
+testing/test_LU_ops_OBJS = testing/test_LU_operations.o \
+  control/constants.o control/magma_zmio.o \
+  control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+  control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+  blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+  blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+  testing/test_main.o libgmock.a
+
+testing/test_LU_larnv_OBJS = testing/test_LU_larnv.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	control/init.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+	src/parlu_v0_0.o src/parlu_v0_1.o src/parlu_v1_0.o \
+  testing/test_cmd_line_main.o libgmock.a
+
+testing/test_LU_OBJS = testing/test_LU.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	control/init.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+	src/parlu_v0_0.o src/parlu_v0_1.o src/parlu_v1_0.o \
+	src/parlu_v1_1.o src/parlu_v1_2.o src/parlu_v1_3.o \
+	src/parlu_v2_0.o src/parlu_v2_1.o \
+	src/parlu_v3_0.o src/parlu_v3_1.o \
+  testing/test_cmd_line_main.o libgmock.a
+
+testing/test_iLU_ops_OBJS = testing/test_iLU_operations.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	control/sparse_sub.o control/sparse_tilepattern.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+	src/parilu_v0_0.o src/parilu_v3_0.o \
+	testing/test_cmd_line_main.o libgmock.a
+
+testing/test_iLU_OBJS = testing/test_iLU.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	control/init.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+	src/parilu_v0_0.o src/parilu_v0_3.o \
+  testing/test_cmd_line_main.o libgmock.a
+# Note: to see detailed output from parilu_v0_3 set debug mode:
+# $ make -f makefile_autodepend testing/test_iLU CPPFLAGS+=-DDEBUG_PARILU -B
+
+testing/test_linearSolver_OBJS = testing/test_linearSolver.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	control/init.o control/magma_zmlumerge.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zaxpy.o blas/zspmv.o blas/zspmm.o blas/zcsrilu0.o \
+	src/parilu_v0_2.o src/parilu_v0_3.o \
+	src/mkl_fgmres.o src/fgmres.o src/fgmres_restart.o \
+	src/fgmres_householder_opt4.o src/fgmres_householder_restart.o \
+	src/trisolve.cpp \
+	src/gram_schmidt.cpp \
+	src/givens.cpp \
+	src/orthogonality_error.cpp \
+  testing/test_cmd_line_main.o libgmock.a
+
+define generateTester
+
+$(1): $$($(1)_OBJS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) \
+  $$($(1)_OBJS) -o $(1) $(LIBS)
+
+endef
+
+$(foreach i, $(TESTS), $(eval $(call generateTester,$(i))))
+
+runTests :
+	make -f makefile_autodepend $(TESTS)
+	@cd testing; \
+  $(foreach i, $(TESTS), echo ====; echo $(i); ../$(i); echo ====;) \
+	./test_LU_larnv --dim 500; \
+	./test_LU --dim 500; \
+	./test_LU --matrix matrices/Trefethen_20.mtx --tile 2
+
+#
+# Make Drivers
+#
+
+
+drivers/generate_iLU_KNL_OBJS = drivers/generate_iLU.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	control/init.o control/magma_zmscale.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+	src/parilu_v0_3_prescribedSweeps.o
+
+drivers/solver_KNL_OBJS = drivers/solver_interface.o \
+	control/constants.o control/magma_zmio.o \
+	control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+	control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+	control/init.o control/magma_zmlumerge.o \
+	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+	blas/zaxpy.o blas/zspmv.o blas/zspmm.o blas/zcsrilu0.o \
+	src/parilu_v0_2.o src/parilu_v0_3.o \
+	src/mkl_fgmres.o src/fgmres.o src/fgmres_restart.o \
+	src/fgmres_householder_opt4.o src/fgmres_householder_restart.o \
+	src/trisolve.cpp \
+	src/gram_schmidt.cpp \
+	src/givens.cpp \
+	src/orthogonality_error.cpp
+
+$(foreach i, $(DRIVERS), $(eval $(call generateTester,$(i))))
+
+#
+# Incorporate Google Testing & Mocking Framework
+#
+GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
+	$(GTEST_DIR)/include/gtest/internal/*.h
+
+GMOCK_HEADERS = $(GMOCK_DIR)/include/gmock/*.h \
+	$(GMOCK_DIR)/include/gmock/internal/*.h \
+	$(GTEST_HEADERS)
+
+GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
+GMOCK_SRCS_ = $(GMOCK_DIR)/src/*.cc $(GMOCK_HEADERS)
+
+gtest-all.o : $(GTEST_SRCS_)
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
+		$(GTEST_DIR)/src/gtest-all.cc
+
+gtest_main.o : $(GTEST_SRCS_)
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
+		$(GTEST_DIR)/src/gtest_main.cc
+
+libgtest.a : gtest-all.o
+	$(AR) $(ARFLAGS) $@ $^
+
+gtest_main.a : gtest-all.o gtest_main.o
+	$(AR) $(ARFLAGS) $@ $^
+
+gmock-all.o : $(GMOCK_SRCS_)
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) -I$(GMOCK_DIR) $(CXXFLAGS) \
+		-c $(GMOCK_DIR)/src/gmock-all.cc
+
+gmock_main.o : $(GMOCK_SRCS_)
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) -I$(GMOCK_DIR) $(CXXFLAGS) \
+		-c $(GMOCK_DIR)/src/gmock_main.cc
+
+libgmock.a : gmock-all.o gtest-all.o
+	$(AR) $(ARFLAGS) $@ $^
+
+gmock_main.a : gmock-all.o gtest-all.o gmock_main.o
+	$(AR) $(ARFLAGS) $@ $^
+
+#
+# Handle dependencies automatically
+#
+DEPDIR := .d
+$(shell mkdir -p $(DEPDIR) >/dev/null)
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+
+COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
+
+%.o : %.cpp
+%.o : %.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+blas/%.o : blas/%.cpp
+blas/%.o : blas/%.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+control/%.o : control/%.cpp
+control/%.o : control/%.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+src/%.o : src/%.cpp
+src/%.o : src/%.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+testing/%.o : testing/%.cpp
+testing/%.o : testing/%.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+drivers/%.o : drivers/%.cpp
+drivers/%.o : drivers/%.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+$(DEPDIR)/%.d: ;
+.PRECIOUS: $(DEPDIR)/%.d
+
+include $(wildcard $(patsubst %,$(DEPDIR)/%.d,$(basename $(SRCS))))
+#
+#
+#
+
+clean:
+	rm *.o *.a $(wildcard **/*.o) $(wildcard **/*.a) $(TARGETS)

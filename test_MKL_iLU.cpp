@@ -22,7 +22,7 @@ typedef double dataType;
 
 int main(int argc, char* argv[])
 {
-  
+
   // begin with a square matrix A
   char* sparse_filename;
   char* sparse_basename;
@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
   char output_L[256];
   char output_U[256];
   int tile = 100;
-  
+
   if (argc < 4) {
     printf("Usage %s <matrix> <tile size> <output directory>\n", argv[0] );
     return 1;
@@ -45,9 +45,9 @@ int main(int argc, char* argv[])
     char *ext;
     ext = strrchr( sparse_basename, '.');
     strncpy( sparse_name, sparse_basename, int(ext - sparse_basename) );
-    printf("File %s basename %s name %s \n", 
+    printf("File %s basename %s name %s \n",
       sparse_filename, sparse_basename, sparse_name );
-    printf("tile size is %d \n", tile ); 
+    printf("tile size is %d \n", tile );
     printf("Output directory is %s\n", output_dir );
     strcpy( output_basename, output_dir );
     strcat( output_basename, sparse_name );
@@ -59,9 +59,9 @@ int main(int argc, char* argv[])
   data_d_matrix Asparse = {Magma_CSR};
   data_z_csr_mtx( &Asparse, sparse_filename );
   data_d_matrix A = {Magma_CSR};
-  data_zmconvert( Asparse, &A, Magma_CSR, Magma_CSR ); 
+  data_zmconvert( Asparse, &A, Magma_CSR, Magma_CSR );
   data_d_matrix B = {Magma_DENSE};
-  data_zmconvert( Asparse, &B, Magma_CSR, Magma_CSR ); 
+  data_zmconvert( Asparse, &B, Magma_CSR, Magma_CSR );
   //data_zdisplay_dense( &A );
   //data_zmfree( &Asparse );
 
@@ -71,14 +71,14 @@ int main(int argc, char* argv[])
   printf("%% MKL csrilu0 (Benchmark)\n");
   data_d_matrix Amkl = {Magma_CSR};
   data_zmconvert(Asparse, &Amkl, Magma_CSR, Magma_CSR);
-  
+
   dataType wstart = omp_get_wtime();
   //data_LUnp_mkl( &Amkl );
   data_dcsrilu0_mkl( &Amkl );
   dataType wend = omp_get_wtime();
   printf("%% MKL csrilu0 required %f wall clock seconds as measured by omp_get_wtime()\n", wend-wstart );
-  
-  
+
+
   data_d_matrix Lmkl = {Magma_CSRL};
   Lmkl.diagorder_type = Magma_UNITY;
   data_zmconvert(Amkl, &Lmkl, Magma_CSR, Magma_CSRL);
@@ -93,12 +93,12 @@ int main(int argc, char* argv[])
   printf(" done.\n");
   data_d_matrix LUmkl = {Magma_CSR};
   data_zmconvert(Amkl, &LUmkl, Magma_CSR, Magma_CSR);
-  
+
   dataType Amklres = 0.0;
   dataType Amklnonlinres = 0.0;
   //data_zfrobenius_inplaceLUresidual(A, Amkl, &Amkldiff);
   data_zilures( A, Lmkl, Umkl, &LUmkl, &Amklres, &Amklnonlinres);
-  
+
   printf("MKL_csrilu0_res = %e\n", Amklres);
   printf("MKL_csrilu0_nonlinres = %e\n", Amklnonlinres);
   strcpy( output_L, output_basename );
@@ -110,10 +110,10 @@ int main(int argc, char* argv[])
   data_zmfree( &Amkl );
   //data_zmfree( &Lmkl );
   //data_zmfree( &Umkl );
-  fflush(stdout); 
+  fflush(stdout);
   // =========================================================================
 
-  
+
   data_zmfree( &Asparse );
   data_zmfree( &A );
   data_zmfree( &B );
@@ -123,6 +123,6 @@ int main(int argc, char* argv[])
   //testing::InitGoogleTest(&argc, argv);
   //return RUN_ALL_TESTS();
   return 0;
-  
+
 }
 

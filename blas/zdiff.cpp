@@ -1,20 +1,20 @@
 #include "../include/sparse.h"
 #include <mkl.h>
 
-extern "C" 
+extern "C"
 int
 data_zdiff_csr(
     data_d_matrix *A,
     data_d_matrix *B,
-    data_d_matrix *C, 
+    data_d_matrix *C,
     dataType *res,
     dataType *nonlinres )
-{                    
-	dataType tmp, tmp2;
+{
+  dataType tmp, tmp2;
   int i,j,k;
   *res = 0.0;
   *nonlinres = 0.0;
-  
+
   if ( A->storage_type != B->storage_type ) {
     data_d_matrix B_a = {A->storage_type};
     data_zmconvert( *B, &B_a, B->storage_type, A->storage_type );
@@ -65,19 +65,19 @@ data_zdiff_csr(
     (*nonlinres) =  sqrt((*nonlinres));
     (*res) =  sqrt((*res));
   }
-  
+
   return DEV_SUCCESS;
 }
 
 int
 data_zdiff_magnitude_csr(
     data_d_matrix *A,
-    data_d_matrix *B,  
+    data_d_matrix *B,
     dataType *res)
-{                    
-	int i,j,k;
+{
+  int i,j,k;
   *res = 0.0;
-  
+
   if ( A->storage_type != B->storage_type ) {
     data_d_matrix C = {A->storage_type};
     data_zmconvert( *B, &C, B->storage_type, A->storage_type );
@@ -107,16 +107,16 @@ data_zdiff_magnitude_csr(
         }
     }
   }
-  
+
   return DEV_SUCCESS;
 }
 
-extern "C" 
+extern "C"
 int
 data_zsubtract_csr(
     data_d_matrix *A,
     data_d_matrix *B )
-{                  
+{
   int i,j,k;
   for (i=0; i<A->num_rows; i++) {
       for (j=A->row[i]; j<A->row[i+1]; j++) {
@@ -129,18 +129,18 @@ data_zsubtract_csr(
           }
       }
   }
-  
+
   return DEV_SUCCESS;
 }
 
-extern "C" 
+extern "C"
 int
 data_zsubtract_guided_csr(
   data_d_matrix *A,
   data_d_matrix *B,
   data_d_matrix *C,
   dataType *step )
-{                  
+{
   int i,j,k,l;
   dataType tmp = 0.0;
   for (i=0; i<A->num_rows; i++) {
@@ -162,16 +162,16 @@ data_zsubtract_guided_csr(
       }
     }
   }
-  
+
   return DEV_SUCCESS;
 }
 
-extern "C" 
+extern "C"
 int
 data_zdiagdivide_csr(
   data_d_matrix *A,
   data_d_matrix *B )
-{                  
+{
   int i,j,k;
   dataType div = 1.0;
   for (i=0; i<A->num_rows; i++) {
@@ -192,16 +192,16 @@ data_zdiagdivide_csr(
       //}
     }
   }
-  
+
   return DEV_SUCCESS;
 }
 
-extern "C" 
+extern "C"
 int
 data_zset_csr(
     data_d_matrix *A,
     data_d_matrix *B )
-{                  
+{
   int i,j,k;
   for (i=0; i<A->num_rows; i++) {
       for (j=A->row[i]; j<A->row[i+1]; j++) {
@@ -213,6 +213,6 @@ data_zset_csr(
           }
       }
   }
-  
+
   return DEV_SUCCESS;
 }

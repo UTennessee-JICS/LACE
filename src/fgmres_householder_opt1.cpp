@@ -101,11 +101,11 @@ data_fgmres_householder(
     {
       #pragma omp for nowait
       for (int i=0; i<LU.num_rows+1; i++) {
-      	ia[i] = LU.row[i] + 1;
+        ia[i] = LU.row[i] + 1;
       }
       #pragma omp for nowait
       for (int i=0; i<LU.nnz; i++) {
-      	ja[i] = LU.col[i] + 1;
+        ja[i] = LU.col[i] + 1;
       }
     }
 
@@ -235,18 +235,18 @@ data_fgmres_householder(
       if ( gmres_par->user_csrtrsv_choice == 0 ) {
         // Apply preconditioner to krylov.val[idx(A->col[j],search,krylov.ld)]
         cvar1='L';
-		    cvar='N';
-		    cvar2='U';
-		    mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
-		      q.val, tmp.val );
-		    cvar1='U';
-		    cvar='N';
-		    cvar2='N';
-		    mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
-		      tmp.val, &(Minvvj.val[idx(0,search,Minvvj.ld)]) );
+        cvar='N';
+        cvar2='U';
+        mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
+          q.val, tmp.val );
+        cvar1='U';
+        cvar='N';
+        cvar2='N';
+        mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
+          tmp.val, &(Minvvj.val[idx(0,search,Minvvj.ld)]) );
       }
       else {
-		    data_parcsrtrsv( MagmaLower, L->storage_type, L->diagorder_type,
+        data_parcsrtrsv( MagmaLower, L->storage_type, L->diagorder_type,
           L->num_rows, L->val, L->row, L->col,
           q.val, tmp.val,
           ptrsv_tol, &ptrsv_iter );

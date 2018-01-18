@@ -23,21 +23,21 @@ icpc -std=c++11 -isystem ${GTEST_DIR}/include -pthread example_02.cpp libgtest.a
 struct BankAccount
 {
   int balance = 0;
-  
+
   BankAccount()
   {
   }
-  
+
   explicit BankAccount(const int balance)
     : balance(balance)
   {
   }
-  
+
   void deposit(int amount)
   {
     balance += amount;
   }
-  
+
   bool withdraw(int amount)
   {
     if(amount <= balance)
@@ -52,12 +52,12 @@ struct BankAccount
 struct BankAccountTest : testing::Test
 {
   BankAccount* account;
-  
+
   BankAccountTest()
   {
     account = new BankAccount;
   }
-  
+
   virtual ~BankAccountTest()
   {
     delete account;
@@ -81,10 +81,10 @@ struct account_state
   int withdrawal_amount;
   int final_balance;
   bool success;
-  
+
   friend std::ostream& operator <<(std::ostream& os, const account_state& obj)
   {
-    return os 
+    return os
       << "initial_balance: " << obj.initial_balance
       << " withdrawal_amount: " << obj.withdrawal_amount
       << " final_balance: " << obj.final_balance
@@ -108,7 +108,7 @@ TEST_P(WithdrawAccountTest, FinalBalance)
   EXPECT_EQ(as.success, success);
 }
 
-INSTANTIATE_TEST_CASE_P(Default, WithdrawAccountTest, 
+INSTANTIATE_TEST_CASE_P(Default, WithdrawAccountTest,
   testing::Values(
     account_state{100, 50, 50, true},
     account_state{100, 200, 100, false}

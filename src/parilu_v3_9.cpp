@@ -1,7 +1,7 @@
 /*
     -- LACE (version 0.0) --
        Univ. of Tennessee, Knoxville
-       
+
        @author Stephen Wood
 
 */
@@ -10,18 +10,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-extern "C" 
+extern "C"
 void
-data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile ) 
+data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile )
 {
-  
+
   data_zdiameter( A );
   //printf("A:\n");
   //data_zwrite_csr( A );
   data_z_pad_csr( A, tile );
   //printf("A padded by %d tile:\n", tile);
   //data_zwrite_csr( A );
-  
+
   std::vector<Int3> Atiles;
   std::vector<Int3> Ltiles;
   std::vector<Int3> Utiles;
@@ -31,24 +31,24 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
   std::vector<sparse_matrix_t> U_handles;
   std::vector< std::vector<int> > Lbatches;
   std::vector< std::vector<int> > Ubatches;
-  data_sparse_tilepatterns_handles( tile, tile, 
-    &Atiles, &Ltiles, &Utiles, 
-    &L_subs, &U_subs, 
+  data_sparse_tilepatterns_handles( tile, tile,
+    &Atiles, &Ltiles, &Utiles,
+    &L_subs, &U_subs,
     &L_handles, &U_handles,
     &Lbatches, &Ubatches, A );
   printf( "\n%%A's %d active tiles:\n", int(Atiles.size()) );
   for(int i=0; i< int(Atiles.size()); i++ ) {
-    printf("[%d, %d : %d]\n", Atiles[i].a[0], Atiles[i].a[1], Atiles[i].a[2] ); 
+    printf("[%d, %d : %d]\n", Atiles[i].a[0], Atiles[i].a[1], Atiles[i].a[2] );
   }
   for(int i=0; i< int(Lbatches.size()); i++ ) {
-    printf("[%d, %d]\n", i, int(Lbatches[i].size()) ); 
+    printf("[%d, %d]\n", i, int(Lbatches[i].size()) );
   }
   for(int i=0; i< int(Ubatches.size()); i++ ) {
-    printf("[%d, %d]\n", i, int(Ubatches[i].size()) ); 
+    printf("[%d, %d]\n", i, int(Ubatches[i].size()) );
   }
   getchar();
-  
-  // Separate the lower, upper, and diagonal elements 
+
+  // Separate the lower, upper, and diagonal elements
   // into L, U, and D respectively.
   L->diagorder_type = Magma_UNITY;
   data_zmconvert(*A, L, Magma_CSR, Magma_CSRL);
@@ -57,7 +57,7 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
   data_zmconvert(*A, &Lc, Magma_CSR, Magma_CSRL);
   //printf("L done.\n");
   //data_zwrite_csr( L );
-  
+
   U->diagorder_type = Magma_VALUE;
   U->major = MagmaRowMajor;
   data_zmconvert(*A, U, Magma_CSR, Magma_CSRU);
@@ -66,48 +66,48 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
   data_zmconvert(*A, &Uc, Magma_CSR, Magma_CSRU);
   //printf("U done.\n");
   //data_zwrite_csr( U );
-  
+
   data_d_matrix D = {Magma_DENSED};
   data_zmconvert(*A, &D, Magma_CSR, Magma_DENSED);
   //data_zprint_dense( D );
   data_d_matrix Dc = {Magma_DENSED};
   data_zmconvert(*A, &Dc, Magma_CSR, Magma_DENSED);
   //printf("D done.\n");
-  
+
   // Set diagonal elements to the recipricol
-  #pragma omp parallel  
+  #pragma omp parallel
   #pragma omp for nowait
   for (int i=0; i<D.nnz; i++) {
     D.val[ i ] = 1.0/D.val[ i ];
   }
-  
+
   int row_limit = A->num_rows;
   if (A->pad_rows > 0 && A->pad_cols > 0) {
     row_limit = A->pad_rows;
   }
-  
+
   // ParLU element wise
   int iter = 0;
   dataType tmp = 0.0;
   dataType step = 1.0;
   dataType tol = 1.0e-15;
   dataType Anorm = 0.0;
- 
+
   int num_threads = 0;
   #pragma omp parallel
   {
     num_threads = omp_get_num_threads();
   }
   int chunk = int(Atiles.size()) /( 2*num_threads );
-  
+
   dataType cone = 1.0;
   //dataType czero = 0.0;
-  
-	int ii, jj, ti, tj;
-	int maxrow, maxcol;
+
+  int ii, jj, ti, tj;
+  int maxrow, maxcol;
   int span;
   dataType sum = 0.0;
-	
+
   data_zfrobenius(*A, &Anorm);
   printf("%% Anorm = %e\n", Anorm);
   printf("%% A->diameter=%d\n",A->diameter);
@@ -118,11 +118,11 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
   printf("%% A->nnz=%d\n",A->nnz);
   printf("%% A->true_nnz=%d\n",A->true_nnz);
   printf("%% chunk=%d\n",chunk);
-  
+
   dataType wstart = omp_get_wtime();
   while ( step > tol && iter < 10000 ) {
     step = 0.0;
-    //#pragma omp parallel private(ii, jj, ti, tj, maxrow, maxcol, tmp, span, sum ) 
+    //#pragma omp parallel private(ii, jj, ti, tj, maxrow, maxcol, tmp, span, sum )
     {
       //#pragma omp for schedule(static,1) reduction(+:step) nowait
       //#pragma omp for reduction(+:step) nowait
@@ -131,34 +131,34 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
         int infospmmbatch = 0;
         ti = Utiles[t].a[0];
         tj = Utiles[t].a[1];
-        maxrow = ti + tile; 
-        maxcol = tj + tile; 
+        maxrow = ti + tile;
+        maxcol = tj + tile;
         //int span = MIN( (ti+tile - 0), (tj+tile - 0) );
         span = MIN( (maxrow - Utiles[t].a[2]), (maxcol - Utiles[t].a[2]) );
         printf("==== U t=%d ti=%d tj=%d span=%d\n", t, ti, tj, span);
-        
-        data_d_matrix C = {Magma_CSR}; 
-        
+
+        data_d_matrix C = {Magma_CSR};
+
         if (ti<=tj) {
           infospmmbatch = data_sparse_subsparse_spmm_batches( t, tile, cone,
             &L_handles, &U_handles, &Ubatches[2*t], &Ubatches[2*t+1], &C );
           if (infospmmbatch != SPARSE_STATUS_SUCCESS  ) {
             printf("U %d [%d,%d] C:\n", t, ti, tj);
             data_zwrite_csr( &C );
-          } 
-          
-        	// begin updating values of U
+          }
+
+          // begin updating values of U
           for(int i=ti; i < maxrow; i++ ) {
             for(int j=Uc.row[i]; j < Uc.row[i+1]; j++ ) {
-              if (U->col[j] >= tj && U->col[j] < maxcol && U->col[j] != i) {  
+              if (U->col[j] >= tj && U->col[j] < maxcol && U->col[j] != i) {
                 ii = i - ti;
                 jj = U->col[j] - tj;
-                
+
                 for(int k=C.row[ii]; k < C.row[ii+1]; k++ ) {
                   if ( C.col[k] == jj ) {
                     tmp = Uc.val[ j ] - C.val[ k ];
                     step += pow( U->val[ j ] - tmp, 2 );
-                    U->val[ j ] = tmp; 
+                    U->val[ j ] = tmp;
                     for(int tk=U_subs[t].row[ii]; tk < U_subs[t].row[ii+1]; tk++ ) {
                       if ( U_subs[t].col[tk] == jj ) {
                         U_subs[t].val[ tk ] = tmp;
@@ -166,23 +166,23 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
                     }
                   }
                 }
-                
+
               }
             }
-            
+
           }
           if (ti==tj) {
             for(int i=ti; i < maxrow; i++ ) {
               for(int j=U->row[i]; j < U->row[i+1]; j++) {
                 if ( U->col[j] == i ) {
                   ii = i - ti;
-                  jj = U->col[j] - tj; 
-                  
+                  jj = U->col[j] - tj;
+
                   for(int k=C.row[ii]; k < C.row[ii+1]; k++ ) {
                     if ( C.col[k] == jj ) {
                       tmp = 1.0/( Dc.val[ i ] - C.val[ k ] );
                       step += pow( D.val[ i ] - tmp, 2 );
-                      D.val[ i ] = tmp; 
+                      D.val[ i ] = tmp;
                       //for(int tk=U_subs[t].row[ii]; tk < U_subs[t].row[ii+1]; tk++ ) {
                       //  if ( U_subs[t].col[tk] == jj ) {
                       //    U_subs[t].val[ tk ] = 1.0/tmp;
@@ -190,14 +190,14 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
                       //}
                     }
                   }
-                  
+
                 }
               }
-            }	 
+            }
             // begin updating values of L
             for(int i=ti; i < maxrow; i++ ) {
               for(int j=Lc.row[i]; j < Lc.row[i+1]; j++ ) {
-                if (L->col[j] >= tj && L->col[j] < maxcol  && L->col[j] != i) { 
+                if (L->col[j] >= tj && L->col[j] < maxcol  && L->col[j] != i) {
                   ii = i - ti;
                   jj = L->col[j] - tj;
                   sum = 0.0;
@@ -208,7 +208,7 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
                   }
                   tmp = ( (Lc.val[ j ] - sum)*D.val[ L->col[j] ] );
                   step += pow( L->val[ j ] - tmp, 2 );
-                  L->val[ j ] = tmp; 
+                  L->val[ j ] = tmp;
                   for(int tk=L_subs[t].row[ii]; tk < L_subs[t].row[ii+1]; tk++ ) {
                     if ( L_subs[t].col[tk] == jj ) {
                       L_subs[t].val[ tk ] = tmp;
@@ -217,45 +217,45 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
                 }
               }
             }
-                  
+
           }
           // done updating values for tiles in the upper triangle and on the major diagonal
-          
-          
+
+
         }
-        
+
         data_zmfree( &C );
-         
+
       }
-      
+
       //#pragma omp for schedule(static,chunk) reduction(+:step) nowait
       for(int t=0; t< int(Ltiles.size()); t++ ) {
         int infospmmbatch = 0;
         ti = Ltiles[t].a[0];
         tj = Ltiles[t].a[1];
-        maxrow = ti + tile; 
-        maxcol = tj + tile; 
+        maxrow = ti + tile;
+        maxcol = tj + tile;
         //int span = MIN( (ti+tile - 0), (tj+tile - 0) );
         span = MIN( (maxrow - Ltiles[t].a[2]), (maxcol - Ltiles[t].a[2]) );
         printf("==== L t=%d ti=%d tj=%d span=%d\n", t, ti, tj, span);
-        
-        data_d_matrix C = {Magma_CSR}; 
-        
+
+        data_d_matrix C = {Magma_CSR};
+
         if (ti>tj) {
-        	infospmmbatch = data_sparse_subsparse_spmm_batches( t, tile, cone,
-            &L_handles, &U_handles, &Lbatches[2*t], &Lbatches[2*t+1], &C ); 
+          infospmmbatch = data_sparse_subsparse_spmm_batches( t, tile, cone,
+            &L_handles, &U_handles, &Lbatches[2*t], &Lbatches[2*t+1], &C );
           if (infospmmbatch != SPARSE_STATUS_SUCCESS  ) {
             printf("L %d [%d,%d] C:\n", t, ti, tj);
             data_zwrite_csr( &C );
           }
-          
+
           // begin updating values of L
           for(int i=ti; i < maxrow; i++ ) {
             for(int j=Lc.row[i]; j < Lc.row[i+1]; j++ ) {
               if (Lc.col[j] >= tj && L->col[j] < maxcol  && L->col[j] != i) {
                 ii = i - ti;
                 jj = L->col[j] - tj;
-                
+
                 sum = 0.0;
                 for(int k=C.row[ii]; k < C.row[ii+1]; k++ ) {
                   if ( C.col[k] == jj ) {
@@ -264,7 +264,7 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
                 }
                 tmp = ( (Lc.val[ j ] - sum)*D.val[ L->col[j] ] );
                 step += pow( L->val[ j ] - tmp, 2 );
-                L->val[ j ] = tmp; 
+                L->val[ j ] = tmp;
                 for(int tk=L_subs[t].row[ii]; tk < L_subs[t].row[ii+1]; tk++ ) {
                   if ( L_subs[t].col[tk] == jj ) {
                     L_subs[t].val[ tk ] = tmp;
@@ -274,16 +274,16 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
             }
           }
           // done updating values for strictly lower tiles
-          
+
         }
-        
+
         data_zmfree( &C );
-         
+
       }
-      
-        
+
+
     }
-    
+
     step /= Anorm;
     iter++;
     printf("%% iteration = %d step = %e\n", iter, step);
@@ -291,10 +291,10 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
   }
   dataType wend = omp_get_wtime();
   dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
-  
-  #pragma omp parallel  
+
+  #pragma omp parallel
   {
-    #pragma omp for nowait 
+    #pragma omp for nowait
     for(int i=0; i < row_limit; i++ ) {
       for(int j=U->row[i]; j < U->row[i+1]; j++) {
         if ( U->col[j] == i ) {
@@ -303,15 +303,15 @@ data_PariLU_v3_9( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U, int tile
       }
     }
   }
-  
-  
-  printf("%% PariLU v3.9 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n", 
+
+
+  printf("%% PariLU v3.9 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n",
     num_threads, iter, wend-wstart, ompwtime );
-  fflush(stdout); 
-  
+  fflush(stdout);
+
   data_zmfree( &D );
   data_zmfree( &Dc );
   data_zmfree( &Lc );
   data_zmfree( &Uc );
-  
+
 }
