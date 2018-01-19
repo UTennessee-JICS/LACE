@@ -1,14 +1,10 @@
 # README #
 
-This README would normally document whatever steps are necessary to get your application up and running.
-
-### What is this repository for? ###
-
-* Quick summary
-Linear Algebra for Computational Engineering
-* Version
-0.1.0
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+### Quick summary Linear Algebra for Computational Engineering ###
+ 
+* Version 0.1.0
+* Description of the motivation, theory, and implementation details can be found in:   
+Stephen Wood, Chad E. Burdyshaw, Jon T. Erwin, Douglas L. Stefanski, Ryan S. Glasby, and Gregory Peterson. "Strategy for Fine-Grained Parallelism in Multi-Level Computational Engineering Solvers", 2018 AIAA Information Systems-AIAA Infotech @ Aerospace, AIAA SciTech Forum, (AIAA 2018-0397) https://doi.org/10.2514/6.2018-0397 
 
 ### How do I get set up? ###
 
@@ -54,3 +50,5 @@ Make from project root for now
 
 * Repo owner or admin
 * Other community or team contact
+
+* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
