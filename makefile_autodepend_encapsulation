@@ -10,6 +10,7 @@
 CXX			 	 ?= icpc
 CXXFLAGS	 ?= -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
 
+override CXXFLAGS += -fPIC
 
 override CPPFLAGS  += -I$(GTEST_DIR)/include -I$(GMOCK_DIR)/include \
 	-I$(MKLROOT)/include -I./include
@@ -221,6 +222,23 @@ testing/testlib_pariLU: libpariLU.a testing/test_iLU.o \
 	testing/test_cmd_line_main.o libgmock.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) \
 		$^ -o $@ $(LIBS) libpariLU.a
+
+libpariLU.so: control/constants.o control/magma_zmio.o \
+  control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+  control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+  control/init.o \
+  blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+  blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+  src/parilu_v0_0.o src/parilu_v0_3.o
+	$(CXX) -shared $(CPPFLAGS) $(CXXFLAGS) \
+		-Wl,-soname,libpariLU.so.0 -o libpariLU.so.0.1 $^
+	ln -sf libpariLU.so.0.1 libpariLU.so.0
+	ln -sf libpariLU.so.0 libpariLU.so
+
+testing/testsharedlib_pariLU: libpariLU.so testing/test_iLU.o \
+	testing/test_cmd_line_main.o libgmock.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) \
+		$(LIBS) -L/mnt/hgfs/Share/repositories/lace/ $^ -lpariLU -o $@
 
 #
 # Incorporate Google Testing & Mocking Framework
