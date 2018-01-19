@@ -9,6 +9,10 @@
 # defaults if nothing else is given in make.inc
 CXX			 	 ?= icpc
 CXXFLAGS	 ?= -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
+CC         ?= icc
+CCFLAGS    ?= -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -
+qopt-report=5 -xAVX
+
 
 override CXXFLAGS += -fPIC
 
@@ -239,6 +243,16 @@ testing/testsharedlib_pariLU: libpariLU.so testing/test_iLU.o \
 	testing/test_cmd_line_main.o libgmock.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) \
 		$(LIBS) -L/mnt/hgfs/Share/repositories/lace/ $^ -lpariLU -o $@
+
+#
+# Exemplar use of libraries from C programs
+#
+
+testing/testClib_pariLU: libpariLU.a testing/test_C_iLU.o
+	$(CC) $(CPPFLAGS) $(CCFLAGS) \
+    $^ -o $@ $(LIBS) libpariLU.a
+
+
 
 #
 # Incorporate Google Testing & Mocking Framework

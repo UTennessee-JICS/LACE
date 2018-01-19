@@ -2,7 +2,7 @@
 #define SPARSE_Z_H
 
 #include "sparse_types.h"
-#include <vector>
+//#include <vector>
 #include <math.h>
 
 #ifdef _OPENMP
@@ -149,7 +149,7 @@ data_zvinit(
   data_int_t      num_rows,
   data_int_t      num_cols,
   dataType        values,
-  data_order_t    major = MagmaColMajor);
+  data_order_t    major);
 
 int
 data_z_csr_compressor(
@@ -191,7 +191,7 @@ data_z_pad_csr(
   data_d_matrix * A,
   int             tile_size);
 
-void
+/*void
 data_sparse_subvector(
   int             sub_mbegin,
   int             sub_nbegin,
@@ -204,7 +204,7 @@ data_sparse_subvector_lowerupper(
   int             sub_nbegin,
   data_d_matrix * A,
   dataType *      subvector);
-
+*/
 void
 data_sparse_subdense(
   int             sub_m,
@@ -278,7 +278,7 @@ data_sparse_subsparse_cs_lowerupper_handle(
   data_d_matrix *   Asub,
   sparse_matrix_t * Asub_handle);
 
-void
+/*void
 data_sparse_tilepattern(
   int                 sub_m,
   int                 sub_n,
@@ -319,6 +319,7 @@ data_sparse_tilepattern_lowerupper(
   int sub_m,
   int sub_n, std::vector<Int3> * tiles,
   data_d_matrix * A);
+*/
 
 int
 data_zrowentries(
@@ -568,7 +569,7 @@ data_z_spmm_handle(
   sparse_matrix_t * B,
   data_d_matrix *   C);
 
-int
+/*int
 data_sparse_subsparse_spmm(
   int             tile,
   int             span,
@@ -600,7 +601,7 @@ data_sparse_subsparse_spmm_batches(
   std::vector<int> *             lbatch,
   std::vector<int> *             ubatch,
   data_d_matrix *                C);
-
+*/
 int
 data_z_spmm_batch(
   dataType          alpha,
@@ -1105,7 +1106,7 @@ data_orthogonality_error_incremental(data_d_matrix * krylov,
 #endif
 
 
-template <class T>
+/*template <class T>
 inline int
 sgn(T v)
 {
@@ -1117,7 +1118,7 @@ inline T
 mysgn(T v)
 {
   return T(v >= T(0)) - T(v < T(0));
-}
+}*/
 
 #undef PRECISION_z
 #endif /* SPARSE_Z_H */
