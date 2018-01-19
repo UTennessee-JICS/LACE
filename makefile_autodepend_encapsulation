@@ -205,6 +205,24 @@ drivers/solver_OBJS = drivers/solver_interface.o \
 $(foreach i, $(DRIVERS), $(eval $(call generateTester,$(i))))
 
 #
+# Make and use libraries
+#
+
+libpariLU.a: control/constants.o control/magma_zmio.o \
+  control/mmio.o control/magma_zmconverter.o control/magma_zmtranspose.o \
+  control/magma_zfree.o control/magma_zmatrixchar.o control/norms.o \
+  control/init.o \
+  blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
+  blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
+  src/parilu_v0_0.o src/parilu_v0_3.o
+	$(AR) $(ARFLAGS) $@ $^
+
+testing/testlib_pariLU: libpariLU.a testing/test_iLU.o \
+	testing/test_cmd_line_main.o libgmock.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) \
+		$^ -o $@ $(LIBS) libpariLU.a
+
+#
 # Incorporate Google Testing & Mocking Framework
 #
 GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
