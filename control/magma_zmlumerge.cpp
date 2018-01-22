@@ -55,7 +55,7 @@ data_zmlumerge(
     data_int_t z = 0;
     for (data_int_t i = 0; i < A->num_rows; i++) {
       for (data_int_t j = L.row[i]; j < L.row[i + 1]; j++) {
-        if (L.col[j] < i) {         // skip diagonal elements
+        if (L.col[j] < i) { // skip diagonal elements
           z++;
         }
       }
@@ -71,7 +71,7 @@ data_zmlumerge(
     for (data_int_t i = 0; i < A->num_rows; i++) {
       A->row[i] = z;
       for (data_int_t j = L.row[i]; j < L.row[i + 1]; j++) {
-        if (L.col[j] < i) {         // skip diagonal elements
+        if (L.col[j] < i) { // skip diagonal elements
           A->col[z] = L.col[j];
           A->val[z] = L.val[j];
           z++;
@@ -85,7 +85,7 @@ data_zmlumerge(
     }
     A->row[A->num_rows] = z;
     A->nnz = z;
-  } else   {
+  } else {
     DEV_PRINTF("%% warning: %s , within %s ; matrix in wrong formats L = %d, U = %d.\n",
       __FILE__, __FUNCTION__, L.storage_type, U.storage_type);
     data_d_matrix LL = { Magma_CSR };

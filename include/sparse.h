@@ -2,7 +2,7 @@
 #define SPARSE_Z_H
 
 #include "sparse_types.h"
-//#include <vector>
+// #include <vector>
 #include <math.h>
 
 #ifdef _OPENMP
@@ -192,19 +192,19 @@ data_z_pad_csr(
   int             tile_size);
 
 /*void
-data_sparse_subvector(
-  int             sub_mbegin,
-  int             sub_nbegin,
-  data_d_matrix * A,
-  dataType *      subvector);
-
-void
-data_sparse_subvector_lowerupper(
-  int             sub_mbegin,
-  int             sub_nbegin,
-  data_d_matrix * A,
-  dataType *      subvector);
-*/
+ * data_sparse_subvector(
+ * int             sub_mbegin,
+ * int             sub_nbegin,
+ * data_d_matrix * A,
+ * dataType *      subvector);
+ *
+ * void
+ * data_sparse_subvector_lowerupper(
+ * int             sub_mbegin,
+ * int             sub_nbegin,
+ * data_d_matrix * A,
+ * dataType *      subvector);
+ */
 void
 data_sparse_subdense(
   int             sub_m,
@@ -279,47 +279,47 @@ data_sparse_subsparse_cs_lowerupper_handle(
   sparse_matrix_t * Asub_handle);
 
 /*void
-data_sparse_tilepattern(
-  int                 sub_m,
-  int                 sub_n,
-  std::vector<Int3> * tiles,
-  data_d_matrix *     A);
-
-void
-data_sparse_tilepattern_handles(int sub_m, int sub_n,
-  std::vector<Int3> * tiles,
-  std::vector<data_d_matrix> * L_subs,
-  std::vector<data_d_matrix> * U_subs,
-  std::vector<sparse_matrix_t> * L_handles,
-  std::vector<sparse_matrix_t> * U_handles,
-  data_d_matrix * A);
-
-void
-data_sparse_tilepatterns(int sub_m,
-  int                        sub_n,
-  std::vector<Int3> *        Ltiles,
-  std::vector<Int3> *        Utiles,
-  data_d_matrix *            A);
-
-void
-data_sparse_tilepatterns_handles(int sub_m, int sub_n,
-  std::vector<Int3> * Atiles,
-  std::vector<Int3> * Ltiles,
-  std::vector<Int3> * Utiles,
-  std::vector<data_d_matrix> * L_subs,
-  std::vector<data_d_matrix> * U_subs,
-  std::vector<sparse_matrix_t> * L_handles,
-  std::vector<sparse_matrix_t> * U_handles,
-  std::vector<std::vector<int> > * Lbatches,
-  std::vector<std::vector<int> > * Ubatches,
-  data_d_matrix * A);
-
-void
-data_sparse_tilepattern_lowerupper(
-  int sub_m,
-  int sub_n, std::vector<Int3> * tiles,
-  data_d_matrix * A);
-*/
+ * data_sparse_tilepattern(
+ * int                 sub_m,
+ * int                 sub_n,
+ * std::vector<Int3> * tiles,
+ * data_d_matrix *     A);
+ *
+ * void
+ * data_sparse_tilepattern_handles(int sub_m, int sub_n,
+ * std::vector<Int3> * tiles,
+ * std::vector<data_d_matrix> * L_subs,
+ * std::vector<data_d_matrix> * U_subs,
+ * std::vector<sparse_matrix_t> * L_handles,
+ * std::vector<sparse_matrix_t> * U_handles,
+ * data_d_matrix * A);
+ *
+ * void
+ * data_sparse_tilepatterns(int sub_m,
+ * int                        sub_n,
+ * std::vector<Int3> *        Ltiles,
+ * std::vector<Int3> *        Utiles,
+ * data_d_matrix *            A);
+ *
+ * void
+ * data_sparse_tilepatterns_handles(int sub_m, int sub_n,
+ * std::vector<Int3> * Atiles,
+ * std::vector<Int3> * Ltiles,
+ * std::vector<Int3> * Utiles,
+ * std::vector<data_d_matrix> * L_subs,
+ * std::vector<data_d_matrix> * U_subs,
+ * std::vector<sparse_matrix_t> * L_handles,
+ * std::vector<sparse_matrix_t> * U_handles,
+ * std::vector<std::vector<int> > * Lbatches,
+ * std::vector<std::vector<int> > * Ubatches,
+ * data_d_matrix * A);
+ *
+ * void
+ * data_sparse_tilepattern_lowerupper(
+ * int sub_m,
+ * int sub_n, std::vector<Int3> * tiles,
+ * data_d_matrix * A);
+ */
 
 int
 data_zrowentries(
@@ -570,38 +570,38 @@ data_z_spmm_handle(
   data_d_matrix *   C);
 
 /*int
-data_sparse_subsparse_spmm(
-  int             tile,
-  int             span,
-  int             ti,
-  int             tj,
-  Int3 *          tiles,
-  data_d_matrix * Lsub,
-  data_d_matrix * Usub,
-  data_d_matrix * C);
-
-int
-data_sparse_subsparse_spmm_handle(
-  int               tile,
-  int               span,
-  int               ti,
-  int               tj,
-  Int3 *            tiles,
-  sparse_matrix_t * L,
-  sparse_matrix_t * U,
-  data_d_matrix *   C);
-
-int
-data_sparse_subsparse_spmm_batches(
-  int                            to_update,
-  int                            tile,
-  dataType                       alpha,
-  std::vector<sparse_matrix_t> * L_handles,
-  std::vector<sparse_matrix_t> * U_handles,
-  std::vector<int> *             lbatch,
-  std::vector<int> *             ubatch,
-  data_d_matrix *                C);
-*/
+ * data_sparse_subsparse_spmm(
+ * int             tile,
+ * int             span,
+ * int             ti,
+ * int             tj,
+ * Int3 *          tiles,
+ * data_d_matrix * Lsub,
+ * data_d_matrix * Usub,
+ * data_d_matrix * C);
+ *
+ * int
+ * data_sparse_subsparse_spmm_handle(
+ * int               tile,
+ * int               span,
+ * int               ti,
+ * int               tj,
+ * Int3 *            tiles,
+ * sparse_matrix_t * L,
+ * sparse_matrix_t * U,
+ * data_d_matrix *   C);
+ *
+ * int
+ * data_sparse_subsparse_spmm_batches(
+ * int                            to_update,
+ * int                            tile,
+ * dataType                       alpha,
+ * std::vector<sparse_matrix_t> * L_handles,
+ * std::vector<sparse_matrix_t> * U_handles,
+ * std::vector<int> *             lbatch,
+ * std::vector<int> *             ubatch,
+ * data_d_matrix *                C);
+ */
 int
 data_z_spmm_batch(
   dataType          alpha,
@@ -1107,18 +1107,18 @@ data_orthogonality_error_incremental(data_d_matrix * krylov,
 
 
 /*template <class T>
-inline int
-sgn(T v)
-{
-  return (v > T(0)) - (v < T(0));
-}
-
-template <class T>
-inline T
-mysgn(T v)
-{
-  return T(v >= T(0)) - T(v < T(0));
-}*/
+ * inline int
+ * sgn(T v)
+ * {
+ * return (v > T(0)) - (v < T(0));
+ * }
+ *
+ * template <class T>
+ * inline T
+ * mysgn(T v)
+ * {
+ * return T(v >= T(0)) - T(v < T(0));
+ * }*/
 
 #undef PRECISION_z
 #endif /* SPARSE_Z_H */

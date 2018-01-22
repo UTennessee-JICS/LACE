@@ -302,16 +302,16 @@ mm_read_mtx_crd_data(FILE * f, int M, int N, int nz,
     for (i = 0; i < nz; i++)
       if (fscanf(f, "%d %d %lg %lg", &I[i], &J[i], &val[2 * i], &val[2 * i + 1])
         != 4) info = MM_PREMATURE_EOF;
-  } else if (mm_is_real(matcode))   {
+  } else if (mm_is_real(matcode)) {
     for (i = 0; i < nz; i++) {
       if (fscanf(f, "%d %d %lg\n", &I[i], &J[i], &val[i])
         != 3) info = MM_PREMATURE_EOF;
     }
-  } else if (mm_is_pattern(matcode))   {
+  } else if (mm_is_pattern(matcode)) {
     for (i = 0; i < nz; i++)
       if (fscanf(f, "%d %d", &I[i], &J[i])
         != 2) info = MM_PREMATURE_EOF;
-  } else   {
+  } else {
     info = MM_UNSUPPORTED_TYPE;
   }
 
@@ -327,12 +327,12 @@ mm_read_mtx_crd_entry(FILE * f, int * I, int * J,
   if (mm_is_complex(matcode)) {
     if (fscanf(f, "%d %d %lg %lg", I, J, real, imag)
       != 4) info = MM_PREMATURE_EOF;
-  } else if (mm_is_real(matcode))   {
+  } else if (mm_is_real(matcode)) {
     if (fscanf(f, "%d %d %lg\n", I, J, real)
       != 3) info = MM_PREMATURE_EOF;
-  } else if (mm_is_pattern(matcode))   {
+  } else if (mm_is_pattern(matcode)) {
     if (fscanf(f, "%d %d", I, J) != 2) info = MM_PREMATURE_EOF;
-  } else   {
+  } else {
     info = MM_UNSUPPORTED_TYPE;
   }
 
@@ -387,14 +387,14 @@ mm_read_mtx_crd(char * fname, int * M, int * N,
     ret_code = mm_read_mtx_crd_data(f, *M, *N, *nz, *I, *J, *val,
         *matcode);
     if (ret_code != 0) info = ret_code;
-  } else if (mm_is_real(*matcode))   {
+  } else if (mm_is_real(*matcode)) {
     // CHECK( data_dmalloc_cpu( val, *nz ) );
     // *val = (dataType*) malloc( *nz*sizeof(dataType) );
     LACE_CALLOC(*val, *nz);
     ret_code = mm_read_mtx_crd_data(f, *M, *N, *nz, *I, *J, *val,
         *matcode);
     if (ret_code != 0) info = ret_code;
-  } else if (mm_is_pattern(*matcode))   {
+  } else if (mm_is_pattern(*matcode)) {
     ret_code = mm_read_mtx_crd_data(f, *M, *N, *nz, *I, *J, *val,
         *matcode);
     if (ret_code != 0) info = ret_code;
@@ -459,10 +459,10 @@ mm_write_mtx_crd(char fname[], int M, int N, int nz,
   if (mm_is_pattern(matcode)) {
     for (i = 0; i < nz; i++)
       fprintf(f, "%d %d\n", I[i], J[i]);
-  } else if (mm_is_real(matcode))   {
+  } else if (mm_is_real(matcode)) {
     for (i = 0; i < nz; i++)
       fprintf(f, "%d %d %20.16g\n", I[i], J[i], val[i]);
-  } else if (mm_is_complex(matcode))   {
+  } else if (mm_is_complex(matcode)) {
     for (i = 0; i < nz; i++)
       fprintf(f, "%d %d %20.16g %20.16g\n", I[i], J[i], val[2 * i],
         val[2 * i + 1]);

@@ -202,7 +202,7 @@ read_z_csr_from_mtx(
 
       coo_row[ i ] = ROW - 1;
       coo_col[ i ] = COL - 1;
-      coo_val[ i ] = VAL;      // , VALC);
+      coo_val[ i ] = VAL; // , VALC);
     }
     // printf(" ...successfully read complex matrix... ");
   } else {
@@ -464,7 +464,7 @@ read_z_coo_from_mtx(
 
       coo_rowh[ i ] = ROW - 1;
       coo_colh[ i ] = COL - 1;
-      coo_valh[ i ] = VAL;      // , VALC);
+      coo_valh[ i ] = VAL; // , VALC);
     }
     // printf(" ...successfully read complex matrix... ");
   } else {
@@ -664,7 +664,7 @@ data_zwrite_csr_mtx(
       printf(" done\n");
 
     fflush(stdout);
-  } else   {
+  } else {
     printf("%% Writing sparse matrix to file (%s):", filename);
     fflush(stdout);
 
@@ -1167,7 +1167,7 @@ read_z_dense_from_mtx(
 
       // coo_row[ i ] = ROW - 1;
       // coo_col[ i ] = COL - 1;
-      coo_val[ i ] = VAL;      // , VALC);
+      coo_val[ i ] = VAL; // , VALC);
     }
     // printf(" ...successfully read complex matrix... ");
   } else {
@@ -1295,7 +1295,7 @@ data_zprint_dense(
   if (A.storage_type == Magma_DENSED) {
     printf("\nprinting a dense diagonal\n");
     data_zprint_dense_mtx(A.nnz, 1, A.nnz, A.major, &A.val);
-  } else if (A.pad_rows > 0 && A.pad_cols > 0)   {
+  } else if (A.pad_rows > 0 && A.pad_cols > 0) {
     data_zprint_dense_mtx(A.pad_rows, A.pad_cols, A.nnz, A.major, &A.val);
   } else {
     data_zprint_dense_mtx(A.num_rows, A.num_cols, A.nnz, A.major, &A.val);
@@ -1314,7 +1314,7 @@ data_zwrite_dense(
   if (A.storage_type == Magma_DENSED) {
     printf("\nprinting a dense diagonal\n");
     info = data_zwrite_dense_mtx(A.nnz, 1, A.nnz, A.major, &A.val, filename);
-  } else if (A.pad_rows > 0 && A.pad_cols > 0)   {
+  } else if (A.pad_rows > 0 && A.pad_cols > 0) {
     info = data_zwrite_dense_mtx(A.pad_rows, A.pad_cols, A.nnz, A.major, &A.val, filename);
   } else {
     info = data_zwrite_dense_mtx(A.num_rows, A.num_cols, A.nnz, A.major, &A.val, filename);
@@ -1345,7 +1345,7 @@ data_zdisplay_dense(
       }
       printf("\n");
     }
-  } else   {
+  } else {
     printf("%d %d\n", int(row_limit), int(col_limit));
     for (int i = 0; i < row_limit; i++) {
       for (int j = 0; j < col_limit; j++) {
@@ -1403,7 +1403,7 @@ data_z_pad_dense(
       A->val[ i * A->pad_cols + i ] = 1.0;
     }
     A->ld = A->pad_cols;
-  } else if (A->major == MagmaColMajor)   {
+  } else if (A->major == MagmaColMajor) {
     for (int j = 0; j < A->num_cols; j++) {
       for (int i = 0; i < A->num_rows; i++) {
         A->val[ i + j * A->pad_rows ] = valtmp[ i + j * A->num_rows ];

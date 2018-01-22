@@ -55,7 +55,7 @@ data_zmscale(
   if (A->storage_type == Magma_CSRCOO) {
     if (scaling == Magma_NOSCALE) {
       // no scale
-    } else if (A->num_rows == A->num_cols)   {
+    } else if (A->num_rows == A->num_cols) {
       if (scaling == Magma_UNITROW) {
         // scale to unit rownorm
         // tmp = (dataType*) calloc( A->num_rows, sizeof(dataType) );
@@ -69,7 +69,7 @@ data_zmscale(
         for (int z = 0; z < A->nnz; z++) {
           A->val[z] = A->val[z] * tmp[A->col[z]] * tmp[A->rowidx[z]];
         }
-      } else if (scaling == Magma_UNITDIAG)   {
+      } else if (scaling == Magma_UNITDIAG) {
         // scale to unit diagonal
         // tmp = (dataType*) calloc( A->num_rows, sizeof(dataType) );
         LACE_CALLOC(tmp, A->num_rows);
@@ -91,15 +91,15 @@ data_zmscale(
         for (int z = 0; z < A->nnz; z++) {
           A->val[z] = A->val[z] * tmp[A->col[z]] * tmp[A->rowidx[z]];
         }
-      } else   {
+      } else {
         printf("%%error: scaling not supported.\n");
         info = DEV_ERR_NOT_SUPPORTED;
       }
-    } else   {
+    } else {
       printf("%%error: scaling not supported.\n");
       info = DEV_ERR_NOT_SUPPORTED;
     }
-  } else   {
+  } else {
     data_storage_t A_storage = A->storage_type;
     data_zmconvert(*A, &CSRA, A->storage_type, Magma_CSRCOO);
 
@@ -163,14 +163,14 @@ data_zmscale_matrix_rhs(
     scaling = Magma_NOSCALE;
   }
 
-  if (A->storage_type == Magma_CSRCOO) { } else   {
+  if (A->storage_type == Magma_CSRCOO) { } else {
     data_rowindex(A, &A->rowidx);
   }
 
   if (scaling == Magma_NOSCALE) {
     // no scale
-  } else if (A->num_rows == A->num_cols)   {
-    if (scaling == Magma_NOSCALE) { } else   {
+  } else if (A->num_rows == A->num_cols) {
+    if (scaling == Magma_NOSCALE) { } else {
       if (scaling == Magma_UNITROW) {
         // scale to unit rownorm by rows
         // tmp = (dataType*) calloc( A->num_rows, sizeof(dataType) );
@@ -188,7 +188,7 @@ data_zmscale_matrix_rhs(
             A->val[z] = A->val[z] * tmp[A->rowidx[z]];
           }
         }
-      } else if (scaling == Magma_UNITDIAG)   {
+      } else if (scaling == Magma_UNITDIAG) {
         // scale to unit diagonal by rows
         // tmp = (dataType*) calloc( A->num_rows, sizeof(dataType) );
         LACE_CALLOC(tmp, A->num_rows);
@@ -222,7 +222,7 @@ data_zmscale_matrix_rhs(
         //  scaling_factors->val[i] = tmp[i];
         //  b->val[i] = b->val[i] * tmp[i];
         // }
-      } else if (scaling == Magma_UNITROWCOL)   {
+      } else if (scaling == Magma_UNITROWCOL) {
         // scale to unit rownorm by rows and columns
         // tmp = (dataType*) calloc( A->num_rows, sizeof(dataType) );
         LACE_CALLOC(tmp, A->num_rows);
@@ -249,7 +249,7 @@ data_zmscale_matrix_rhs(
         //  scaling_factors->val[i] = tmp[i];
         //  b->val[i] = b->val[i] * tmp[i];
         // }
-      } else if (scaling == Magma_UNITDIAGCOL)   {
+      } else if (scaling == Magma_UNITDIAGCOL) {
         // scale to unit diagonal by rows and columns
         // tmp = (dataType*) calloc( A->num_rows, sizeof(dataType) );
         LACE_CALLOC(tmp, A->num_rows);
@@ -283,7 +283,7 @@ data_zmscale_matrix_rhs(
         //  scaling_factors->val[i] = tmp[i];
         //  b->val[i] = b->val[i] * tmp[i];
         // }
-      } else   {
+      } else {
         printf("%%error: scaling not supported.\n");
         info = DEV_ERR_NOT_SUPPORTED;
       }
@@ -313,7 +313,7 @@ data_zmscale_matrix_rhs(
       // return only scaling factors and leave application to the
       // right hand side and solution vector to separate operations???
     }
-  } else   {
+  } else {
     printf("%%error: scaling not supported.\n");
     info = DEV_ERR_NOT_SUPPORTED;
   }
@@ -359,7 +359,7 @@ data_zmdiagadd(
         A->val[z] = A->val[z] + add;
       }
     }
-  } else   {
+  } else {
     data_storage_t A_storage = A->storage_type;
     data_zmconvert(*A, &CSRA, A->storage_type, Magma_CSRCOO);
 
@@ -435,7 +435,7 @@ data_zmscale_generate(
     printf("%% scaling[%d] = %d n=%d\n", j, scaling[j], n);
     if (scaling[j] == Magma_NOSCALE) {
       // no scale
-    } else if (A->num_rows == A->num_cols)   {
+    } else if (A->num_rows == A->num_cols) {
       if (scaling[j] == Magma_UNITROW && side[j] != MagmaBothSides) {
         // scale to unit rownorm
         for (int z = 0; z < A->num_rows; z++) {
@@ -444,7 +444,7 @@ data_zmscale_generate(
             s += A->val[f] * A->val[f];
           scaling_factors[j].val[z] = 1.0 / sqrt(s);
         }
-      } else if (scaling[j] == Magma_UNITDIAG && side[j] != MagmaBothSides)   {
+      } else if (scaling[j] == Magma_UNITDIAG && side[j] != MagmaBothSides) {
         // scale to unit diagonal
         for (int z = 0; z < A->num_rows; z++) {
           dataType s = 0.0;
@@ -459,13 +459,13 @@ data_zmscale_generate(
           }
           scaling_factors[j].val[z] = 1.0 / s;
         }
-      } else if (scaling[j] == Magma_UNITCOL && side[j] != MagmaBothSides)   {
+      } else if (scaling[j] == Magma_UNITCOL && side[j] != MagmaBothSides) {
         // scale to unit column norm
         CHECK(data_zmtranspose(*A, &CSRA) );
         data_scale_t tscale = Magma_UNITROW;
         data_zmscale_generate(1, &tscale, &side[j], &CSRA,
           &scaling_factors[j]);
-      } else if (scaling[j] == Magma_UNITROW && side[j] == MagmaBothSides)   {
+      } else if (scaling[j] == Magma_UNITROW && side[j] == MagmaBothSides) {
         // scale to unit rownorm by rows and columns
         for (int z = 0; z < A->num_rows; z++) {
           dataType s = 0.0;
@@ -473,7 +473,7 @@ data_zmscale_generate(
             s += A->val[f] * A->val[f];
           scaling_factors[j].val[z] = 1.0 / s;
         }
-      } else if (scaling[j] == Magma_UNITDIAG && side[j] == MagmaBothSides)   {
+      } else if (scaling[j] == Magma_UNITDIAG && side[j] == MagmaBothSides) {
         // scale to unit diagonal by rows and columns
         printf("scale to unit diagonal by rows and columns\n");
         for (int z = 0; z < A->num_rows; z++) {
@@ -489,18 +489,18 @@ data_zmscale_generate(
           }
           scaling_factors[j].val[z] = 1.0 / sqrt(s);
         }
-      } else if (scaling[j] == Magma_UNITCOL && side[j] == MagmaBothSides)   {
+      } else if (scaling[j] == Magma_UNITCOL && side[j] == MagmaBothSides) {
         // scale to unit column norm
         CHECK(data_zmtranspose(*A, &CSRA) );
         data_scale_t tscale = Magma_UNITROW;
         data_zmscale_generate(1, &tscale, &side[j], &CSRA,
           &scaling_factors[j]);
-      } else   {
+      } else {
         printf("%%error: scaling %d not supported line = %d.\n",
           scaling[j], __LINE__);
         info = DEV_ERR_NOT_SUPPORTED;
       }
-    } else   {
+    } else {
       printf("%%error: scaling of non-square matrices %d not supported line = %d.\n",
         scaling[0], __LINE__);
       info = DEV_ERR_NOT_SUPPORTED;
@@ -581,7 +581,7 @@ data_zmscale_apply(
         for (int z = 0; z < A->nnz; z++) {
           A->val[z] = A->val[z] * scaling_factors[j].val[A->rowidx[z]];
         }
-      } else if (side[j] == MagmaBothSides)   {
+      } else if (side[j] == MagmaBothSides) {
         printf("scale by rows and columns \n");
         fflush(stdout);
         // scale by rows and columns
@@ -590,7 +590,7 @@ data_zmscale_apply(
             * scaling_factors[j].val[A->col[z]]
             * scaling_factors[j].val[A->rowidx[z]];
         }
-      } else if (side[j] == MagmaRight)   {
+      } else if (side[j] == MagmaRight) {
         // scale by columns
         for (int z = 0; z < A->nnz; z++) {
           A->val[z] = A->val[z] * scaling_factors[j].val[A->rowidx[z]];

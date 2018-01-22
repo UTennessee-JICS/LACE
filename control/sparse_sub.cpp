@@ -378,7 +378,7 @@ data_sparse_subsparse_cs_lowerupper_handle(
         }
       }
     }
-  } else {   // U
+  } else { // U
     for (int i = sub_mbegin; i < sub_mbegin + sub_m; i++) {
       for (int j = A->row[i]; j < A->row[i + 1]; j++) {
         if (A->col[j] >= sub_nbegin && A->col[j] < sub_nbegin + sub_n && A->col[j] > i) {
@@ -406,7 +406,7 @@ data_sparse_subsparse_cs_lowerupper_handle(
           }
         }
       }
-    } else {   // U
+    } else { // U
       for (int i = sub_mbegin; i < sub_mbegin + sub_m; i++) {
         Asub->row[i - sub_mbegin] = nnz;
         for (int j = A->row[i]; j < A->row[i + 1]; j++) {
@@ -634,7 +634,7 @@ data_sparse_subsparse_spmm_batches(
         // printf(" (%e, %6d)", values_C[ii], columns_C[ii] ); fflush(0);
         if (j + 1 < pointerE_C[i] && columns_C[ii] > columns_C[ii + 1]) {
           // printf("\nSWAP!!!\n");
-          valtmp = values_C[ii];
+          valtmp            = values_C[ii];
           values_C[ii]      = values_C[ii + 1];
           values_C[ii + 1]  = valtmp;
           coltmp            = columns_C[ii];

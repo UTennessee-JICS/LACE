@@ -84,7 +84,7 @@ data_z_spmm(
       // info = DEV_SUCCESS;
       info = mkl_sparse_spmm(SPARSE_OPERATION_NON_TRANSPOSE,
           csrA, csrB, &csrC);
-    } else   {
+    } else {
       printf("error: format not supported.\n");
       info = DEV_ERR_NOT_SUPPORTED;
     }

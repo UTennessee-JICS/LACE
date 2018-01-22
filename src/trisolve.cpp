@@ -53,7 +53,7 @@ data_forward_solve(data_d_matrix * L, data_d_matrix * x, data_d_matrix * rhs,
       *iter = *iter + 1;
       printf("%% iteration = %d step = %e\n", *iter, step);
     }
-  } else   {
+  } else {
     info = -1;
     printf("L matrix storage %d and fill mode %d must be CSRL (%d) and lower (%d) for a forward solve.\n",
       L->storage_type, L->fill_mode, Magma_CSRL, MagmaLower);
@@ -100,7 +100,7 @@ data_backward_solve(data_d_matrix * U, data_d_matrix * x, data_d_matrix * rhs,
       *iter = *iter + 1;
       printf("%% iteration = %d step = %e\n", *iter, step);
     }
-  } else   {
+  } else {
     info = -1;
     printf("U matrix storage %d and fill mode %d must be CSRU (%d) and lower (%d) for a backward solve.\n",
       U->storage_type, U->fill_mode, Magma_CSRU, MagmaUpper);
@@ -162,7 +162,7 @@ data_forward_solve_permute(data_d_matrix * L, data_d_matrix * x, data_d_matrix *
     }
 
     free(c);
-  } else   {
+  } else {
     info = -1;
     printf("L matrix storage %d and fill mode %d must be CSRL (%d) and lower (%d) for a forward solve.\n",
       L->storage_type, L->fill_mode, Magma_CSRL, MagmaLower);
@@ -222,7 +222,7 @@ data_backward_solve_permute(data_d_matrix * U, data_d_matrix * x, data_d_matrix 
 
       std::random_shuffle(c, c + U->num_rows);
     }
-  } else   {
+  } else {
     info = -1;
     printf("U matrix storage %d and fill mode %d must be CSRU (%d) and lower (%d) for a backward solve.\n",
       U->storage_type, U->fill_mode, Magma_CSRU, MagmaUpper);

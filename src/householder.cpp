@@ -68,7 +68,7 @@ data_housegen(int n,
   if (u[0] >= 0) {
     u[0]  = u[0] + 1.0;
     (*nu) = -(*nu);
-  } else   {
+  } else {
     u[0] = u[0] - 1.0;
   }
   dataType tmp = 1.0 / sqrt(fabs(u[0]));

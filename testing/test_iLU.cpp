@@ -51,7 +51,7 @@ protected:
         {
           (*tile_size) = atoi(my_argv[count + 1]);
           count        = count + 2;
-        } else   {
+        } else {
           count++;
         }
       }
@@ -183,7 +183,7 @@ TEST_F(iLUTest, PariLUv0_0){
 
 TEST_F(iLUTest, PariLUv0_3){
   // =========================================================================
-  // PariLU v0.0
+  // PariLU v0.3
   // =========================================================================
   printf("%% PariLU v0.3\n");
 

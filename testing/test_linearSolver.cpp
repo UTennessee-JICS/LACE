@@ -155,9 +155,9 @@ TEST_F(LinearSolverTest, MKLFGMRESnonPreconditioned){
 
   data_z_gmres_param solverParam;
 
-  solverParam.tol_type = 0;
-  solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 20;
+  solverParam.tol_type            = 0;
+  solverParam.rtol                = (*LinearSolverTest::tolerance);
+  solverParam.search_max          = 20;
   solverParam.restart_max         = 20;
   solverParam.reorth              = 0;
   solverParam.precondition        = 0;
@@ -201,9 +201,9 @@ TEST_F(LinearSolverTest, MKLFGMRESPreconditioned){
 
   data_z_gmres_param solverParam;
 
-  solverParam.tol_type = 0;
-  solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 2000;
+  solverParam.tol_type            = 0;
+  solverParam.rtol                = (*LinearSolverTest::tolerance);
+  solverParam.search_max          = 2000;
   solverParam.restart_max         = 2000;
   solverParam.reorth              = 0;
   solverParam.precondition        = 1;
@@ -247,9 +247,9 @@ TEST_F(LinearSolverTest, MKLFGMRESPreconditionedRestart){
 
   data_z_gmres_param solverParam;
 
-  solverParam.tol_type = 0;
-  solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 2000;
+  solverParam.tol_type            = 0;
+  solverParam.rtol                = (*LinearSolverTest::tolerance);
+  solverParam.search_max          = 2000;
   solverParam.restart_max         = 20;
   solverParam.reorth              = 0;
   solverParam.precondition        = 1;
@@ -294,9 +294,9 @@ TEST_F(LinearSolverTest, FGMRESPreconditioned){
   data_z_gmres_param solverParam;
   data_d_gmres_log gmresLog;
 
-  solverParam.tol_type = 0;
-  solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 2000;
+  solverParam.tol_type            = 0;
+  solverParam.rtol                = (*LinearSolverTest::tolerance);
+  solverParam.search_max          = 2000;
   solverParam.restart_max         = 2000;
   solverParam.reorth              = 0;
   solverParam.precondition        = 1;
@@ -400,9 +400,9 @@ TEST_F(LinearSolverTest, FGMRESPreconditionedRestart){
   data_z_gmres_param solverParam;
   data_d_gmres_log gmresLog;
 
-  solverParam.tol_type = 0;
-  solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 20;
+  solverParam.tol_type            = 0;
+  solverParam.rtol                = (*LinearSolverTest::tolerance);
+  solverParam.search_max          = 20;
   solverParam.restart_max         = 100;
   solverParam.reorth              = 0;
   solverParam.precondition        = 1;
@@ -506,9 +506,9 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditioned){
   data_z_gmres_param solverParam;
   data_d_gmres_log gmresLog;
 
-  solverParam.tol_type = 0;
-  solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 2000;
+  solverParam.tol_type            = 0;
+  solverParam.rtol                = (*LinearSolverTest::tolerance);
+  solverParam.search_max          = 2000;
   solverParam.restart_max         = 0;
   solverParam.reorth              = 0;
   solverParam.precondition        = 1;
@@ -612,9 +612,9 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditionedRestart){
   data_z_gmres_param solverParam;
   data_d_gmres_log gmresLog;
 
-  solverParam.tol_type = 0;
-  solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 20;
+  solverParam.tol_type            = 0;
+  solverParam.rtol                = (*LinearSolverTest::tolerance);
+  solverParam.search_max          = 20;
   solverParam.restart_max         = 20;
   solverParam.reorth              = 0;
   solverParam.precondition        = 1;

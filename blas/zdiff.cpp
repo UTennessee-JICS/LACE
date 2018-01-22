@@ -41,7 +41,7 @@ data_zdiff_csr(
     }
     (*nonlinres) = sqrt((*nonlinres));
     (*res)       = sqrt((*res));
-  } else   {
+  } else {
     data_zmconvert(*A, C, Magma_CSR, Magma_CSR);
     for (i = 0; i < A->num_rows; i++) {
       for (j = A->row[i]; j < A->row[i + 1]; j++) {
@@ -94,7 +94,7 @@ data_zdiff_magnitude_csr(
       }
     }
     data_zmfree(&C);
-  } else   {
+  } else {
     for (i = 0; i < A->num_rows; i++) {
       for (j = A->row[i]; j < A->row[i + 1]; j++) {
         int localcol = A->col[j];

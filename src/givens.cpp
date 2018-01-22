@@ -53,11 +53,11 @@ givens_rotation(dataType a,
     GMRESDBG("fabs(b)=%e < tol=%e\n", fabs(b), tol);
     (*c) = 1.0;
     (*s) = 0.0;
-  } else if (fabs(b) > fabs(a) )   {
+  } else if (fabs(b) > fabs(a) ) {
     dataType temp = a / b;
     (*s) = 1.0 / sqrt(1.0 + temp * temp);
     (*c) = temp * (*s);
-  } else   {
+  } else {
     dataType temp = b / a;
     (*c) = 1.0 / sqrt(1.0 + temp * temp);
     (*s) = temp * (*c);

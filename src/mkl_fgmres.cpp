@@ -45,8 +45,8 @@ data_MKL_FGMRES(
   data_d_matrix LU = { Magma_CSR };
 
   /*---------------------------------------------------------------------------
-  *  Allocate storage for the ?par parameters and the solution/rhs/residual vectors
-  *  ---------------------------------------------------------------------------*/
+   *  Allocate storage for the ?par parameters and the solution/rhs/residual vectors
+   *  ---------------------------------------------------------------------------*/
   MKL_INT ipar[size];
   double dpar[size];
 
@@ -80,8 +80,8 @@ data_MKL_FGMRES(
   double dvar_bad     = 0.0;
 
   /*---------------------------------------------------------------------------
-  *  Some additional variables to use with the RCI (P)FGMRES solver
-  *  ---------------------------------------------------------------------------*/
+   *  Some additional variables to use with the RCI (P)FGMRES solver
+   *  ---------------------------------------------------------------------------*/
   MKL_INT itercount = 0, ierr = 0;
   MKL_INT RCI_request, i, ivar;
   double dvar;
@@ -93,8 +93,8 @@ data_MKL_FGMRES(
   printf("--------------------------------------------------------\n\n");
 
   /*---------------------------------------------------------------------------
-  *  Initialize variables and the right hand side through matrix-vector product
-  *  ---------------------------------------------------------------------------*/
+   *  Initialize variables and the right hand side through matrix-vector product
+   *  ---------------------------------------------------------------------------*/
   ivar = N;
   cvar = 'N';
   #pragma omp parallel
@@ -107,15 +107,15 @@ data_MKL_FGMRES(
   DEV_CHECKPT
 
   /*---------------------------------------------------------------------------
-  *  Save the right-hand side in vector b for future use
-  *  ---------------------------------------------------------------------------*/
+   *  Save the right-hand side in vector b for future use
+   *  ---------------------------------------------------------------------------*/
     i = 1;
   dcopy(&ivar, rhs, &i, b, &i);
   DEV_CHECKPT
 
   /*---------------------------------------------------------------------------
-  *  Initialize the initial guess
-  *  ---------------------------------------------------------------------------*/
+   *  Initialize the initial guess
+   *  ---------------------------------------------------------------------------*/
   for (i = 0; i < N; i++) {
     computed_solution[i] = x0->val[i];
     residual[i] = 0.0;
@@ -123,34 +123,34 @@ data_MKL_FGMRES(
 
 
   /*---------------------------------------------------------------------------
-  *  Initialize the solver
-  *  ---------------------------------------------------------------------------*/
+   *  Initialize the solver
+   *  ---------------------------------------------------------------------------*/
   dfgmres_init(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
   printf("after dfgmres_init on line %d RCI_request = %d\n", __LINE__, RCI_request);
   if (RCI_request != 0) goto FAILED;
 
   /*---------------------------------------------------------------------------
-  *  Calculate ILU0 preconditioner.
-  *                       !ATTENTION!
-  *  DCSRILU0 routine uses some IPAR, DPAR set by DFGMRES_INIT routine.
-  *  Important for DCSRILU0 default entries set by DFGMRES_INIT are
-  *  ipar[1] = 6 - output of error messages to the screen,
-  *  ipar[5] = 1 - allow output of errors,
-  *  ipar[30]= 0 - abort DCSRILU0 calculations if routine meets zero diagonal element.
-  *
-  *  If ILU0 is going to be used out of MKL FGMRES context, than the values
-  *  of ipar[1], ipar[5], ipar[30], dpar[30], and dpar[31] should be user
-  *  provided before the DCSRILU0 routine call.
-  *
-  *  In this example, specific for DCSRILU0 entries are set in turn:
-  *  ipar[30]= 1 - change small diagonal value to that given by dpar[31],
-  *  dpar[30]= 1.E-20 instead of the default value set by DFGMRES_INIT.
-  *                   It is a small value to compare a diagonal entry with it.
-  *  dpar[31]= 1.E-16 instead of the default value set by DFGMRES_INIT.
-  *                   It is the target value of the diagonal value if it is
-  *                   small as compared to dpar[30] and the routine should change
-  *                   it rather than abort DCSRILU0 calculations.
-  *  ---------------------------------------------------------------------------*/
+   *  Calculate ILU0 preconditioner.
+   *                       !ATTENTION!
+   *  DCSRILU0 routine uses some IPAR, DPAR set by DFGMRES_INIT routine.
+   *  Important for DCSRILU0 default entries set by DFGMRES_INIT are
+   *  ipar[1] = 6 - output of error messages to the screen,
+   *  ipar[5] = 1 - allow output of errors,
+   *  ipar[30]= 0 - abort DCSRILU0 calculations if routine meets zero diagonal element.
+   *
+   *  If ILU0 is going to be used out of MKL FGMRES context, than the values
+   *  of ipar[1], ipar[5], ipar[30], dpar[30], and dpar[31] should be user
+   *  provided before the DCSRILU0 routine call.
+   *
+   *  In this example, specific for DCSRILU0 entries are set in turn:
+   *  ipar[30]= 1 - change small diagonal value to that given by dpar[31],
+   *  dpar[30]= 1.E-20 instead of the default value set by DFGMRES_INIT.
+   *                   It is a small value to compare a diagonal entry with it.
+   *  dpar[31]= 1.E-16 instead of the default value set by DFGMRES_INIT.
+   *                   It is the target value of the diagonal value if it is
+   *                   small as compared to dpar[30] and the routine should change
+   *                   it rather than abort DCSRILU0 calculations.
+   *  ---------------------------------------------------------------------------*/
   ipar[1]  = 6;
   ipar[5]  = 1;
   ipar[30] = 1;
@@ -189,20 +189,20 @@ data_MKL_FGMRES(
   }
 
   /*---------------------------------------------------------------------------
-  *  Set the desired parameters:
-  *  do the restart after 2 iterations
-  *  LOGICAL parameters:
-  *  do not do the stopping test for the maximal number of iterations
-  *  do the Preconditioned iterations of FGMRES method
-  *  Set parameter ipar[10] for preconditioner call. For this example,
-  *  it reduces the number of iterations.
-  *  DOUBLE PRECISION parameters
-  *  set the relative tolerance to 1.0D-3 instead of default value 1.0D-6
-  *   NOTE. Preconditioner may increase the number of iterations for an
-  *   arbitrary case of the system and initial guess and even ruin the
-  *   convergence. It is user's responsibility to use a suitable preconditioner
-  *   and to apply it skillfully.
-  *  ---------------------------------------------------------------------------*/
+   *  Set the desired parameters:
+   *  do the restart after 2 iterations
+   *  LOGICAL parameters:
+   *  do not do the stopping test for the maximal number of iterations
+   *  do the Preconditioned iterations of FGMRES method
+   *  Set parameter ipar[10] for preconditioner call. For this example,
+   *  it reduces the number of iterations.
+   *  DOUBLE PRECISION parameters
+   *  set the relative tolerance to 1.0D-3 instead of default value 1.0D-6
+   *   NOTE. Preconditioner may increase the number of iterations for an
+   *   arbitrary case of the system and initial guess and even ruin the
+   *   convergence. It is user's responsibility to use a suitable preconditioner
+   *   and to apply it skillfully.
+   *  ---------------------------------------------------------------------------*/
 
   ipar[4]  = solverParam->search_max;
   ipar[7]  = 1;
@@ -223,8 +223,8 @@ data_MKL_FGMRES(
 
 
   /*---------------------------------------------------------------------------
-  *  Check the correctness and consistency of the newly set parameters
-  *  ---------------------------------------------------------------------------*/
+   *  Check the correctness and consistency of the newly set parameters
+   *  ---------------------------------------------------------------------------*/
   dfgmres_check(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
   printf("after dfgmres_check on line %d RCI_request = %d\n", __LINE__, RCI_request);
 
@@ -244,8 +244,8 @@ data_MKL_FGMRES(
   if (RCI_request != 0) goto FAILED;
 
   /*---------------------------------------------------------------------------
-  *  Print the info about the RCI FGMRES method
-  *  ---------------------------------------------------------------------------*/
+   *  Print the info about the RCI FGMRES method
+   *  ---------------------------------------------------------------------------*/
   printf("Some info about the current run of RCI FGMRES method:\n\n");
   if (ipar[7]) {
     printf("As ipar[7]=%d, the automatic test for the maximal number of iterations will be\n", ipar[7]);
@@ -289,25 +289,25 @@ data_MKL_FGMRES(
   printf("+++\n\n");
 
   /*---------------------------------------------------------------------------
-  *  Compute the solution by RCI (P)FGMRES solver with preconditioning
-  *  Reverse Communication starts here
-  *  ---------------------------------------------------------------------------*/
+   *  Compute the solution by RCI (P)FGMRES solver with preconditioning
+   *  Reverse Communication starts here
+   *  ---------------------------------------------------------------------------*/
 ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
   printf("after dfgmres on line %d RCI_request = %d\n", __LINE__, RCI_request);
 
   /*---------------------------------------------------------------------------
-  *  If RCI_request=0, then the solution was found with the required precision
-  *  ---------------------------------------------------------------------------*/
+   *  If RCI_request=0, then the solution was found with the required precision
+   *  ---------------------------------------------------------------------------*/
   if (RCI_request == 0) goto COMPLETE;
 
   /*---------------------------------------------------------------------------
-  *  If RCI_request=1, then compute the vector A*tmp[ipar[21]-1]
-  *  and put the result in vector tmp[ipar[22]-1]
-  *  ---------------------------------------------------------------------------
-  *  NOTE that ipar[21] and ipar[22] contain FORTRAN style addresses,
-  *  therefore, in C code it is required to subtract 1 from them to get C style
-  *  addresses
-  *  ---------------------------------------------------------------------------*/
+   *  If RCI_request=1, then compute the vector A*tmp[ipar[21]-1]
+   *  and put the result in vector tmp[ipar[22]-1]
+   *  ---------------------------------------------------------------------------
+   *  NOTE that ipar[21] and ipar[22] contain FORTRAN style addresses,
+   *  therefore, in C code it is required to subtract 1 from them to get C style
+   *  addresses
+   *  ---------------------------------------------------------------------------*/
   if (RCI_request == 1) {
     printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
     mkl_dcsrgemv(&cvar, &ivar, A->val, ia, ja, &tmp[ipar[21] - 1], &tmp[ipar[22] - 1]);
@@ -315,18 +315,18 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
   }
 
   /*---------------------------------------------------------------------------
-  *  If RCI_request=2, then do the user-defined stopping test
-  *  The residual stopping test for the computed solution is performed here
-  *  ---------------------------------------------------------------------------
-  *  NOTE: from this point vector b[N] is no longer containing the right-hand
-  *  side of the problem! It contains the current FGMRES approximation to the
-  *  solution. If you need to keep the right-hand side, save it in some other
-  *  vector before the call to dfgmres routine. Here we saved it in vector
-  *  rhs[N]. The vector b is used instead of rhs to preserve the
-  *  original right-hand side of the problem and guarantee the proper
-  *  restart of FGMRES method. Vector b will be altered when computing the
-  *  residual stopping criterion!
-  *  ---------------------------------------------------------------------------*/
+   *  If RCI_request=2, then do the user-defined stopping test
+   *  The residual stopping test for the computed solution is performed here
+   *  ---------------------------------------------------------------------------
+   *  NOTE: from this point vector b[N] is no longer containing the right-hand
+   *  side of the problem! It contains the current FGMRES approximation to the
+   *  solution. If you need to keep the right-hand side, save it in some other
+   *  vector before the call to dfgmres routine. Here we saved it in vector
+   *  rhs[N]. The vector b is used instead of rhs to preserve the
+   *  original right-hand side of the problem and guarantee the proper
+   *  restart of FGMRES method. Vector b will be altered when computing the
+   *  residual stopping criterion!
+   *  ---------------------------------------------------------------------------*/
   if (RCI_request == 2) {
     printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
 
@@ -355,15 +355,15 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
   }
 
   /*---------------------------------------------------------------------------
-  *  If RCI_request=3, then apply the preconditioner on the vector
-  *  tmp[ipar[21]-1] and put the result in vector tmp[ipar[22]-1]
-  *  ---------------------------------------------------------------------------
-  *  NOTE that ipar[21] and ipar[22] contain FORTRAN style addresses,
-  *  therefore, in C code it is required to subtract 1 from them to get C style
-  *  addresses
-  *  Here is the recommended usage of the result produced by ILU0 routine
-  *    via standard MKL Sparse Blas solver routine mkl_dcsrtrsv.
-  *   ---------------------------------------------------------------------------*/
+   *  If RCI_request=3, then apply the preconditioner on the vector
+   *  tmp[ipar[21]-1] and put the result in vector tmp[ipar[22]-1]
+   *  ---------------------------------------------------------------------------
+   *  NOTE that ipar[21] and ipar[22] contain FORTRAN style addresses,
+   *  therefore, in C code it is required to subtract 1 from them to get C style
+   *  addresses
+   *  Here is the recommended usage of the result produced by ILU0 routine
+   *    via standard MKL Sparse Blas solver routine mkl_dcsrtrsv.
+   *   ---------------------------------------------------------------------------*/
   if (RCI_request == 3) {
     printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
     cvar1 = 'L';
@@ -378,10 +378,10 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
   }
 
   /*---------------------------------------------------------------------------
-  *  If RCI_request=4, then check if the norm of the next generated vector is
-  *  not zero up to rounding and computational errors. The norm is contained
-  *  in dpar[6] parameter
-  *  ---------------------------------------------------------------------------*/
+   *  If RCI_request=4, then check if the norm of the next generated vector is
+   *  not zero up to rounding and computational errors. The norm is contained
+   *  in dpar[6] parameter
+   *  ---------------------------------------------------------------------------*/
   if (RCI_request == 4) {
     printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
     printf("dpar[2] = %e\n", dpar[2]);
@@ -392,28 +392,29 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
     if (dpar[6] < 1.0E-14) goto COMPLETE;
     else goto ONE;
   }
+
   /*---------------------------------------------------------------------------
-  *  If RCI_request=anything else, then dfgmres subroutine failed
-  *  to compute the solution vector: computed_solution[N]
-  *  ---------------------------------------------------------------------------*/
+   *  If RCI_request=anything else, then dfgmres subroutine failed
+   *  to compute the solution vector: computed_solution[N]
+   *  ---------------------------------------------------------------------------*/
   else {
     printf("RCI_request = %d\n", RCI_request);
     goto FAILED;
   }
 
   /*---------------------------------------------------------------------------
-  *  Reverse Communication ends here
-  *  Get the current iteration number and the FGMRES solution (DO NOT FORGET to
-  *  call dfgmres_get routine as computed_solution is still containing
-  *  the initial guess!). Request to dfgmres_get to put the solution
-  *  into vector computed_solution[N] via ipar[12]
-  *  ---------------------------------------------------------------------------*/
+   *  Reverse Communication ends here
+   *  Get the current iteration number and the FGMRES solution (DO NOT FORGET to
+   *  call dfgmres_get routine as computed_solution is still containing
+   *  the initial guess!). Request to dfgmres_get to put the solution
+   *  into vector computed_solution[N] via ipar[12]
+   *  ---------------------------------------------------------------------------*/
 COMPLETE:   ipar[12] = 0;
   dfgmres_get(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp, &itercount);
 
   /*---------------------------------------------------------------------------
-  *  Print solution vector: computed_solution[N] and the number of iterations: itercount
-  *  ---------------------------------------------------------------------------*/
+   *  Print solution vector: computed_solution[N] and the number of iterations: itercount
+   *  ---------------------------------------------------------------------------*/
   printf("The system has been solved \n");
 
   final_residual_nrm2 = dnrm2(&ivar, residual, &incx);

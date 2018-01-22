@@ -46,7 +46,7 @@ data_PariLU_v0_3_prescribedSweeps(data_d_matrix * A,
   PARILUDBG("PariLU_v0_3_tol = %e\n", tol);
   int num_threads = 0;
 
-  dataType s = 0.0;
+  dataType s          = 0.0;
   dataType sp         = 0.0;
   dataType tmp        = 0.0;
   dataType step       = FLT_MAX;

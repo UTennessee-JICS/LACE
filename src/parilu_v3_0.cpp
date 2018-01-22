@@ -132,8 +132,8 @@ data_PariLU_v3_0(data_d_matrix * A, data_d_matrix * L, data_d_matrix * U, int ti
               // #pragma omp simd
               for (int j = Uc.row[i]; j < Uc.row[i + 1]; j++) {
                 if (U->col[j] >= tj && U->col[j] < maxcol && U->col[j] != i) {
-                  ii = i - ti;
-                  jj = U->col[j] - tj;
+                  ii          = i - ti;
+                  jj          = U->col[j] - tj;
                   tmp         = Uc.val[ j ] - Ctile2[ ii * tile + jj ];
                   step       += pow(U->val[ j ] - tmp, 2);
                   U->val[ j ] = tmp;
@@ -161,8 +161,8 @@ data_PariLU_v3_0(data_d_matrix * A, data_d_matrix * L, data_d_matrix * U, int ti
                 // #pragma omp simd
                 for (int j = Lc.row[i]; j < Lc.row[i + 1]; j++) {
                   if (L->col[j] >= tj && L->col[j] < maxcol && L->col[j] != i) {
-                    ii = i - ti;
-                    jj = L->col[j] - tj;
+                    ii          = i - ti;
+                    jj          = L->col[j] - tj;
                     tmp         = ( (Lc.val[ j ] - Ctile2[ ii * tile + jj ]) * D.val[ L->col[j] ] );
                     step       += pow(L->val[ j ] - tmp, 2);
                     L->val[ j ] = tmp;

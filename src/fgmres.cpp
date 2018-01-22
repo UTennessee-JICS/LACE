@@ -73,8 +73,8 @@ data_fgmres(
   dataType negone = -1.0;
 
   // initialize
-  data_int_t info = DEV_NOTCONVERGED;
-  data_int_t n = A->num_rows;
+  data_int_t info              = DEV_NOTCONVERGED;
+  data_int_t n                 = A->num_rows;
   data_int_t search_max        = gmres_par->search_max;
   data_int_t search_directions = 0;
   dataType rtol                = gmres_par->rtol;

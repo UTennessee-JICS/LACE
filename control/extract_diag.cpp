@@ -69,7 +69,7 @@ data_zmextractdiag(
         if (A.col[j] == i) {
           printf("row=%d, col=%d, val=%e \n", i, A.col[j], A.val[j]);
           count++;
-        } else   {
+        } else {
           count++;
         }
       }
@@ -93,7 +93,7 @@ data_zmextractdiag(
           B->val[count] = A.val[j];
           B->row[count] = count;
           count++;
-        } else   {
+        } else {
           printf("zero on diagonal row=%d, col=%d, val=%e \n", i, i, 0.0);
           B->col[count] = i;
           B->val[count] = 0.0;

@@ -55,7 +55,7 @@ protected:
         {
           (*tile_size) = atoi(my_argv[count + 1]);
           count        = count + 2;
-        } else   {
+        } else {
           count++;
         }
       }
@@ -77,7 +77,7 @@ protected:
       for (int i = 0; i < A->num_rows; i++) {
         A->val[ i * A->ld + i ] += 1.0e3;
       }
-    } else   {
+    } else {
       printf("A will be read from %s and converted to a dense matrix\n", matrix_name);
       data_d_matrix Asparse = { Magma_CSR };
       CHECK(data_z_csr_mtx(&Asparse, matrix_name) );

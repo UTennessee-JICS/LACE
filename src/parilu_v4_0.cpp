@@ -152,7 +152,7 @@ data_PariLU_v4_0(data_d_matrix * A, data_d_matrix * L, data_d_matrix * U)
         // printf(" (%e, %6d)", values_C[ii], columns_C[ii] ); fflush(0);
         if (j + 1 < pointerE_C[i] && columns_C[ii] > columns_C[ii + 1]) {
           // printf("\nSWAP!!!\n");
-          valtmp = values_C[ii];
+          valtmp            = values_C[ii];
           values_C[ii]      = values_C[ii + 1];
           values_C[ii + 1]  = valtmp;
           coltmp            = columns_C[ii];

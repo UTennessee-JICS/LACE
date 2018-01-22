@@ -48,7 +48,7 @@ data_zfrobenius_dense(
         (*res) = (*res) + A.val[ i * A.ld + j ] * A.val[ i * A.ld + j ];
       }
     }
-  } else   {
+  } else {
     for (j = 0; j < A.num_cols; j++) {
       for (i = 0; i < A.num_rows; i++) {
         (*res) = (*res) + A.val[ i + j * A.ld ] * A.val[ i + j * A.ld ];
@@ -138,7 +138,7 @@ data_zfrobenius_diff_dense(
         (*res) = (*res) + tmp2 * tmp2;
       }
     }
-  } else   {
+  } else {
     for (j = 0; j < A.num_cols; j++) {
       for (i = 0; i < A.num_rows; i++) {
         tmp2   = A.val[ i + j * A.ld ] - B.val[ i + j * A.ld ];
@@ -224,7 +224,7 @@ data_zfrobenius_LUresidual(
       rowlimit, rowlimit, collimit,
       alpha, L.val, L.ld, U.val, U.ld,
       beta, B.val, B.ld);
-  } else   {
+  } else {
     data_d_matrix C = { Magma_DENSEU };
     C.major = MagmaRowMajor;
     // C.diagorder_type = U.diagorder_type;
@@ -321,7 +321,7 @@ data_zilures(
     // printf("L lower triangular.\n");
     LL.diagorder_type = Magma_UNITY;
     data_zmconvert(L, &LL, Magma_CSR, Magma_CSRL);
-  } else if (L.row[1] == 0)   {// strictly lower triangular
+  } else if (L.row[1] == 0) { // strictly lower triangular
     printf("L strictly lower triangular.\n");
     data_zmconvert(L, &LL, Magma_CSR, Magma_CSR);
     free(LL.col);
@@ -345,7 +345,7 @@ data_zilures(
       z++;
     }
     LL.row[LL.num_rows] = z;
-  } else   {
+  } else {
     printf("error: L neither lower nor strictly lower triangular!\n");
   }
 
@@ -353,7 +353,7 @@ data_zilures(
   if (U.storage_type == Magma_CSR || U.storage_type == Magma_CSRU) {
     // printf("U is CSR\n");
     data_zmconvert(U, &U_d, Magma_CSR, Magma_CSR);
-  } else if (U.storage_type == Magma_CSC || U.storage_type == Magma_CSCU)   {
+  } else if (U.storage_type == Magma_CSC || U.storage_type == Magma_CSCU) {
     // printf("U is CSC\n");
     data_zmconvert(U, &U_d, Magma_CSC, Magma_CSR);
   }

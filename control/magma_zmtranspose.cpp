@@ -175,7 +175,7 @@ z_transpose_csr(
   if (A.pad_rows != 0) {
     // printf("total=%d A.true_nnz=%d\n", total, A.true_nnz);
     assert(total == A.true_nnz);
-  } else   {
+  } else {
     // printf("total=%d A.nnz=%d\n", total, A.nnz);
     assert(total == A.nnz);
   }
@@ -195,7 +195,7 @@ z_transpose_csr(
   if (A.pad_rows != 0) {
     // printf("total=%d A.true_nnz=%d\n", total, A.true_nnz);
     assert(B->row[ rowlimit - 1 ] == A.true_nnz);
-  } else   {
+  } else {
     // printf("total=%d A.nnz=%d\n", total, A.nnz);
     assert(B->row[ rowlimit - 1 ] == A.nnz);
   }
@@ -334,7 +334,7 @@ z_transpose_bcsr(
   if (A.pad_rows != 0) {
     // printf("total=%d A.true_nnz=%d\n", total, A.true_nnz);
     assert(total == A.numblocks);
-  } else   {
+  } else {
     // printf("total=%d A.nnz=%d\n", total, A.nnz);
     assert(total == A.numblocks);
   }
@@ -364,7 +364,7 @@ z_transpose_bcsr(
   if (A.pad_rows != 0) {
     // printf("total=%d A.true_nnz=%d\n", total, A.true_nnz);
     assert(B->row[ rowlimit - 1 ] == A.numblocks);
-  } else   {
+  } else {
     // printf("total=%d A.nnz=%d\n", total, A.nnz);
     assert(B->row[ rowlimit - 1 ] == A.numblocks);
   }
@@ -436,7 +436,7 @@ z_transpose_dense(
     }
     B->major = MagmaRowMajor;
     B->ld    = collimit;
-  } else if (A.major == MagmaColMajor)   {
+  } else if (A.major == MagmaColMajor) {
     for (int j = 0; j < rowlimit; j++) {
       for (int i = 0; i < collimit; i++) {
         B->val[ i * rowlimit + j ] = A.val[ i + j * A.ld ];

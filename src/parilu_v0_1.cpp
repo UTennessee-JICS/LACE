@@ -34,7 +34,7 @@ data_PariLU_v0_1(data_d_matrix * A, data_d_matrix * L, data_d_matrix * U)
   dataType tol    = 1.0e-15;
   int num_threads = 0;
 
-  dataType s = 0.0;
+  dataType s          = 0.0;
   dataType sp         = 0.0;
   dataType tmp        = 0.0;
   dataType step       = 1.0;

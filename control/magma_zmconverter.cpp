@@ -660,7 +660,7 @@ data_zmconvert(
           A.val, A.col, A.row, B->val, B->col, B->row, &info);
 
         B->nnz = B->numblocks * B->ldblock;
-      } else   {
+      } else {
         printf("error: conversion from %d to %d requires blocksize to be set.\n",
           old_format, new_format);
         printf("\tB->blocksize currently = %d .  B->blocksize > 0 required.\n",
@@ -810,7 +810,7 @@ data_zmconvert(
           B->val, B->col, B->row, A.val, A.col, A.row, &info);
         // printf("\ninfo_bsrcsr=%d\n",info);
         // fflush(stdout);
-      } else   {
+      } else {
         printf("error: conversion from %d to %d requires blocksize to be set.\n",
           old_format, new_format);
         printf("\tB->blocksize currently = %d .  A.blocksize > 0 required.\n",
@@ -896,15 +896,15 @@ data_zmconvert(
       data_zmconvert(A, B, Magma_CSR, Magma_CSC);
       B->storage_type = Magma_CSR;
       B->major        = MagmaRowMajor;
-    } else if (old_format == Magma_CSCU)   {
+    } else if (old_format == Magma_CSCU) {
       data_zmconvert(A, B, Magma_CSR, Magma_CSC);
       B->storage_type = new_format;
       B->major        = MagmaRowMajor;
-    } else if (old_format == Magma_CSCL)   {
+    } else if (old_format == Magma_CSCL) {
       data_zmconvert(A, B, Magma_CSR, Magma_CSC);
       B->storage_type = new_format;
       B->major        = MagmaRowMajor;
-    } else   {
+    } else {
       printf("error: format not supported %d to %d.\n",
         old_format, new_format);
       // datablasSetKernelStream( queue );
@@ -922,19 +922,19 @@ data_zmconvert(
       data_zmconvert(A, B, Magma_CSR, Magma_CSRL);
       B->storage_type = Magma_CSCL;
       B->major        = MagmaColMajor;
-    } else if (new_format == Magma_CSCU)   {
+    } else if (new_format == Magma_CSCU) {
       data_zmconvert(A, B, Magma_CSR, Magma_CSRU);
       B->storage_type = Magma_CSCU;
       B->major        = MagmaColMajor;
-    } else if (new_format == Magma_CSRU)   {
+    } else if (new_format == Magma_CSRU) {
       data_zmconvert(A, B, Magma_CSC, Magma_CSRU);
       B->storage_type = Magma_CSRU;
       B->major        = MagmaRowMajor;
-    } else if (new_format == Magma_CSRCOO)   {
+    } else if (new_format == Magma_CSRCOO) {
       data_zmconvert(A, B, Magma_CSR, Magma_CSRCOO);
       B->storage_type = Magma_CSCCOO;
       B->major        = MagmaColMajor;
-    } else if (new_format == Magma_DENSE)   {
+    } else if (new_format == Magma_DENSE) {
       data_zmconvert(A, B, Magma_CSR, Magma_DENSE);
       B->storage_type = Magma_DENSE;
       B->major        = MagmaColMajor;
@@ -977,20 +977,20 @@ data_zmconvert(
             for (int j = 0; j < A.num_cols; j++)
               B->val[ i * (A.ld) + j ] = A.val[ i * (A.ld) + j ];
           }
-        } else   {
+        } else {
           for (int j = 0; j < A.num_cols; j++) {
             for (int i = 0; i < A.num_rows; i++)
               B->val[ i + j * (A.ld) ] = A.val[ i * (A.ld) + j ];
           }
         }
-      } else   {
+      } else {
         // printf("A is column major ");
         if (B->major == MagmaRowMajor) {
           for (int i = 0; i < A.num_rows; i++) {
             for (int j = 0; j < A.num_cols; j++)
               B->val[ i * (A.ld) + j ] = A.val[ i + j * (A.ld) ];
           }
-        } else   {
+        } else {
           for (int j = 0; j < A.num_cols; j++) {
             for (int i = 0; i < A.num_rows; i++)
               B->val[ i + j * (A.ld) ] = A.val[ i + j * (A.ld) ];
@@ -1004,14 +1004,14 @@ data_zmconvert(
           for (int i = A.num_rows; i < A.pad_rows; i++) {
             B->val[ i * A.ld + i ] = one;
           }
-        } else   {
+        } else {
           for (int i = A.num_cols; i < A.pad_cols; i++) {
             B->val[ i + i * A.ld ] = one;
           }
         }
       }
       // printf( "done\n" );
-    } else if (new_format == Magma_DENSEL)   {
+    } else if (new_format == Magma_DENSEL) {
       // printf("\n%% dense to denseL ");
       B->storage_type = Magma_DENSEL;
       B->fill_mode    = MagmaLower;
@@ -1033,7 +1033,7 @@ data_zmconvert(
             else if (B->diagorder_type == Magma_NODIAG)
               B->val[ i * (A.ld) + i ] = zero;
           }
-        } else   {
+        } else {
           // printf("B is Col major B->diagorder_type = %d ", B->diagorder_type);
           for (int j = 0; j < A.num_cols; j++) {
             if (B->diagorder_type == Magma_VALUE)
@@ -1046,7 +1046,7 @@ data_zmconvert(
               B->val[ i + j * (A.ld) ] = A.val[ i * (A.ld) + j ];
           }
         }
-      } else   {
+      } else {
         // printf("A is Col major B->diagorder_type = %d ", B->diagorder_type);
         if (B->major == MagmaRowMajor) {
           // printf("B is row major B->diagorder_type = %d ", B->diagorder_type);
@@ -1060,7 +1060,7 @@ data_zmconvert(
             for (int i = j + 1; i < A.num_rows; i++)
               B->val[ i * (A.ld) + j ] = A.val[ i + j * (A.ld) ];
           }
-        } else   {
+        } else {
           // printf("B is Col major B->diagorder_type = %d ", B->diagorder_type);
           for (int j = 0; j < A.num_cols; j++) {
             if (B->diagorder_type == Magma_VALUE)
@@ -1081,14 +1081,14 @@ data_zmconvert(
           for (int i = A.num_rows; i < A.pad_rows; i++) {
             B->val[ i * A.ld + i ] = one;
           }
-        } else   {
+        } else {
           for (int i = A.num_cols; i < A.pad_cols; i++) {
             B->val[ i + i * A.ld ] = one;
           }
         }
       }
       // printf( "done\n" );
-    } else if (new_format == Magma_DENSEU)   {
+    } else if (new_format == Magma_DENSEU) {
       // printf("\n%% dense* to denseU ");
       B->storage_type = Magma_DENSEU;
       B->fill_mode    = MagmaUpper;
@@ -1112,7 +1112,7 @@ data_zmconvert(
                 B->val[ i * (A.ld) + j ] = A.val[ i * (A.ld) + j ];
             }
           }
-        } else   {
+        } else {
           // printf("B is Col major B->diagorder_type = %d\n", B->diagorder_type);
           for (int i = 0; i < A.num_rows; i++) {
             if (i < A.num_cols) {
@@ -1127,7 +1127,7 @@ data_zmconvert(
             }
           }
         }
-      } else   {
+      } else {
         // printf("A is Col major B->diagorder_type = %d\n", B->diagorder_type);
         if (B->major == MagmaRowMajor) {
           // printf("B is Row major B->diagorder_type = %d\n", B->diagorder_type);
@@ -1143,7 +1143,7 @@ data_zmconvert(
                 B->val[ i * (A.ld) + j ] = A.val[ i + j * (A.ld) ];
             }
           }
-        } else   {
+        } else {
           // printf("B is Col major B->diagorder_type = %d\n", B->diagorder_type);
           for (int j = 0; j < A.num_cols; j++) {
             if (j < A.num_rows) {
@@ -1167,7 +1167,7 @@ data_zmconvert(
             for (int i = A.num_rows; i < A.pad_rows; i++) {
               B->val[ i * A.ld + i ] = one;
             }
-          } else   {
+          } else {
             for (int i = A.num_cols; i < A.pad_cols; i++) {
               B->val[ i + i * A.ld ] = one;
             }
@@ -1175,7 +1175,7 @@ data_zmconvert(
         }
       }
       // printf( "done\n" );
-    } else if (new_format == Magma_DENSED)   {
+    } else if (new_format == Magma_DENSED) {
       // printf("\n%%dense to denseD ");
       B->storage_type   = Magma_DENSED;
       B->diagorder_type = Magma_VALUE;
@@ -1387,7 +1387,7 @@ data_zmconvert(
     B->storage_type = Magma_BCSCU;
     B->major        = MagmaColMajor;
     data_zmfree(&C);
-  } else   {
+  } else {
     printf("error: conversion not supported %d to %d.\n",
       old_format, new_format);
     info = DEV_ERR_NOT_SUPPORTED;
@@ -1415,7 +1415,7 @@ data_zcheckupperlower(
         }
       }
     }
-  } else if (A->storage_type == Magma_CSRU)   {
+  } else if (A->storage_type == Magma_CSRU) {
     for (int i = 0; i < A->num_rows; i++) {
       for (int j = A->row[i]; j < A->row[i + 1]; j++) {
         if (A->col[j] < i) {

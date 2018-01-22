@@ -64,11 +64,11 @@ data_z_spmv(
         &alpha, "GFNC", A->val,
         A->col, A->row, A->row + 1,
         x->val, &beta, y->val);
-    } else   {
+    } else {
       printf("error: format not supported.\n");
       info = DEV_ERR_NOT_SUPPORTED;
     }
-  } else   {
+  } else {
     printf("error: dimensions not matched A->num_cols=%d x->num_rows=%d.\n",
       A->num_cols, x->num_rows);
     info = DEV_ERR_NOT_SUPPORTED;
