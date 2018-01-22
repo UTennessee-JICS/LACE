@@ -10,8 +10,7 @@
 CXX			 	 ?= icpc
 CXXFLAGS	 ?= -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
 CC         ?= icc
-CCFLAGS    ?= -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -
-qopt-report=5 -xAVX
+CCFLAGS    ?= -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
 
 
 override CXXFLAGS += -fPIC
@@ -22,8 +21,10 @@ override CPPFLAGS  += -I$(GTEST_DIR)/include -I$(GMOCK_DIR)/include \
 LACE_HEADERS = include/*.h
 SRCDIRS = control blas src testing drivers
 SRCFILES = $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.cpp))
-SRCS = *.cpp $(SRCFILES) $(LACE_HEADERS)
+override SRCFILES += $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.c))
+SRCS = *.cpp *.c $(SRCFILES) $(LACE_HEADERS)
 OBJS = $(SRCFILES:%.cpp=%.o)
+override OBJS += $(SRCFILES:%.c=%.o)
 
 LIBDIR		?= -L$(MKLROOT)/lib
 LIB 			?= -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl
@@ -303,6 +304,7 @@ $(shell mkdir -p $(DEPDIR) >/dev/null)
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 
 COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+COMPILE.c = $(CC) $(CCFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
 
 %.o : %.cpp
@@ -326,8 +328,11 @@ src/%.o : src/%.cpp $(DEPDIR)/%.d
 	$(POSTCOMPILE)
 
 testing/%.o : testing/%.cpp
-testing/%.o : testing/%.cpp $(DEPDIR)/%.d
 	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+
+testing/%.o : testing/%.c
+testing/%.o : testing/%.c $(DEPDIR)/%.d
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
 	$(POSTCOMPILE)
 
 drivers/%.o : drivers/%.cpp
