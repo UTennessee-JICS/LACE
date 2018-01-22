@@ -11,7 +11,8 @@ CXX			 	 ?= icpc
 CXXFLAGS	 ?= -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
 CC         ?= icc
 CCFLAGS    ?= -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
-
+FC				 ?= ifort
+FCFLAGS    ?= -lstdc++ -fopenmp
 
 override CXXFLAGS += -fPIC
 
@@ -253,6 +254,13 @@ testing/testClib_pariLU: libpariLU.a testing/test_C_iLU.o
 	$(CC) $(CPPFLAGS) $(CCFLAGS) \
     $^ -o $@ $(LIBS) libpariLU.a
 
+#
+# Exemplar use of libraries from Fortran programs
+#
+
+testing/testFinterL: libpariLU.a testing/testFinterface.f interface/interface.o
+	$(FC) $(FCFLAGS) \
+		$^ -o $@ $(LIBS) libpariLU.a
 
 
 #
@@ -328,17 +336,20 @@ src/%.o : src/%.cpp $(DEPDIR)/%.d
 	$(POSTCOMPILE)
 
 testing/%.o : testing/%.cpp
-	$(COMPILE.cc) $(OUTPUT_OPTION) $<
-
-testing/%.o : testing/%.c
-testing/%.o : testing/%.c $(DEPDIR)/%.d
+testing/%.o : testing/%.cpp $(DEPDIR)/%.d
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
 	$(POSTCOMPILE)
+
+testing/%.o : testing/%.c
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
 
 drivers/%.o : drivers/%.cpp
 drivers/%.o : drivers/%.cpp $(DEPDIR)/%.d
 	$(COMPILE.cc) $(OUTPUT_OPTION) $<
 	$(POSTCOMPILE)
+
+interface/%.o : interface/%.c
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
 
 $(DEPDIR)/%.d: ;
 .PRECIOUS: $(DEPDIR)/%.d
