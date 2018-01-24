@@ -44,7 +44,8 @@ Make from project root for now
 
 * Writing tests
 * Code review
-* Other guidelines
+* Gitflow
+  https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow
 
 ### Who do I talk to? ###
 
