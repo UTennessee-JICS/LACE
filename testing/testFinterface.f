@@ -2,23 +2,23 @@
 
       integer ii, jj, kk
       integer storageType, nRow, nCol, nnz, cooRow, cooCol
-      common/ijk/ ii, jj, kk
-      real*8  ff, cooVal(20)
-      character*32 cc
+      integer LnRow, LnCol, Lnnz, LcooRow, LcooCol
+      integer UnRow, UnCol, Unnz, UcooRow, UcooCol
+      real*8  cooVal(147), LcooVal(147), UcooVal(147)
       character*1024 fileName
 
-      ii = 2
-      jj = 3
-      kk = 4
-      ff = 9.0567
-      cc = 'Example of a character string'
       fileName = "matrices/Trefethen_20.mtx"
-
-      write(6,10) ii, ff
-10    format('ii= ',i2,' ff= ',f10.4)
 
       call read_z_coo_from_mtx(storageType, nRow, nCol, nnz,
      &  cooVal, cooRow, cooCol, fileName )
+
+      write(*,*) 'nnz=', nnz
+      write(*,*) 'nRow=', nRow
+
+      do 10 ii = 1, 20
+        write(*,*) cooVal(ii)
+  10  continue
+c      call data_PariLU_v0_3(
 
       stop
       end
