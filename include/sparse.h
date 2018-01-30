@@ -1016,6 +1016,13 @@ data_fgmres(
   data_d_gmres_log * gmres_log);
 
 int
+data_fgmres_gpu(
+    data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
+    data_d_matrix *L, data_d_matrix *U,
+    data_d_gmres_param *gmres_par,
+    data_d_gmres_log *gmres_log );
+
+int
 data_fgmres_restart(
   data_d_matrix * A, data_d_matrix * b, data_d_matrix * x0,
   data_d_matrix * L, data_d_matrix * U,
@@ -1028,6 +1035,31 @@ data_fgmres_householder(
   data_d_matrix * L, data_d_matrix * U,
   data_d_gmres_param * gmres_par,
   data_d_gmres_log * gmres_log);
+
+int
+data_fgmres_householder_gpu(
+    data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
+    data_d_matrix *L, data_d_matrix *U,
+    data_d_gmres_param *gmres_par,
+    data_d_gmres_log *gmres_log );
+int
+data_fgmres_householder_gpu_v_0_1(
+    data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
+    data_d_matrix *L, data_d_matrix *U,
+    data_d_gmres_param *gmres_par,
+    data_d_gmres_log *gmres_log );
+int
+data_fgmres_householder_gpu_v_0_2(
+    data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
+    data_d_matrix *L, data_d_matrix *U,
+    data_d_gmres_param *gmres_par,
+    data_d_gmres_log *gmres_log );
+int
+data_fgmres_householder_gpu_v_0_3(
+    data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
+    data_d_matrix *L, data_d_matrix *U,
+    data_d_gmres_param *gmres_par,
+    data_d_gmres_log *gmres_log );
 
 int
 data_fgmres_householder_restart(

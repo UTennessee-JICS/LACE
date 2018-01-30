@@ -100,14 +100,18 @@ data_fgmres(
   {
     maxThreads = omp_get_max_threads();
     chunk      = n / maxThreads;
-    #pragma omp for simd schedule(static,chunk) nowait
+    //#pragma omp for simd schedule(static,chunk) nowait
+    #pragma omp for schedule(static,chunk) nowait
+    #pragma simd
     #pragma vector aligned
     #pragma vector vecremainder
     #pragma nounroll_and_jam
     for (int i = 0; i < LU.num_rows + 1; i++) {
       ia[i] = LU.row[i] + 1;
     }
-    #pragma omp for simd schedule(static,chunk) nowait
+    //#pragma omp for simd schedule(static,chunk) nowait
+    #pragma omp for schedule(static,chunk) nowait
+    #pragma simd
     #pragma vector aligned
     #pragma vector vecremainder
     #pragma nounroll_and_jam
@@ -184,7 +188,9 @@ data_fgmres(
 
   // fill first column of Kylov subspace for Arnoldi iteration
   #pragma omp parallel
-  #pragma omp for simd schedule(static,chunk) nowait
+  //#pragma omp for simd schedule(static,chunk) nowait
+  #pragma omp for schedule(static,chunk) nowait
+  #pragma simd
   #pragma vector aligned
   #pragma vector vecremainder
   #pragma nounroll_and_jam
@@ -253,7 +259,9 @@ data_fgmres(
     //                  u.val );
 
     #pragma omp parallel
-    #pragma omp for simd schedule(static,chunk) nowait
+    //#pragma omp for simd schedule(static,chunk) nowait
+    #pragma omp for schedule(static,chunk) nowait
+    #pragma simd
     #pragma vector aligned
     #pragma vector vecremainder
     #pragma nounroll_and_jam
@@ -278,7 +286,9 @@ data_fgmres(
       // h.val[idx(j,search,h.ld)] = 0.0;
       dataType tmp = 0.0;
       #pragma omp parallel
-      #pragma omp for simd schedule(static,chunk) reduction(+:tmp) nowait
+      //#pragma omp for simd schedule(static,chunk) reduction(+:tmp) nowait
+      #pragma omp for schedule(static,chunk) reduction(+:tmp) nowait
+      #pragma simd
       #pragma vector aligned
       #pragma vector vecremainder
       #pragma nounroll_and_jam
@@ -290,7 +300,9 @@ data_fgmres(
       }
       h.val[idx(j, search, h.ld)] = tmp;
       #pragma omp parallel
-      #pragma omp for simd schedule(static,chunk) nowait
+      //#pragma omp for simd schedule(static,chunk) nowait
+      #pragma omp for schedule(static,chunk) nowait
+      #pragma simd
       #pragma vector aligned
       #pragma vector vecremainder
       #pragma nounroll_and_jam
@@ -313,7 +325,9 @@ data_fgmres(
       for (int j = 0; j <= search; j++) {
         hr = 0.0;
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
+        //#pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for schedule(static,chunk) nowait
+        #pragma simd
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
@@ -322,7 +336,9 @@ data_fgmres(
         }
         h.val[idx(j, search, h.ld)] = h.val[idx(j, search, h.ld)] + hr;
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
+        //#pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for schedule(static,chunk) nowait
+        #pragma simd
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
@@ -336,7 +352,9 @@ data_fgmres(
     // Watch out for happy breakdown
     if (fabs(h.val[idx((search1), search, h.ld)]) > std::numeric_limits<double>::epsilon() ) {
       #pragma omp parallel
-      #pragma omp for simd schedule(static,chunk) nowait
+      //#pragma omp for simd schedule(static,chunk) nowait
+      #pragma omp for schedule(static,chunk) nowait
+      #pragma simd
       #pragma vector aligned
       #pragma vector vecremainder
       #pragma nounroll_and_jam
@@ -446,7 +464,9 @@ data_fgmres(
 
       // use preconditioned vectors to form the update (GEMV)
       #pragma omp parallel
-      #pragma omp for simd schedule(static,chunk) nowait
+      //#pragma omp for simd schedule(static,chunk) nowait
+      #pragma omp for schedule(static,chunk) nowait
+      #pragma simd
       #pragma vector aligned
       #pragma vector vecremainder
       #pragma nounroll_and_jam
@@ -458,7 +478,9 @@ data_fgmres(
       }
 
       #pragma omp parallel
-      #pragma omp for simd schedule(static,chunk) nowait
+      //#pragma omp for simd schedule(static,chunk) nowait
+      #pragma omp for schedule(static,chunk) nowait
+      #pragma simd
       #pragma vector aligned
       #pragma vector vecremainder
       #pragma nounroll_and_jam

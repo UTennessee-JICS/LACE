@@ -1,0 +1,94 @@
+#
+#
+#CC=g++-6
+
+#pure c++ compilation
+#CC=icpc
+
+#for cuda compilation
+CC=nvcc -x cu --compiler-options "-m64" -lcublas -lcusparse
+
+#VPATH=blas control include src testing
+#CFLAGS= -std=c++11 -g -Wall -O2 -fno-unsafe-math-optimizations -fopenmp
+#CFLAGS= -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
+
+#for nvcc
+CFLAGS= -std=c++11 -g -O3
+CFLAGS+= -Xcompiler -fopenmp
+CFLAGS+= -I${PWD}/include
+#CFLAGS+= -ccbin /usr/bin/gcc
+
+CPPFLAGS = -I$(GTEST_DIR)/include -I$(GMOCK_DIR)/include \
+	-I$(MKLROOT)/include -I./include
+
+#LDFLAGS=-pthread 
+LDFLAGS=-lgomp
+
+#SOURCES=example_01.cpp
+#OBJECTS=$(SOURCES:.cpp=.o)
+#EXECUTABLE=exampleGoogleTest_01
+
+all: test_iLU test_solve_FGMRES test_solve_FGMRES_Householder
+
+
+test_iLU: test_iLU.cpp
+	$(CC) $(LDFLAGS) $(CFLAGS) $(CPPFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	test_iLU.cpp control/constants.cpp control/magma_zmio.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/sparse_sub.cpp control/sparse_tilepattern.cpp \
+	control/magma_zmscale.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zspmm.cpp \
+	src/parilu_v0_0.cpp src/parilu_v0_1.cpp src/parilu_v0_2.cpp src/parilu_v0_4.cpp \
+	src/parilu_v0_3.cpp src/parilu_v0_3_gpu.cpp \
+	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm \
+	-o $@
+
+test_solve_FGMRES: test_solve_FGMRES.cpp
+	$(CC)  $(LDFLAGS) $(CFLAGS) $(CPPFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+        src/cuda_tools.cu \
+	src/parilu_v0_3.cpp \
+	src/trisolve.cpp \
+	src/orthogonality_error.cpp \
+	src/fgmres.cpp \
+	src/fgmres_gpu.cpp \
+	test_solve_FGMRES.cpp \
+	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm -ldl \
+	-o $@
+
+test_solve_FGMRES_Householder: test_solve_FGMRES_Householder.cpp
+	$(CC)  $(LDFLAGS) $(CFLAGS) $(CPPFLAGS) \
+	-L${MKLROOT}/lib -I${MKLROOT}/include \
+	control/constants.cpp control/magma_zmio.cpp control/init.cpp \
+	control/mmio.cpp control/magma_zmconverter.cpp control/magma_zmtranspose.cpp \
+	control/magma_zfree.cpp control/magma_zmatrixchar.cpp control/norms.cpp \
+	control/magma_zmlumerge.cpp control/magma_zmscale.cpp \
+	blas/zdiff.cpp blas/zdot.cpp blas/zgemv.cpp blas/zgemm.cpp \
+	blas/zcsrilu0.cpp blas/zlunp.cpp blas/zaxpy.cpp blas/zspmv.cpp blas/zspmm.cpp \
+        src/cuda_tools.cu \
+	src/parilu_v0_3.cpp \
+	src/trisolve.cpp \
+	src/givens.cpp \
+	src/orthogonality_error.cpp \
+	src/fgmres_householder.cpp \
+	src/fgmres_householder_gpu_v_0_1.cpp \
+	src/fgmres_householder_gpu_v_0_2.cpp \
+	src/fgmres_householder_gpu_v_0_3.cpp \
+	test_solve_FGMRES_Householder.cpp \
+	-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lstdc++ -lm -ldl \
+	-o $@
+
+clean:
+	rm test_iLU test_solve_FGMRES test_solve_FGMRES_Householder
+
+cleanall:
+	rm *.o blas/*.o control/*.o src/*.o test_iLU test_solve_FGMRES test_solve_FGMRES_Householder
