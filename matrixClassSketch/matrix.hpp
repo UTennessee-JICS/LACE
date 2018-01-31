@@ -124,7 +124,8 @@ template <class T>
 class CSMatrix {
 public:
   CSMatrix() : numLayouts(1), matrixNumRows(0), matrixNumCols(0),
-    row(nullptr), col(nullptr), rowStride(1), columnStride(1), entry(nullptr) {};
+    row(nullptr), col(nullptr), rowStride(1), columnStride(1), entry(nullptr),
+    matrixNNZ(0) {};
   ~CSMatrix() {
     delete [] row;
     delete [] col;
@@ -148,7 +149,7 @@ public:
     matrixNumCols = cols;
     matrixNNZ = nnz;
     rowStride = cols;
-    columnStride = dim_t(1);
+    columnStride = dim_t(1); // row major example
     row = new dim_t[matrixNumRows+1]();
     col = new dim_t[matrixNNZ]();
     entry = new T[matrixNNZ]();
