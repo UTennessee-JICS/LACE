@@ -117,7 +117,7 @@ data_fgmres_householder_gpu_v_0_1(
     cublasCheck(cublasCreate(&handle));
     cublasCheck(cublasInit());
 
-#if 0//test managed
+#if 1//test managed
     cudaCheck(cudaMalloc((void**)&d_uval,(n)*sizeof(dataType)));
     cudaCheck(cudaMalloc((void**)&d_qval,(n)*sizeof(dataType)));
     cudaCheck(cudaMalloc((void**)&d_rval,(n)*sizeof(dataType)));
@@ -126,7 +126,7 @@ data_fgmres_householder_gpu_v_0_1(
     cudaCheck(cudaMalloc((void**)&d_zval,(n)*sizeof(dataType)));
     //cudaMalloc((void**)&d_A_val,(A->nnz)*sizeof(dataType));
     cudaCheck(cudaMalloc((void**)&d_krylov_val,(n*(search_max+1))*sizeof(dataType)));
-    cudaCheck(cudaMalloc((void**)&d_alpha_val,(search_max+1)*sizeof(dataType)));    
+    cudaCheck(cudaMalloc((void**)&d_alpha_val,(search_max)*sizeof(dataType)));    
     cudaCheck(cudaMalloc((void**)&d_Minvvj_val,(n*(search_max))*sizeof(dataType)));   
     cudaCheck(cudaMalloc((void**)&d_precondq_val,(n*(search_max+1))*sizeof(dataType))); 
 #else
@@ -138,7 +138,7 @@ data_fgmres_householder_gpu_v_0_1(
     cudaCheck(cudaMallocManaged((void**)&d_zval,(n)*sizeof(dataType)));
     //cudaMalloc((void**)&d_A_val,(A->nnz)*sizeof(dataType));
     cudaCheck(cudaMallocManaged((void**)&d_krylov_val,(n*(search_max+1))*sizeof(dataType)));
-    cudaCheck(cudaMallocManaged((void**)&d_alpha_val,(search_max+1)*sizeof(dataType)));    
+    cudaCheck(cudaMallocManaged((void**)&d_alpha_val,(search_max)*sizeof(dataType)));    
     cudaCheck(cudaMallocManaged((void**)&d_Minvvj_val,(n*(search_max))*sizeof(dataType)));   
     cudaCheck(cudaMallocManaged((void**)&d_precondq_val,(n*(search_max+1))*sizeof(dataType)));
 #endif
@@ -235,7 +235,7 @@ data_fgmres_householder_gpu_v_0_1(
     data_d_matrix alpha={Magma_DENSE};
     data_zvinit( &alpha, search_max, 1, zero );
     alpha.major = MagmaColMajor;
-    cublasCheck(cublasDscal(handle,n,&zero,d_alpha_val,1));
+    cublasCheck(cublasDscal(handle,search_max,&zero,d_alpha_val,1));
 
     // initial residual
     data_z_spmv( negone, A, &x, zero, &r );
@@ -260,6 +260,8 @@ data_fgmres_householder_gpu_v_0_1(
       return info;
     }
 
+
+
 #if 1//USE_CUDA
     cublasCheck(cublasDcopy(handle,n,d_rval,1,d_krylov_val,1));
 
@@ -269,31 +271,31 @@ data_fgmres_householder_gpu_v_0_1(
 
     dataType k1norm2;
 
-    //#if 0//not malloc managed
+#if 1//not malloc managed
     ////it is inefficient to copy this back to the host to perform the following two operations
-    //cublasCheck(cublasGetVector(n,sizeof(dataType), d_krylov_val,1, krylov.val,1),"cublasGetVector ln 244");
+    cublasCheck(cublasGetVector(n,sizeof(dataType), d_krylov_val,1, krylov.val,1));
     ////get sign mysgn(T v) {return T(v >= T(0)) - T(v < T(0));}
 
-    //dataType dd = mysgn(krylov.val[0+0*krylov.ld])*rnorm2;
-    //krylov.val[0+0*krylov.ld] = krylov.val[0+0*krylov.ld] + dd;
+    dataType dd = mysgn(krylov.val[0+0*krylov.ld])*rnorm2;
+    krylov.val[0+0*krylov.ld] = krylov.val[0+0*krylov.ld] + dd;
 
     ////copy back to coprocessor
-    //cublasCheck(cublasSetVector(n,sizeof(dataType), krylov.val,1, d_krylov_val,1),"cublasSetVector ln 249");
-    //#else
+    cublasCheck(cublasSetVector(n,sizeof(dataType), krylov.val,1, d_krylov_val,1));
+#else
 
     //get sign mysgn(T v) {return T(v >= T(0)) - T(v < T(0));}
-    cudaDeviceSynchronize();
+//cudaDeviceSynchronize();
     dataType dd = mysgn(d_krylov_val[0+0*krylov.ld])*rnorm2;
     d_krylov_val[0+0*krylov.ld] = d_krylov_val[0+0*krylov.ld] + dd;
 
-    //#endif 
+#endif 
 
 
     cublasCheck(cublasDnrm2(handle, n, d_krylov_val, 1, &k1norm2));
     d_scalar = 1.0/k1norm2;
     cublasCheck(cublasDscal(handle,n,&d_scalar, d_krylov_val,1));
 
-    cudaDeviceSynchronize();
+//cudaDeviceSynchronize();
 
 cublasCheck(cublasGetVector(n,sizeof(dataType), d_krylov_val,1, krylov.val,1));
 
@@ -416,6 +418,7 @@ cublasCheck(cublasGetVector(n,sizeof(dataType), d_precondq_val,1, precondq.val,1
           }
         }
 #endif
+
       
       for ( int j=0; j <= search1; j++ ) {
         for ( int i=0; i<krylov.ld; i++ ) {
@@ -440,6 +443,7 @@ cublasCheck(cublasGetVector(n,sizeof(dataType), d_precondq_val,1, precondq.val,1
 			&d_krylov_val[j+search1*krylov.ld],1));
 
 	cublasCheck(cublasGetVector(n*(search_max+1),sizeof(dataType), d_krylov_val,1, krylov.val,1));
+
 #else
         for ( int i=j; i<n; ++i ) {
           sum = sum + krylov.val[idx(i,j,krylov.ld)]*krylov.val[idx(i,search1,krylov.ld)];
@@ -448,6 +452,7 @@ cublasCheck(cublasGetVector(n,sizeof(dataType), d_precondq_val,1, precondq.val,1
           krylov.val[idx(jj,search1,krylov.ld)] = krylov.val[idx(jj,search1,krylov.ld)] - 2.0*sum*krylov.val[idx(jj,j,krylov.ld)];
         }
 #endif
+
       }
       for ( int j=0; j <= search1; ++j ) {
         for ( int i=0; i<n; ++i ) {
@@ -456,6 +461,7 @@ cublasCheck(cublasGetVector(n,sizeof(dataType), d_precondq_val,1, precondq.val,1
       }
 
       if ( search < n ) {
+
 #if 1//USE_CUDA
         dataType snrm2;
         span=n-search;
@@ -551,7 +557,6 @@ cublasCheck(cublasGetVector(n,sizeof(dataType), d_precondq_val,1, precondq.val,1
       }
 #endif
 
-
       // Apply Givens rotations
       for ( int j = 0; j<search; ++j ) {
         dataType temp = givens_cos.val[j]*krylov.val[idx(j,search1,krylov.ld)]
@@ -637,30 +642,37 @@ cublasCheck(cublasGetVector(n,sizeof(dataType), d_precondq_val,1, precondq.val,1
         cublasCheck(cublasSetVector(n*search1,sizeof(dataType),Minvvj.val,1,d_Minvvj_val,1));
 #endif
 
+
+
 #if 1//USE_CUDA
 
-#if 0
+#if 1
         d_scalar=1.0;
 	//z[i] = z[i] + Minvvj[i,j]*alpha[j]
         cublasCheck(cublasDgemv( handle, CUBLAS_OP_N,
-				 n, Minvvj.ld, 
-				 &d_scalar, d_Minvvj_val, n,
+				 n, search_max, 
+				 &d_scalar, d_Minvvj_val, Minvvj.ld,
 				 d_alpha_val, 1, 
-				 &d_scalar, d_zval, 1),"cublasDgemv");
+				 &d_scalar, d_zval, 1));
 #else
+
+
         // use preconditioned vectors to form the update (GEMV)
         for (int j = 0; j <= search; j++ ) {
+
 	  //d_scalar=d_alpha_val[j];
-          cublasCheck(cublasGetVector(1,sizeof(dataType),&d_alpha_val[j],1,&d_scalar,1));        
+          cublasCheck(cublasGetVector(1,sizeof(dataType),&d_alpha_val[j],1,&d_scalar,1));       
 
 	//d_scalar=alpha.val[j];
-	  cublasCheck(cublasDaxpy(handle, n, &d_scalar, &d_Minvvj_val[0+j*Minvvj.ld],1,d_zval,1));
-          //cublasCheck(cublasSetVector(1,sizeof(dataType),&alpha.val[j],1,&d_alpha_val[j],1),"cublasSetVector ln 523");        
-  	  //cublasCheck(cublasDaxpy(handle, n, &d_alpha_val[j], &d_Minvvj_val[0+j*Minvvj.ld],1,d_zval,1),"cublasDaxpy");
+   cublasCheck(cublasDaxpy(handle, n, &d_scalar, &d_Minvvj_val[0+j*Minvvj.ld],1,d_zval,1));
+          //cublasCheck(cublasSetVector(1,sizeof(dataType),&alpha.val[j],1,&d_alpha_val[j],1),"cublasSetVector ln 523");      
+
+// cublasCheck(cublasDaxpy(handle, n, &d_alpha_val[j], &d_Minvvj_val[0+j*Minvvj.ld],1,d_zval,1));
 
           //for (int i = 0; i < n; i++ ) {
 	  //z.val[i] = z.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*alpha.val[j];
           //}
+
         }
 #endif
 
