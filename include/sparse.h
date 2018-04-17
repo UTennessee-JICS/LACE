@@ -393,6 +393,12 @@ data_zmcopy(
     data_d_matrix A,
     data_d_matrix *B );
 
+
+int 
+data_sparse_reorder(
+    data_d_matrix* A);
+
+
 //======================================
 // norms
 //======================================
@@ -648,6 +654,12 @@ int
 data_diagbcsr_mult_bcsr(
   data_d_matrix* diagA,
   data_d_matrix* A );
+
+void 
+data_reorder_cuthill_mckee(
+  data_d_matrix* A,
+  int* nn_map,
+  bool reverse=false);
 
 //======================================
 // dense factorizations

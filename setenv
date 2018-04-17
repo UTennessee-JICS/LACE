@@ -1,0 +1,26 @@
+#
+# Modify to set your path to googletest and googlemock builds
+export GTEST_DIR=/nics/c/home/chadb/googletest/googletest
+export GMOCK_DIR=/nics/c/home/chadb/googletest/googlemock
+
+# Modify to set your paths to SuiteSparse build for AMD reordering
+#export INCLUDE=$INCLUDE:/lustre/haven/user/chadb/lace_repo_reordering_branch/LACE/SuiteSparse/AMD/Include/
+#export CPATH=$CPATH:/lustre/haven/user/chadb/lace_repo_reordering_branch/LACE/SuiteSparse/AMD/Include/
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/lustre/haven/user/chadb/lace_repo_reordering_branch/LACE/SuiteSparse/AMD/Lib/
+#export LIBRARY_PATH=$LIBRARY_PATH:/lustre/haven/user/chadb/lace_repo_reordering_branch/LACE/SuiteSparse/AMD/Lib/
+#export INCLUDE=$INCLUDE:/lustre/haven/user/chadb/lace_repo_reordering_branch/LACESuiteSparse/UFconfig/
+#export CPATH=$CPATH:/lustre/haven/user/chadb/lace_repo_reordering_branch/LACE/SuiteSparse/UFconfig/
+
+#export INCLUDE=$INCLUDE:/lustre/haven/user/chadb/lace_repo_reordering_branch/SparseLib++/1.7/include/
+#export CPATH=$CPATH:/lustre/haven/user/chadb/lace_repo_reordering_branch/SparseLib++/1.7/include/
+#export LIBRARY_PATH=$LIBRARY_PATH:/lustre/haven/user/chadb/lace_repo_reordering_branch/SparseLib++/1.7/lib/
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/lustre/haven/user/chadb/lace_repo_reordering_branch/SparseLib++/1.7/lib/
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/SuiteSparse/lib/
+
+# for mkl
+#module load intel-compilers/2018.1.163
+module load intel-compilers
+export MKLROOT=/nics/e/sw/cs400_centos7.3_optsoftware/intel/parallel_studio_xe_2017_update2/mkl
+# if compiling using gnu
+module swap PE-intel PE-gnu

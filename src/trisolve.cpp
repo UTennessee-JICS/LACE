@@ -26,7 +26,7 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs,
     && L->fill_mode == MagmaLower
     && L->diagorder_type != Magma_NODIAG ) {
 
-    int j = 0;
+    //int j = 0;
     *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;
@@ -78,7 +78,7 @@ data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs,
     && U->fill_mode == MagmaUpper
     && U->diagorder_type != Magma_NODIAG ) {
 
-    int j = 0;
+    //int j = 0;
     *iter = 0;
     dataType step = 1.e8;
     dataType tmp = 0.0;

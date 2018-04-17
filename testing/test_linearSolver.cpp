@@ -711,3 +711,51 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditionedRestart) {
   data_zmfree( &Ucsr );
 
 }
+
+
+
+TEST_F(LinearSolverTest, MKLFGMRESnonPreconditionedReordered) {
+  printf("%% MKL FGMRES non-preconditioned reordered\n");
+
+  // store initial guess in solution_vector
+  data_d_matrix solution_vector = {Magma_DENSE};
+  CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
+  
+  data_z_gmres_param solverParam;
+  
+  solverParam.tol_type = 0;
+  solverParam.rtol = (*LinearSolverTest::tolerance);
+  solverParam.search_max = 20;
+  solverParam.restart_max = 20;
+  solverParam.reorth = 0;
+  solverParam.precondition = 0;
+  solverParam.parilu_reduction = 1.0e-15;
+  solverParam.monitorOrthog = 1;
+  solverParam.user_csrtrsv_choice = 0;
+
+
+#if 1
+  data_sparse_reorder(A);
+#endif
+
+ 
+  // solve
+  data_MKL_FGMRES( A, &solution_vector, rhs_vector, &solverParam );
+  // print solver summary
+  
+  // caclulate residual
+  dataType residual = 0.0;
+  data_d_matrix r={Magma_DENSE};
+  data_zvinit( &r, A->num_rows, 1, zero );
+  data_z_spmv( negone, A, &solution_vector, zero, &r );
+  data_zaxpy( A->num_rows, one, rhs_vector->val, 1, r.val, 1);
+  for (int i=0; i<A->num_rows; ++i) {
+    GMRESDBG("r.val[%d] = %.16e\n", i, r.val[i]);
+  }
+  residual = data_dnrm2( A->num_rows, r.val, 1 );
+  printf("%% external check of rnorm2 = %.16e;\n\n", residual);
+  fflush(stdout);
+  EXPECT_LE( residual, (*LinearSolverTest::tolerance) );
+  data_zmfree( &solution_vector );
+  data_zmfree( &r );
+}

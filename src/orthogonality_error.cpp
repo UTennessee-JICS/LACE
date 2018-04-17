@@ -50,8 +50,8 @@ data_orthogonality_error( data_d_matrix* krylov,
 {
 
   dataType zero = 0.0;
-  dataType one = 1.0;
-  dataType negone = -1.0;
+  //dataType one = 1.0;
+  //dataType negone = -1.0;
 
   data_d_matrix eye={Magma_DENSE};
   data_zvinit( &eye, search, search, zero );
@@ -91,8 +91,8 @@ data_orthogonality_error_incremental( data_d_matrix* krylov,
 {
 
   dataType zero = 0.0;
-  dataType one = 1.0;
-  dataType negone = -1.0;
+  //dataType one = 1.0;
+  //dataType negone = -1.0;
 
   data_d_matrix eye={Magma_DENSE};
   data_zvinit( &eye, search, 1, zero );

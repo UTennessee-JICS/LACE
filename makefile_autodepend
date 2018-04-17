@@ -7,12 +7,19 @@
 -include make.inc
 
 # defaults if nothing else is given in make.inc
-CXX			 	 ?= icpc
+CXX	 	 ?= icpc
 CXXFLAGS	 ?= -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
 
+#for AMD reordering
+S = SuiteSparse
 
 override CPPFLAGS  += -I$(GTEST_DIR)/include -I$(GMOCK_DIR)/include \
+	-I$(S)/include \
 	-I$(MKLROOT)/include -I./include
+
+#CPPFLAGS	+= -I$(S)/include
+#    cc myprogram.c -I$(S)/include -lumfpack -lamd -lcholmod -lsuitesparseconfig -lm
+         
 
 LACE_HEADERS = include/*.h
 SRCDIRS = control blas src testing drivers
@@ -21,8 +28,12 @@ SRCS = *.cpp $(SRCFILES) $(LACE_HEADERS)
 OBJS = $(SRCFILES:%.cpp=%.o)
 
 LIBDIR		?= -L$(MKLROOT)/lib
-LIB 			?= -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl
-LIBS			 = $(LIBDIR) $(LIB)
+LIB 		?= -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl
+#LIBDIR 		+= -L/lustre/haven/user/chadb/lace_repo_reordering_branch/SuiteSparse/AMD/Lib
+LIBDIR 		+= -L$(S)/lib
+LIB		+= -lamd -lsuitesparseconfig
+LIBS		 = $(LIBDIR) $(LIB)
+
 
 EXAMPLES = testing/exampleGoogleTest_01 testing/exampleGoogleTest_02
 
@@ -141,10 +152,12 @@ testing/test_linearSolver_OBJS = testing/test_linearSolver.o \
 	src/parilu_v0_2.o src/parilu_v0_3.o \
 	src/mkl_fgmres.o src/fgmres.o src/fgmres_restart.o \
 	src/fgmres_householder_opt4.o src/fgmres_householder_restart.o \
+        src/cuthill_mckee.o \
 	src/trisolve.cpp \
 	src/gram_schmidt.cpp \
 	src/givens.cpp \
 	src/orthogonality_error.cpp \
+        src/reorder.cpp \
   testing/test_cmd_line_main.o libgmock.a
 
 define generateTester
@@ -200,7 +213,9 @@ drivers/solver_OBJS = drivers/solver_interface.o \
 	src/trisolve.cpp \
 	src/gram_schmidt.cpp \
 	src/givens.cpp \
-	src/orthogonality_error.cpp 
+	src/orthogonality_error.cpp \
+        src/cuthill_mckee.cpp \
+        src/reorder.cpp
 
 $(foreach i, $(DRIVERS), $(eval $(call generateTester,$(i))))
 
