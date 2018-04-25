@@ -18,7 +18,7 @@
 #include "../include/sparse.h" 
 #include "../include/dense_types.h"
 
-extern "C" int compare_degree ( const void *a, const void *b );
+//extern "C" int compare_degree ( const void *a, const void *b );
 
 struct node
 {
@@ -30,13 +30,9 @@ extern "C" int compare_degree ( const void *a, const void *b )
 {
   struct node * aa = (struct node*)a;
   struct node * bb = (struct node*)b; 
-  //struct node node1 = (struct node)(*(struct node*))a;
-  //struct node node2 = (struct node)(*(struct node*))b;
 
   if ( aa->degree < bb->degree )
-  //if ( node1.degree > node2.degree )
     return 1;
-  //else if ( node1.degree < node2.degree )
   else if ( aa->degree > bb->degree )
     return -1;
   else
@@ -237,7 +233,12 @@ void data_reorder_cuthill_mckee (data_d_matrix* A, int* nn_map, bool reverse)
   free(nnsn);
   free(nsn);
 
-  printf("Cuthill_McKee(): Finished reordering the vertices. Maximum degree in mesh is <%d>.\n",maxdegree);
+  if(reverse){
+    printf("Reverse Cuthill_McKee(): Finished reordering the vertices. Maximum degree in mesh is <%d>.\n",maxdegree);
+  }
+  else{
+    printf("Cuthill_McKee(): Finished reordering the vertices. Maximum degree in mesh is <%d>.\n",maxdegree);
+  }
 
   // Debug code to print to screen.
 #if 0

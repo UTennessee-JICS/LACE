@@ -1,8 +1,9 @@
 #include "../include/sparse.h"
-#include "amd.h"
+#include "amd.h"//for SparseSuite AMD reordering function
+#include <stdio.h>
+#include <stdlib.h>
 
-
-static void print_char_orig_Matrix(int* Ap, int* Ai, int n)
+void print_char_Matrix(int* Ap, int* Ai, int n)
 {
 #if 0
    printf ("\nInput matrix:  %d-by-%d, with %d entries.\n"
@@ -52,37 +53,10 @@ static void print_char_orig_Matrix(int* Ap, int* Ai, int n)
 };
 
 
-static void print_char_Matrix(int* Ap, int* Ai, int* P, int* Pinv, int n)
+void print_char_permuted_Matrix(int* Ap, int* Ai, int* P, int* Pinv, int n)
 {
   char Ac[n][n];
   int i,j,k,inew,jnew,p;
-
-  //compute inverse permutation vector
-  for (k = 0 ; k < n ; k++)
-  {
-    /* row/column j is the kth row/column in the permuted matrix */
-    j = P [k] ;
-    Pinv [j] = k ;
-  }
-
-#if 0
-  /* print the permutation vector, P, and compute the inverse permutation */
-  printf ("Permutation vector:\n") ;
-  for (k = 0 ; k < n ; k++)
-  {
-    /* row/column j is the kth row/column in the permuted matrix */
-    j = P [k] ;
-    printf (" %2d", j) ;
-  }
-  printf ("\n\n") ;
-  printf ("Inverse permutation vector:\n") ;
-  for (int j = 0 ; j < n ; j++)
-  {
-    int k = Pinv [j] ;
-    printf (" %2d", k) ;
-  }
-  printf ("\n\n") ;
-#endif
 
   for (jnew = 0 ; jnew < n ; jnew++)
   {
@@ -109,14 +83,93 @@ static void print_char_Matrix(int* Ap, int* Ai, int* P, int* Pinv, int n)
 };
 
 
+void reorder_csr_indices(data_d_matrix* A, int* P, int* Pinv)
+{
+  //reorder matrix indices
+  int* ia = A->row;
+  int* ja = A->col;
 
-int data_sparse_reorder(data_d_matrix* A)
+  int* ia2;
+  dataType* val2;
+  int* ja2;
+
+  LACE_CALLOC(ia2, A->num_rows+1);
+  LACE_CALLOC(ja2,A->nnz);
+  LACE_CALLOC(val2, A->nnz);
+
+  ia2[0]=0;
+  /*compute new index offsets for ia2*/
+  for(int i=0; i<A->num_rows; ++i)
+  {
+    int count=0;
+    int old_row = P[i];
+    for(int j=ia[old_row]; j<ia[old_row+1]; ++j)
+    { 
+      ja2[ia2[i]+count] = Pinv[ja[j]];
+      val2[ia2[i]+count]=A->val[j];
+      count++;
+    }
+    ia2[i+1]=ia2[i]+count;
+  }
+
+  //eliminate old data and replace with new
+  free(A->row);
+  A->row = ia2;
+  free(A->col);
+  A->col = ja2;
+  free(A->val);
+  A->val = val2;
+};
+
+//for use in qsort, defines a tuple with matrix col index and value
+typedef struct
+{
+   int index;
+   dataType val;
+} element;
+
+//function passed to qsort to compare matrix elements in row
+int comparator(const void *p, const void *q)
+{
+   element *element_p = (element*)p;
+   element *element_q = (element*)q;
+   return ( element_p->index - element_q->index );
+};
+
+//use qsort to take reordered rows and sort by col index number
+void sort_csr_rows(data_d_matrix* A)
+{
+  element* current_row;
+  current_row = (element*)calloc(A->num_rows,sizeof(element)); 
+
+  for(int i=0; i<A->num_rows; ++i){
+    //load row into entries
+    int count=0;
+    for(int j=A->row[i]; j<A->row[i+1]; ++j){
+       current_row[count].index=A->col[j];
+       current_row[count].val=A->val[j];
+       count++;
+    }
+
+    //sort row
+    qsort(current_row, count, sizeof(element), comparator);
+
+    //load sorted values back into array
+    count=0;
+    for(int j=A->row[i];j<A->row[i+1];++j){
+       A->col[j]=current_row[count].index;
+       A->val[j]=current_row[count].val;
+       count++;
+    }
+  }
+};
+
+int data_sparse_reorder(data_d_matrix* A, int* P, int* Pinv, int reorder)
 {
   //reorder A
+
   int* Ap;//[A->num_rows+1];
   int* Ai;//[A->nnz];
-  int P[A->num_rows];
-  int Pinv[A->num_rows];
   Ap = A->row;
   Ai = A->col;
 
@@ -125,67 +178,77 @@ int data_sparse_reorder(data_d_matrix* A)
   //int nz = Ap [n] ;
   /* print a character plot of the original matrix. */
   printf ("\nPlot of original matrix pattern:\n") ;
-  print_char_orig_Matrix(Ap, Ai, n);
+  print_char_Matrix(Ap, Ai, n);
 
-
-//#if 0 //AMD  
-  /* get the default parameters, and print them */
-  double Control[AMD_CONTROL];
-  double Info[AMD_INFO];
-  amd_defaults (Control) ;
-  amd_control  (Control) ;
-
-  int result = amd_order(A->num_rows, Ap, Ai, P, Control, Info);
-  amd_control(Control);
-  //int status = amd_valid(n,n,Ap,Ai);
-  printf ("return value from amd_order: %d (should be %d)\n", result, AMD_OK) ;
-  /* print the statistics */
-  amd_info (Info) ;
-  if (result != AMD_OK)
+  switch (reorder)
   {
-    printf ("AMD failed\n") ;
-    exit (1) ;
+     case 1:{ 
+        //Cuthill-McKee
+        data_reorder_cuthill_mckee(A, P);
+     }break;
+
+     case 2:{
+        //Reverse Cuthill-McKee
+        bool reverse=true;
+        data_reorder_cuthill_mckee(A, P, reverse);
+     }break;
+
+     case 3:{ 
+        //AMD 
+        /* get the default parameters, and print them */
+        double Control[AMD_CONTROL];
+        double Info[AMD_INFO];
+        amd_defaults (Control) ;
+        amd_control  (Control) ;
+        int result = amd_order(A->num_rows, Ap, Ai, P, Control, Info);
+        amd_control(Control);
+        //int status = amd_valid(n,n,Ap,Ai);
+        //printf ("return value from amd_order: %d (should be %d)\n", result, AMD_OK) ;
+        /* print the statistics */
+        amd_info (Info);
+        if (result != AMD_OK)
+        {
+           printf ("AMD failed\n") ;
+           exit (1) ;
+        }
+     }break;
+
+     default:{//no reordering
+        for(int k=0;k<n;++k){
+           P[k] = k ;
+           Pinv[k] = k ;
+        }
+     }
   }
+ 
+  //compute inverse permutation vector
+  for (int k = 0 ; k < n ; k++)
+  {
+    /* row/column j is the kth row/column in the permuted matrix */
+     Pinv [P[k]] = k ;
+  }
+
+  //reorder the indices for A->row A->col from permutation vector P
+  reorder_csr_indices(A,P,Pinv);
+  //sort the cols and accociated vals in increasing order for each row
+  sort_csr_rows(A);
+
+#if 1
   /* print a character plot of the permuted matrix. */
-  printf ("\nPlot of permuted AMD matrix pattern:\n") ;
-  print_char_Matrix(Ap, Ai, P, Pinv, n);
-//endif
+  printf ("\nPlot of reordered matrix pattern:\n") ;
+  print_char_Matrix(A->row, A->col, A->num_rows);
+#endif
 
+#if 0
+  for(int i=0;i<A->num_rows;++i){
+     printf("\nrow[%d]: ",i);
+     for(int j=A->row[i];j<A->row[i+1];++j){
+        printf(" %d:%2.2e",A->col[j],A->val[j]);
+     }
+    printf("\n");
+  }
+#endif
 
-//#if 0 //Cuthill-McKee
-   //int* nn_map=(int*)calloc(n+1,sizeof(int));
-   data_reorder_cuthill_mckee(A, P);
-   printf("Old vertex id -> Reordered vertex id.\n");
-   for (int  i=0; i < n; i++ )
-   {
-     printf("%d  ->  %d.\n",i,P[i]);
-   }
-  /* print a character plot of the permuted matrix. */
-  printf ("\nPlot of permuted Cuthill Mckee matrix pattern:\n") ;
-  print_char_Matrix(Ap, Ai, P, Pinv, n);
-//#endif
-
-
-//#if 0 //Reverse Cuthill-McKee
-   //int* nn_map=(int*)calloc(n+1,sizeof(int));
-   bool reverse=true;
-   data_reorder_cuthill_mckee(A, P, reverse);
-   printf("Old vertex id -> Reordered vertex id.\n");
-   for (int  i=0; i < n; i++ )
-    {
-      printf("%d  ->  %d.\n",i,P[i]);
-    }
-  /* print a character plot of the permuted matrix. */
-  printf ("\nPlot of permuted Reverse Cuthill Mckee matrix pattern:\n") ;
-  print_char_Matrix(Ap, Ai, P, Pinv, n);
-//#endif
-
-
-
-
-//  /* print a character plot of the permuted matrix. */
-//  printf ("\nPlot of permuted matrix pattern:\n") ;
-//  print_char_Matrix(Ap, Ai, P, Pinv, n);
   return(0);
 };
 

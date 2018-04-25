@@ -1,6 +1,7 @@
 
 #include "sparse.h"
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <libgen.h>
 #include <string.h>
@@ -12,6 +13,13 @@
 #include "mkl_rci.h"
 
 #define size 128
+
+//#define DEBUG_MKL 
+#ifdef DEBUG_MKL
+  #define MKL_PRINTF(...){ printf(__VA_ARGS__); fflush(stdout); }
+#else
+  #define MKL_PRINTF(...){ (void)0; }
+#endif
 
 extern "C"
 int
@@ -101,13 +109,11 @@ data_MKL_FGMRES(
       rhs[i] = rhs_vector->val[i];
     }
   }
-  DEV_CHECKPT
 /*---------------------------------------------------------------------------
    Save the right-hand side in vector b for future use
   ---------------------------------------------------------------------------*/
   i=1;
   dcopy(&ivar, rhs, &i, b, &i);
-  DEV_CHECKPT
 /*---------------------------------------------------------------------------
    Initialize the initial guess
   ---------------------------------------------------------------------------*/
@@ -116,13 +122,11 @@ data_MKL_FGMRES(
     computed_solution[i]=x0->val[i];
     residual[i] = 0.0;
   }
-
-
   /*---------------------------------------------------------------------------
      Initialize the solver
     ---------------------------------------------------------------------------*/
   dfgmres_init(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
-  printf("after dfgmres_init on line %d RCI_request = %d\n", __LINE__, RCI_request);
+  MKL_PRINTF("after dfgmres_init on line %d RCI_request = %d\n", __LINE__, RCI_request);
   if (RCI_request!=0) goto FAILED;
 
 /*---------------------------------------------------------------------------
@@ -157,15 +161,15 @@ data_MKL_FGMRES(
   dcsrilu0(&ivar, A->val, ia, ja, bilu0MKL, ipar, dpar, &ierr);
   ref_norm2=dnrm2(&matsize, bilu0MKL, &incx );
 
-  printf("%s %d A->num_rows = %d\n", __FILE__, __LINE__, A->num_rows);
+  MKL_PRINTF("%s %d A->num_rows = %d\n", __FILE__, __LINE__, A->num_rows);
   // TODO: return an int from parilu factorizations and check it
   data_PariLU_v0_2( A, &L, &U, solverParam->parilu_reduction );
-  printf("%s %d A->num_rows = %d\n", __FILE__, __LINE__, A->num_rows);
+  MKL_PRINTF("%s %d A->num_rows = %d\n", __FILE__, __LINE__, A->num_rows);
 
   data_zilures(*A, L, U, &LU, &Ares, &Anonlinres);
-  printf("%s %d A->num_rows = %d\n", __FILE__, __LINE__, A->num_rows);
-  printf("PariLUv0_2_csrilu0_res = %e\n", Ares);
-  printf("PariLUv0_2_csrilu0_nonlinres = %e\n", Anonlinres);
+  MKL_PRINTF("%s %d A->num_rows = %d\n", __FILE__, __LINE__, A->num_rows);
+  MKL_PRINTF("PariLUv0_2_csrilu0_res = %e\n", Ares);
+  MKL_PRINTF("PariLUv0_2_csrilu0_nonlinres = %e\n", Anonlinres);
 
   data_zmlumerge( L, U, &LU );
   #pragma omp parallel
@@ -181,7 +185,7 @@ data_MKL_FGMRES(
 
   if (ierr!=0)
   {
-    printf("Preconditioner dcsrilu0 has returned the ERROR code %d", ierr);
+    MKL_PRINTF("Preconditioner dcsrilu0 has returned the ERROR code %d", ierr);
     goto FAILED1;
   }
 
@@ -216,95 +220,95 @@ data_MKL_FGMRES(
     dpar[1]=0.0;
   }
 
-  printf("ipar[4]=%d\n", ipar[4]);
-  printf("ipar[14]=%d\n", ipar[14]);
+  MKL_PRINTF("ipar[4]=%d\n", ipar[4]);
+  MKL_PRINTF("ipar[14]=%d\n", ipar[14]);
 
 
   /*---------------------------------------------------------------------------
      Check the correctness and consistency of the newly set parameters
     ---------------------------------------------------------------------------*/
   dfgmres_check(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
-  printf("after dfgmres_check on line %d RCI_request = %d\n", __LINE__, RCI_request);
+  MKL_PRINTF("after dfgmres_check on line %d RCI_request = %d\n", __LINE__, RCI_request);
 
   mkl_dcsrgemv(&cvar, &ivar, A->val, ia, ja, computed_solution, residual);
   i=1;
   dvar=dnrm2(&ivar,residual,&i);
-  printf("\n ==== Initial norm of residual = %e ==== \n", dvar );
+  MKL_PRINTF("\n ==== Initial norm of residual = %e ==== \n", dvar );
   dvar=-1.0;
   daxpy(&ivar, &dvar, rhs, &i, residual, &i);
   dvar=dnrm2(&ivar,residual,&i);
-  printf("\n ==== Initial residual = %e ==== \n", dvar );
+  MKL_PRINTF("\n ==== Initial residual = %e ==== \n", dvar );
   dvar=dnrm2(&ivar,rhs,&i);
-  printf("\n ==== Initial norm of rhs = %e ==== \n", dvar );
+  MKL_PRINTF("\n ==== Initial norm of rhs = %e ==== \n", dvar );
   dvar=dnrm2(&ivar,b,&i);
-  printf("\n ==== Initial norm of b = %e ==== \n", dvar );
+  MKL_PRINTF("\n ==== Initial norm of b = %e ==== \n", dvar );
 
   if (RCI_request!=0) goto FAILED;
   /*---------------------------------------------------------------------------
      Print the info about the RCI FGMRES method
     ---------------------------------------------------------------------------*/
-  printf("Some info about the current run of RCI FGMRES method:\n\n");
+  MKL_PRINTF("Some info about the current run of RCI FGMRES method:\n\n");
   if (ipar[7])
   {
-    printf("As ipar[7]=%d, the automatic test for the maximal number of iterations will be\n", ipar[7]);
-    printf("performed\n");
+    MKL_PRINTF("As ipar[7]=%d, the automatic test for the maximal number of iterations will be\n", ipar[7]);
+    MKL_PRINTF("performed\n");
   }
   else
   {
-    printf("As ipar[7]=%d, the automatic test for the maximal number of iterations will be\n", ipar[7]);
-    printf("skipped\n");
+    MKL_PRINTF("As ipar[7]=%d, the automatic test for the maximal number of iterations will be\n", ipar[7]);
+    MKL_PRINTF("skipped\n");
   }
-  printf("+++\n");
+  MKL_PRINTF("+++\n");
   if (ipar[8])
   {
-    printf("As ipar[8]=%d, the automatic residual test will be performed\n", ipar[8]);
+    MKL_PRINTF("As ipar[8]=%d, the automatic residual test will be performed\n", ipar[8]);
   }
   else
   {
-    printf("As ipar[8]=%d, the automatic residual test will be skipped\n", ipar[8]);
+    MKL_PRINTF("As ipar[8]=%d, the automatic residual test will be skipped\n", ipar[8]);
   }
-  printf("+++\n");
+  MKL_PRINTF("+++\n");
   if (ipar[9])
   {
-    printf("As ipar[9]=%d the user-defined stopping test will be requested via\n", ipar[9]);
-    printf("RCI_request=2\n");
+    MKL_PRINTF("As ipar[9]=%d the user-defined stopping test will be requested via\n", ipar[9]);
+    MKL_PRINTF("RCI_request=2\n");
   }
   else
   {
-    printf("As ipar[9]=%d, the user-defined stopping test will not be requested, thus,\n", ipar[9]);
-    printf("RCI_request will not take the value 2\n");
+    MKL_PRINTF("As ipar[9]=%d, the user-defined stopping test will not be requested, thus,\n", ipar[9]);
+    MKL_PRINTF("RCI_request will not take the value 2\n");
   }
-  printf("+++\n");
+  MKL_PRINTF("+++\n");
   if (ipar[10])
   {
-    printf("As ipar[10]=%d, the Preconditioned FGMRES iterations will be performed, thus,\n", ipar[10]);
-    printf("the preconditioner action will be requested via RCI_request=3\n");
+    MKL_PRINTF("As ipar[10]=%d, the Preconditioned FGMRES iterations will be performed, thus,\n", ipar[10]);
+    MKL_PRINTF("the preconditioner action will be requested via RCI_request=3\n");
   }
   else
   {
-    printf("As ipar[10]=%d, the Preconditioned FGMRES iterations will not be performed,\n", ipar[10]);
-    printf("thus, RCI_request will not take the value 3\n");
+    MKL_PRINTF("As ipar[10]=%d, the Preconditioned FGMRES iterations will not be performed,\n", ipar[10]);
+    MKL_PRINTF("thus, RCI_request will not take the value 3\n");
   }
-  printf("+++\n");
+  MKL_PRINTF("+++\n");
   if (ipar[11])
   {
-    printf("As ipar[11]=%d, the automatic test for the norm of the next generated vector is\n", ipar[11]);
-    printf("not equal to zero up to rounding and computational errors will be performed,\n");
-    printf("thus, RCI_request will not take the value 4\n");
+    MKL_PRINTF("As ipar[11]=%d, the automatic test for the norm of the next generated vector is\n", ipar[11]);
+    MKL_PRINTF("not equal to zero up to rounding and computational errors will be performed,\n");
+    MKL_PRINTF("thus, RCI_request will not take the value 4\n");
   }
   else
   {
-    printf("As ipar[11]=%d, the automatic test for the norm of the next generated vector is\n", ipar[11]);
-    printf("not equal to zero up to rounding and computational errors will be skipped,\n");
-    printf("thus, the user-defined test will be requested via RCI_request=4\n");
+    MKL_PRINTF("As ipar[11]=%d, the automatic test for the norm of the next generated vector is\n", ipar[11]);
+    MKL_PRINTF("not equal to zero up to rounding and computational errors will be skipped,\n");
+    MKL_PRINTF("thus, the user-defined test will be requested via RCI_request=4\n");
   }
-  printf("+++\n\n");
+  MKL_PRINTF("+++\n\n");
   /*---------------------------------------------------------------------------
      Compute the solution by RCI (P)FGMRES solver with preconditioning
      Reverse Communication starts here
     ---------------------------------------------------------------------------*/
 ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
-  printf("after dfgmres on line %d RCI_request = %d\n", __LINE__, RCI_request);
+  MKL_PRINTF("after dfgmres on line %d RCI_request = %d\n", __LINE__, RCI_request);
   /*---------------------------------------------------------------------------
      If RCI_request=0, then the solution was found with the required precision
     ---------------------------------------------------------------------------*/
@@ -319,7 +323,7 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
     ---------------------------------------------------------------------------*/
   if (RCI_request==1)
   {
-    printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
+    MKL_PRINTF("RCI_request = %d line = %d\n", RCI_request, __LINE__);
     mkl_dcsrgemv(&cvar, &ivar, A->val, ia, ja, &tmp[ipar[21]-1], &tmp[ipar[22]-1]);
     goto ONE;
   }
@@ -338,7 +342,7 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
     ---------------------------------------------------------------------------*/
   if (RCI_request==2)
   {
-    printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
+    MKL_PRINTF("RCI_request = %d line = %d\n", RCI_request, __LINE__);
     /* Request to the dfgmres_get routine to put the solution into b[N] via ipar[12]
       ---------------------------------------------------------------------------
        WARNING: beware that the call to dfgmres_get routine with ipar[12]=0 at this stage may
@@ -346,19 +350,19 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
        exploit this option with care */
     ipar[12]=1;
     /* Get the current FGMRES solution in the vector b[N] */
-    printf("before get ipar[12] = %d\n", ipar[12] );
-    printf("before get ipar[13] = %d\n", ipar[13] );
+    MKL_PRINTF("before get ipar[12] = %d\n", ipar[12] );
+    MKL_PRINTF("before get ipar[13] = %d\n", ipar[13] );
     dfgmres_get(&ivar, computed_solution, b, &RCI_request, ipar, dpar, tmp, &itercount);
-    printf("after get RCI_request = %d line = %d\n", RCI_request, __LINE__);
+    MKL_PRINTF("after get RCI_request = %d line = %d\n", RCI_request, __LINE__);
     /* Compute the current true residual via MKL (Sparse) BLAS routines */
     mkl_dcsrgemv(&cvar, &ivar, A->val, ia, ja, b, residual);
     dvar=-1.0E0;
     i=1;
     daxpy(&ivar, &dvar, rhs, &i, residual, &i);
     dvar=dnrm2(&ivar,residual,&i);
-    printf("dvar = %e\n", dvar );
-    printf("dpar[4] = %e\n", dpar[4] );
-    printf("dpar[5] = %e\n", dpar[5] );
+    MKL_PRINTF("dvar = %e\n", dvar );
+    MKL_PRINTF("dpar[4] = %e\n", dpar[4] );
+    MKL_PRINTF("dpar[5] = %e\n", dpar[5] );
     if (dvar<solverParam->rtol) goto COMPLETE;
     else goto ONE;
   }
@@ -374,7 +378,7 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
       ---------------------------------------------------------------------------*/
   if (RCI_request==3)
   {
-    printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
+    MKL_PRINTF("RCI_request = %d line = %d\n", RCI_request, __LINE__);
     cvar1='L';
     cvar='N';
     cvar2='U';
@@ -392,12 +396,12 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
     ---------------------------------------------------------------------------*/
   if (RCI_request==4)
   {
-    printf("RCI_request = %d line = %d\n", RCI_request, __LINE__);
-    printf("dpar[2] = %e\n", dpar[2] );
-    printf("dpar[4] = %e\n", dpar[4] );
-    printf("dpar[4]/dpar[2] = %e\n", dpar[4]/dpar[2] );
-    printf("dpar[6] = %e\n", dpar[6] );
-    printf("itercount = %d\n", itercount );
+    MKL_PRINTF("RCI_request = %d line = %d\n", RCI_request, __LINE__);
+    MKL_PRINTF("dpar[2] = %e\n", dpar[2] );
+    MKL_PRINTF("dpar[4] = %e\n", dpar[4] );
+    MKL_PRINTF("dpar[4]/dpar[2] = %e\n", dpar[4]/dpar[2] );
+    MKL_PRINTF("dpar[6] = %e\n", dpar[6] );
+    MKL_PRINTF("itercount = %d\n", itercount );
     if (dpar[6]<1.0E-14) goto COMPLETE;
     else goto ONE;
   }
@@ -407,7 +411,7 @@ ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
     ---------------------------------------------------------------------------*/
   else
   {
-    printf("RCI_request = %d\n", RCI_request);
+    MKL_PRINTF("RCI_request = %d\n", RCI_request);
     goto FAILED;
   }
   /*---------------------------------------------------------------------------
@@ -422,14 +426,14 @@ COMPLETE:   ipar[12]=0;
   /*---------------------------------------------------------------------------
      Print solution vector: computed_solution[N] and the number of iterations: itercount
     ---------------------------------------------------------------------------*/
-  printf("The system has been solved \n");
+  MKL_PRINTF("The system has been solved \n");
 
   final_residual_nrm2 = dnrm2(&ivar, residual, &incx );
-  printf("\nNumber of iterations: %d\n" ,itercount);
-  printf("\nfinal residual nrm2: %e\n" ,final_residual_nrm2);
-  printf("\ndvar: %e\n" ,dvar);
-  printf("\npreconditioner fabs(ref_norm2-nrm2) = %e\n", fabs(ref_norm2-nrm2) );
-  printf("\n");
+  MKL_PRINTF("\nNumber of iterations: %d\n" ,itercount);
+  MKL_PRINTF("\nfinal residual nrm2: %e\n" ,final_residual_nrm2);
+  MKL_PRINTF("\ndvar: %e\n" ,dvar);
+  MKL_PRINTF("\npreconditioner fabs(ref_norm2-nrm2) = %e\n", fabs(ref_norm2-nrm2) );
+  MKL_PRINTF("\n");
 
   for (int pi=0; pi<A->num_rows; ++pi) {
     x0->val[pi] = computed_solution[pi];

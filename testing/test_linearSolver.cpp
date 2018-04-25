@@ -143,6 +143,13 @@ data_d_matrix* LinearSolverTest::rhs_vector = NULL;
 data_d_matrix* LinearSolverTest::initialGuess_vector = NULL;
 dataType* LinearSolverTest::tolerance = NULL;
 
+
+
+
+
+
+
+#if 1
 TEST_F(LinearSolverTest, MKLFGMRESnonPreconditioned) {
   printf("%% MKL FGMRES non-preconditioned\n");
 
@@ -189,7 +196,10 @@ TEST_F(LinearSolverTest, MKLFGMRESnonPreconditioned) {
   data_zmfree( &r );
 
 }
+#endif
 
+
+#if 1
 TEST_F(LinearSolverTest, MKLFGMRESPreconditioned) {
   printf("%% MKL FGMRES non-preconditioned\n");
 
@@ -236,7 +246,9 @@ TEST_F(LinearSolverTest, MKLFGMRESPreconditioned) {
   data_zmfree( &r );
 
 }
+#endif
 
+#if 1
 TEST_F(LinearSolverTest, MKLFGMRESPreconditionedRestart) {
   printf("%% MKL FGMRES preconditioned restarted\n");
 
@@ -283,6 +295,7 @@ TEST_F(LinearSolverTest, MKLFGMRESPreconditionedRestart) {
   data_zmfree( &r );
 
 }
+#endif
 
 TEST_F(LinearSolverTest, FGMRESPreconditioned) {
   printf("%% FGMRES preconditioned\n");
@@ -713,40 +726,214 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditionedRestart) {
 }
 
 
-
+#if 1
 TEST_F(LinearSolverTest, MKLFGMRESnonPreconditionedReordered) {
   printf("%% MKL FGMRES non-preconditioned reordered\n");
 
   // store initial guess in solution_vector
   data_d_matrix solution_vector = {Magma_DENSE};
+
   CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
   
-  data_z_gmres_param solverParam;
-  
+  data_z_gmres_param solverParam;  
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
   solverParam.search_max = 20;
   solverParam.restart_max = 20;
   solverParam.reorth = 0;
   solverParam.precondition = 0;
-  solverParam.parilu_reduction = 1.0e-15;
+  solverParam.parilu_reduction = 1.0e-15;//value used to check validity of test
   solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 0;
 
+  solverParam.reorder = 3;
 
-#if 1
-  data_sparse_reorder(A);
+  //ceb
+  //matrix reordering strategies:
+  //1. if we provide only a permutation vector we can affect
+  //   the permutation whenever we reference the matrix and vectors 
+  //   in mathematical operations, but this requires that we propagate
+  //   the permutation vector throughout every function that references
+  //   the matrix and vector indexing structures.
+  //   This also will have an effect on the computational efficiency of
+  //   any subsequent matrix and vector element references
+  //2. Alternatively, we can avoid propagating the permutation vector
+  //   into every function, and improve computational efficiency if we
+  //   actually apply the permutation vector to reorder the matrix and 
+  //   vectors before operationg on them. This, strategy incurs an upfront 
+  //   cost in copying data from one location to another in the matrix and
+  //   may require a large but temporary chunk of memory to perform the copy.
+  //   If the matrix is in CSR form, each row may have a different size, so 
+  //   may be difficult to copy in place.
+  //The second approach will be used to improve computational efficiency
+  //   though we may have to be more creative if available memory becomes limited
+  if(solverParam.reorder)
+  {
+    //creates permutation vector and uses it to
+    int* P=(int*)calloc(A->num_rows,sizeof(int));
+    int* Pinv=(int*)calloc(A->num_rows,sizeof(int)); 
+    data_sparse_reorder(A,P,Pinv,solverParam.reorder);
+
+    //for(int i=0;i<A->num_rows;++i){printf("P[%d]=%d\n",i,P[i]);}
+
+#if 0
+    //reorder rhs_vector
+    dataType* rhs __attribute__ ((aligned (DEV_ALIGN)));
+    rhs = (dataType)*calloc(rhs_vector->num_rows,sizeof(dataType));
+    for(int i=0; i<rhs_vector->num_rows; ++i)
+    {
+       rhs[P[i]] = rhs_vector->val[i];
+    }
+    free( rhs_vector->val);
+    rhs_vector->val = rhs;
 #endif
+#if 0
+    //reorder solution vector
+    dataType* x __attribute__ ((aligned (DEV_ALIGN)));
+    x = (dataType)*calloc(solution_vector->num_rows,sizeof(dataType));
+    for(int i=0; i<solution_vector->num_rows; ++i)
+    {
+       x[P[i]] = solution_vector->val[i];
+    }
+    free( soultion_vector->val);
+    solution_vector->val = x;
+#endif
+  }
 
- 
   // solve
   data_MKL_FGMRES( A, &solution_vector, rhs_vector, &solverParam );
+
   // print solver summary
   
   // caclulate residual
   dataType residual = 0.0;
   data_d_matrix r={Magma_DENSE};
   data_zvinit( &r, A->num_rows, 1, zero );
+  //note A is still reordered here
+  data_z_spmv( negone, A, &solution_vector, zero, &r );
+  data_zaxpy( A->num_rows, one, rhs_vector->val, 1, r.val, 1);
+  //for (int i=0; i<A->num_rows; ++i) {
+  //  GMRESDBG("r.val[%d] = %.16e\n", i, r.val[i]);}
+  residual = data_dnrm2( A->num_rows, r.val, 1 );
+  printf("%% external check of rnorm2 = %.16e;\n\n", residual);
+  fflush(stdout);
+
+  //if we are writing out solution, we need to put solution_vector back in original order
+  if(solverParam.reorder)
+  {//reorder solution vector and rhs_vector
+#if 0
+    //reorder solution vector
+    dataType* x __attribute__ ((aligned (DEV_ALIGN)));
+    x = (dataType)*calloc(solution_vector->num_rows,sizeof(dataType));
+    for(int i=0; i<solution_vector->num_rows; ++i)
+    {
+       x[P[i]] = solution_vector->val[i];
+    }
+    free( soultion_vector->val);
+    solution_vector->val = x;
+#endif
+  }
+
+  //google test: check that residual is less than tolerance
+  EXPECT_LE( residual, (*LinearSolverTest::tolerance) );
+  data_zmfree( &solution_vector );
+  data_zmfree( &r );
+}
+#endif
+
+
+#if 1
+TEST_F(LinearSolverTest, MKLFGMRESPreconditionedReordered) {
+  printf("%% MKL FGMRES preconditioned\n");
+
+  // store initial guess in solution_vector
+  data_d_matrix solution_vector = {Magma_DENSE};
+  CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
+
+  data_z_gmres_param solverParam;
+
+  solverParam.tol_type = 0;
+  solverParam.rtol = (*LinearSolverTest::tolerance);
+  solverParam.search_max = 2000;
+  solverParam.restart_max = 2000;
+  solverParam.reorth = 0;
+  solverParam.precondition = 1;
+  solverParam.parilu_reduction = 1.0e-15;
+  solverParam.monitorOrthog = 1;
+  solverParam.user_csrtrsv_choice = 0;
+
+
+
+
+  solverParam.reorder = 3;
+
+  //ceb
+  //matrix reordering strategies:
+  //1. if we provide only a permutation vector we can affect
+  //   the permutation whenever we reference the matrix and vectors 
+  //   in mathematical operations, but this requires that we propagate
+  //   the permutation vector throughout every function that references
+  //   the matrix and vector indexing structures.
+  //   This also will have an effect on the computational efficiency of
+  //   any subsequent matrix and vector element references
+  //2. Alternatively, we can avoid propagating the permutation vector
+  //   into every function, and improve computational efficiency if we
+  //   actually apply the permutation vector to reorder the matrix and 
+  //   vectors before operationg on them. This, strategy incurs an upfront 
+  //   cost in copying data from one location to another in the matrix and
+  //   may require a large but temporary chunk of memory to perform the copy.
+  //   If the matrix is in CSR form, each row may have a different size, so 
+  //   may be difficult to copy in place.
+  //The second approach will be used to improve computational efficiency
+  //   though we may have to be more creative if available memory becomes limited
+  if(solverParam.reorder)
+  {
+    //creates permutation vector and uses it to
+    int* P=(int*)calloc(A->num_rows,sizeof(int));
+    int* Pinv=(int*)calloc(A->num_rows,sizeof(int)); 
+    data_sparse_reorder(A,P,Pinv,solverParam.reorder);
+
+    //for(int i=0;i<A->num_rows;++i){printf("P[%d]=%d\n",i,P[i]);}
+
+#if 0
+    //reorder rhs_vector
+    dataType* rhs __attribute__ ((aligned (DEV_ALIGN)));
+    rhs = (dataType)*calloc(rhs_vector->num_rows,sizeof(dataType));
+    for(int i=0; i<rhs_vector->num_rows; ++i)
+    {
+       rhs[P[i]] = rhs_vector->val[i];
+    }
+    free( rhs_vector->val);
+    rhs_vector->val = rhs;
+#endif
+#if 0
+    //reorder solution vector
+    dataType* x __attribute__ ((aligned (DEV_ALIGN)));
+    x = (dataType)*calloc(solution_vector->num_rows,sizeof(dataType));
+    for(int i=0; i<solution_vector->num_rows; ++i)
+    {
+       x[P[i]] = solution_vector->val[i];
+    }
+    free( soultion_vector->val);
+    solution_vector->val = x;
+#endif
+  }
+
+
+
+
+
+  // solve
+  data_MKL_FGMRES( A, &solution_vector, rhs_vector, &solverParam );
+
+  // print solver summary
+
+
+  // caclulate residual
+  dataType residual = 0.0;
+  data_d_matrix r={Magma_DENSE};
+  data_zvinit( &r, A->num_rows, 1, zero );
+
   data_z_spmv( negone, A, &solution_vector, zero, &r );
   data_zaxpy( A->num_rows, one, rhs_vector->val, 1, r.val, 1);
   for (int i=0; i<A->num_rows; ++i) {
@@ -754,8 +941,14 @@ TEST_F(LinearSolverTest, MKLFGMRESnonPreconditionedReordered) {
   }
   residual = data_dnrm2( A->num_rows, r.val, 1 );
   printf("%% external check of rnorm2 = %.16e;\n\n", residual);
+
   fflush(stdout);
+
   EXPECT_LE( residual, (*LinearSolverTest::tolerance) );
+
   data_zmfree( &solution_vector );
   data_zmfree( &r );
+
 }
+#endif
+

@@ -396,7 +396,10 @@ data_zmcopy(
 
 int 
 data_sparse_reorder(
-    data_d_matrix* A);
+    data_d_matrix* A,
+    int* P,
+    int* Pinv,
+    int reorder);
 
 
 //======================================

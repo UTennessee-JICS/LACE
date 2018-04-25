@@ -69,7 +69,7 @@ typedef struct data_d_solver_par
     dataType           *eigenvalues;            // feedback: array containing eigenvalues
     dataType_ptr       eigenvectors;   // feedback: array containing eigenvectors on DEV
     data_int_t         info;                    // feedback: did the solver converge etc.
-
+    data_int_t         reorder;                 //matrix reordering (0:none, 1:CM, 2:RCM, 3:AMD)
     //---------------------------------
     // the input for verbose is:
     // 0 = production mode
@@ -172,6 +172,7 @@ typedef struct data_z_gmres_param
     data_int_t             precondition;   // 0 -- do not precondition
                                            // 1 -- apply preconditioner
     dataType               parilu_reduction;
+    data_int_t             reorder;        //matrix reordering (0:none, 1:CM, 2:RCM, 3:AMD)
 } __attribute__ ((aligned (DEV_ALIGN))) data_d_gmres_param;
 
 
