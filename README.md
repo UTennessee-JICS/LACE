@@ -19,6 +19,7 @@ Make from project root for now
 			* follow instructions from https://github.com/google/googletest/blob/master/googletest/README.md#using-cmake
 			* eg.
 				* $ export GTEST_DIR=${HOME}/googletest/googletest
+				* $ cd ${HOME}/googletest/googletest
 				* $ mkdir mybuild
 				* $ cd mybuild
 				* $ cmake -Dgtest_build_samples=ON ${GTEST_DIR}
