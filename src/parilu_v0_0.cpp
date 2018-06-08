@@ -31,8 +31,8 @@ data_PariLU_v0_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U )
 
   int iter = 0;
   // use prescibed iteration limit
-  //dataType tol = 1.0e-15;
-  int iter_limit = 5;
+  dataType tol = 1.0e-20;
+  int iter_limit = 20;
   int num_threads = 0;
 
   dataType s = 0.0;
@@ -45,8 +45,8 @@ data_PariLU_v0_0( data_d_matrix* A, data_d_matrix* L, data_d_matrix* U )
   printf("%% Anorm = %e\n", Anorm);
 
   dataType wstart = omp_get_wtime();
-  //while ( step > tol ) {
-  while ( iter < iter_limit ) {
+  while ( (step > tol) && (iter < iter_limit)) {
+    //while ( iter < iter_limit ) {
     step = 0.0;
     sp = 0.0;
 

@@ -689,7 +689,8 @@ data_fgmres_householder(
       fflush(stdout);
       // update the solution
       // solve the least squares problem
-      if ( fabs(givens.val[(search1)]) < rtol  || (search == (search_max-1)) || std::isfinite(givens.val[(search1)]) == 0 ) {
+      //if ( fabs(givens.val[(search1)]) < rtol  || (search == (search_max-1)) || std::isfinite(givens.val[(search1)]) == 0 ) {
+      if ( fabs(givens.val[(search1)]) < rtol  || (search == (search_max-1)) || isfinite(givens.val[(search1)]) == 0 ) {
         GMRESDBG(" !!!!!!! update the solution %d!!!!!!!\n",0);
         #pragma omp parallel
         #pragma omp for simd schedule(simd: static) nowait

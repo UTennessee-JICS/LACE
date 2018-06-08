@@ -36,6 +36,9 @@ protected:
     tile_size = new int();
     (*tile_size) = 8;
 
+    matchfactor = new int();
+    (*matchfactor)=1000.0;
+
     // parse command line arguments
     if (my_argc>1) {
       int count = 1;
@@ -106,6 +109,7 @@ protected:
     printf("MKL_csrilu0_nonlinres = %e\n", (*Amklnonlinres));
     data_zmfree( &Amkl );
     data_zmfree( &LUmkl );
+    printf("\n");
     fflush(stdout);
   }
 
@@ -135,6 +139,7 @@ protected:
   static dataType* Amklres;
   static dataType* Amklnonlinres;
   static int* tile_size;
+  static int* matchfactor;
 };
 
 data_d_matrix* iLUTest::A = NULL;
@@ -143,6 +148,7 @@ data_d_matrix* iLUTest::Umkl = NULL;
 dataType* iLUTest::Amklres = NULL;
 dataType* iLUTest::Amklnonlinres = NULL;
 int* iLUTest::tile_size = NULL;
+int* iLUTest::matchfactor = NULL;
 
 TEST_F(iLUTest, PariLUv0_0) {
   // =========================================================================
@@ -161,13 +167,14 @@ TEST_F(iLUTest, PariLUv0_0) {
   data_d_matrix LU = {Magma_CSR};
   data_zmconvert((*A), &LU, Magma_CSR, Magma_CSR);
   data_zilures((*A), L, U, &LU, &Ares, &Anonlinres);
+
   printf("PariLU_v0_0-5_csrilu0_res = %e\n", Ares);
   printf("PariLU_v0_0-5_csrilu0_nonlinres = %e\n", Anonlinres);
-
   fflush(stdout);
 
-  EXPECT_LE( Ares, (*Amklres)*10.0 );
-  EXPECT_LE( Anonlinres, (*Amklnonlinres)*10.0 );
+  EXPECT_LE( Ares, (*Amklres)*(*matchfactor) );
+  EXPECT_LE( Anonlinres, (*Amklnonlinres)*(*matchfactor) );
+  printf("\n");
 
   data_zmfree( &L );
   data_zmfree( &U );
@@ -183,7 +190,7 @@ TEST_F(iLUTest, PariLUv0_3) {
 
   data_d_matrix L = {Magma_CSRL};
   data_d_matrix U = {Magma_CSRU};
-  dataType reduction = 1.0e-15;
+  dataType reduction = 1.0e-20;
   data_d_preconditioner_log parilu_log;
   // Separate the strictly lower and upper elements
   // into L, and U respectively.
@@ -206,8 +213,8 @@ TEST_F(iLUTest, PariLUv0_3) {
 
   fflush(stdout);
 
-  EXPECT_LE( Ares, (*Amklres)*10.0 );
-  EXPECT_LE( Anonlinres, (*Amklnonlinres)*10.0 );
+  EXPECT_LE( Ares, (*Amklres)*(*matchfactor) );
+  EXPECT_LE( Anonlinres, (*Amklnonlinres)*(*matchfactor) );
 
   data_zmfree( &L );
   data_zmfree( &U );
@@ -242,8 +249,8 @@ TEST_F(iLUTest, PariLUv0_3_gpu) {
   printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
   fflush(stdout);
 
-  EXPECT_LE( Ares, (*Amklres)*10.0 );
-  EXPECT_LE( Anonlinres, (*Amklnonlinres)*10.0 );
+  EXPECT_LE( Ares, (*Amklres)*(*matchfactor) );
+  EXPECT_LE( Anonlinres, (*Amklnonlinres)*(*matchfactor) );
   data_zmfree( &L );
   data_zmfree( &U );
   data_zmfree( &LU );

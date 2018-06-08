@@ -40,8 +40,9 @@ data_PariLU_v0_3( data_d_matrix* A,
   int il, iu, jl, ju;
 
   int iter = 0;
-  dataType tol = 1.0e-1;
+  dataType tol = 1.0e-40;
   tol = reduction*Ares;
+  int itermax=20;
   PARILUDBG("PariLU_v0_3_tol = %e\n", tol);
   int num_threads = 0;
 
@@ -58,7 +59,7 @@ data_PariLU_v0_3( data_d_matrix* A,
 
   dataType wstart = omp_get_wtime();
   data_rowindex(A, &(A->rowidx) );
-  while ( step > tol ) {
+  while ( (step > tol) && (iter < itermax) ) {
     step = 0.0;
 
     sp = 0.0;
@@ -102,7 +103,8 @@ data_PariLU_v0_3( data_d_matrix* A,
     }
     step *= recipAnorm;
     iter++;
-    PARILUDBG("%% PariLUv0_3_iteration = %d step = %e\n", iter, step);
+    //PARILUDBG("%% PariLUv0_3_iteration = %d step = %e\n", iter, step);
+    printf("%% PariLUv0_3_iteration = %d step = %e\n", iter, step);
   }
   dataType wend = omp_get_wtime();
   dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
