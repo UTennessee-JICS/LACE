@@ -1,7 +1,7 @@
 #
-# Modify to set your path to googletest and googlemock builds
-export GTEST_DIR=/nics/c/home/chadb/googletest/googletest
-export GMOCK_DIR=/nics/c/home/chadb/googletest/googlemock
+# Modify to set yur path to googletest and googlemock builds
+export GTEST_DIR=$PWD/googletest/googletest
+export GMOCK_DIR=$PWD/googletest/googlemock
 
 # Modify to set your paths to SuiteSparse build for AMD reordering
 #export INCLUDE=$INCLUDE:/lustre/haven/user/chadb/lace_repo_reordering_branch/LACE/SuiteSparse/AMD/Include/
@@ -16,11 +16,13 @@ export GMOCK_DIR=/nics/c/home/chadb/googletest/googlemock
 #export LIBRARY_PATH=$LIBRARY_PATH:/lustre/haven/user/chadb/lace_repo_reordering_branch/SparseLib++/1.7/lib/
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/lustre/haven/user/chadb/lace_repo_reordering_branch/SparseLib++/1.7/lib/
 
+#link to suitesparse for amd reordering
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/SuiteSparse/lib/
 
 # for mkl
 #module load intel-compilers/2018.1.163
-module load intel-compilers
-export MKLROOT=/nics/e/sw/cs400_centos7.3_optsoftware/intel/parallel_studio_xe_2017_update2/mkl
+#module load intel-compilers
+
 # if compiling using gnu
-module swap PE-intel PE-gnu
+#export MKLROOT=/nics/e/sw/cs400_centos7.3_optsoftware/intel/parallel_studio_xe_2017_update2/mkl
+#module swap PE-intel PE-gnu
