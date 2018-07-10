@@ -9,7 +9,6 @@
 #include "mmio.h"
 #include "sparse.h"
 #include "container_tests.h"
-
 #include "test_cmd_line.h"
 
 #define USE_CUDA 0
@@ -31,7 +30,8 @@ protected:
     }
     fflush(stdout);
 
-    char default_matrix[] = "matrices/Trefethen_20.mtx";
+    //char default_matrix[] = "matrices/Trefethen_20.mtx";
+    char default_matrix[] = "matrices/sparisty2x2_test.mtx";
     char* matrix_name = NULL;
     tile_size = new int();
     (*tile_size) = 8;
@@ -66,36 +66,47 @@ protected:
     printf("A will be read from %s\n", matrix_name);
     A = new data_d_matrix();
     A->storage_type = Magma_CSR;
+    
     CHECK( data_z_csr_mtx( A, matrix_name ) );
 
     // =========================================================================
     // MKL csrilu0  (Benchmark)
     // =========================================================================
     printf("%% MKL csrilu0  (Benchmark)\n");
+
+    Lmkl = new data_d_matrix();
+    Umkl = new data_d_matrix();
+
+
     data_d_matrix Amkl = {Magma_CSR};
+
     data_zmconvert((*A), &Amkl, Magma_CSR, Magma_CSR);
 
     dataType wstart = omp_get_wtime();
+    //this function modifies Amkl
+    //convert matrix to ILU0 form
     CHECK( data_dcsrilu0_mkl( &Amkl ) );
+
     dataType wend = omp_get_wtime();
     printf("%% MKL csrilu0 required %f wall clock seconds as measured by omp_get_wtime()\n", wend-wstart );
 
-    //data_d_matrix Lmkl = {Magma_CSRL};
-    Lmkl = new data_d_matrix();
+    //separate Amkl(in LU form) into L and U form
+
     Lmkl->storage_type = Magma_CSRL;
     Lmkl->diagorder_type = Magma_UNITY;
     data_zmconvert(Amkl, Lmkl, Magma_CSR, Magma_CSRL);
     printf("test if Lmkl is lower: ");
     data_zcheckupperlower( Lmkl );
     printf(" done.\n");
-    //data_d_matrix Umkl = {Magma_CSRU};
-    Umkl = new data_d_matrix();
+
     Umkl->storage_type = Magma_CSRU;
     Umkl->diagorder_type = Magma_VALUE;
     data_zmconvert(Amkl, Umkl, Magma_CSR, Magma_CSRU);
     printf("test if Umkl is upper: ");
     data_zcheckupperlower( Umkl );
     printf(" done.\n");
+
+    //copy A to LU
     data_d_matrix LUmkl = {Magma_CSR};
     data_zmconvert(Amkl, &LUmkl, Magma_CSR, Magma_CSR);
 
@@ -107,8 +118,10 @@ protected:
     data_zilures( (*A), (*Lmkl), (*Umkl), &LUmkl, Amklres, Amklnonlinres);
     printf("MKL_csrilu0_res = %e\n", (*Amklres));
     printf("MKL_csrilu0_nonlinres = %e\n", (*Amklnonlinres));
-    data_zmfree( &Amkl );
     data_zmfree( &LUmkl );
+
+    data_zmfree( &Amkl );
+
     printf("\n");
     fflush(stdout);
   }
@@ -125,6 +138,9 @@ protected:
     delete Amklnonlinres;
     if (tile_size != NULL ) {
       delete tile_size;
+    }
+    if (matchfactor != NULL ) {
+      delete matchfactor;
     }
   }
 
@@ -149,6 +165,9 @@ dataType* iLUTest::Amklres = NULL;
 dataType* iLUTest::Amklnonlinres = NULL;
 int* iLUTest::tile_size = NULL;
 int* iLUTest::matchfactor = NULL;
+
+
+
 
 TEST_F(iLUTest, PariLUv0_0) {
   // =========================================================================
@@ -181,6 +200,7 @@ TEST_F(iLUTest, PariLUv0_0) {
   data_zmfree( &LU );
   // =========================================================================
 }
+
 
 TEST_F(iLUTest, PariLUv0_3) {
   // =========================================================================
@@ -221,6 +241,72 @@ TEST_F(iLUTest, PariLUv0_3) {
   data_zmfree( &LU );
   // =========================================================================
 }
+
+
+TEST_F(iLUTest, PariLUv0_3_bcsr) {
+
+  // =========================================================================
+  // PariLU v0.0
+  // =========================================================================
+  printf("%% PariLU v0.3 BCSR\n");
+  data_d_matrix A_BCSR = {Magma_BCSR};
+  data_d_matrix L = {Magma_BCSRL};
+  data_d_matrix U = {Magma_BCSRU};
+  data_d_matrix LU = {Magma_BCSR};
+
+  //copy A csr to A BCSR
+  //do this twice to get ordered rows
+  A_BCSR.blocksize=2;
+  data_zmconvert((*A), &A_BCSR, Magma_CSR, Magma_BCSR);
+  sort_csr_rows(&A_BCSR);
+
+  data_rowindex(&A_BCSR, &(A_BCSR.rowidx) );
+
+  //printf("A_BCSR:\n");
+  //data_zprint_bcsr(&A_BCSR);
+
+  dataType reduction = 1.0e-20;
+  data_d_preconditioner_log parilu_log;
+
+  // Separate the strictly lower and upper elements
+  // into L, and U respectively.
+//write bcsr version for this function
+//ultimately work this in to a single function 
+  data_PariLU_v0_3_bcsr( &A_BCSR, &L, &U, reduction, &parilu_log );
+  // Check ||A-LU||_Frobenius
+
+  dataType Ares = 0.0;
+  dataType Anonlinres = 0.0;
+//ceb should this be a copy A to LU? 
+  LU.blocksize=A_BCSR.blocksize; 
+  data_zmconvert((*A), &LU, Magma_CSR, Magma_BCSR);
+
+  //data_zilures((*A), L, U, &LU, &Ares, &Anonlinres);
+  data_zilures_bcsr(A_BCSR, L, U, &LU, &Ares, &Anonlinres);
+
+  printf("PariLU_v0_3_bcsr_omp_num_threads = %d\n", parilu_log.omp_num_threads );
+  printf("PariLU_v0_3_bcsr_sweeps = %d\n", parilu_log.sweeps );
+  printf("PariLU_v0_3_bcsr_tol = %e\n", parilu_log.tol );
+  printf("PariLU_v0_3_bcsr_A_Frobenius = %e\n", parilu_log.A_Frobenius );
+  printf("PariLU_v0_3_bcsr_generation_time = %e\n", parilu_log.precond_generation_time );
+  printf("PariLU_v0_3_bcsr_initial_residual = %e\n", parilu_log.initial_residual );
+  printf("PariLU_v0_3_bcsr_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
+  printf("PariLU_v0_3_bcsr_csrilu0_res = %e\n", Ares);
+  printf("PariLU_v0_3_bcsr_csrilu0_nonlinres = %e\n", Anonlinres);
+
+  fflush(stdout);
+
+  EXPECT_LE( Ares, (*Amklres)*(*matchfactor) );
+  EXPECT_LE( Anonlinres, (*Amklnonlinres)*(*matchfactor) );
+
+  data_zmfree( &A_BCSR);
+  data_zmfree( &L );
+  data_zmfree( &U );
+  data_zmfree( &LU );
+  // =========================================================================
+
+}
+
 
 #if USE_CUDA
 TEST_F(iLUTest, PariLUv0_3_gpu) {

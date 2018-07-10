@@ -92,10 +92,11 @@ void reorder_csr_indices(data_d_matrix* A, int* P, int* Pinv)
   int* ia2;
   dataType* val2;
   int* ja2;
+  int ldblock=A->ldblock;
 
   LACE_CALLOC(ia2, A->num_rows+1);
   LACE_CALLOC(ja2,A->nnz);
-  LACE_CALLOC(val2, A->nnz);
+  LACE_CALLOC(val2, A->nnz*ldblock);
 
   ia2[0]=0;
   /*compute new index offsets for ia2*/
@@ -106,7 +107,9 @@ void reorder_csr_indices(data_d_matrix* A, int* P, int* Pinv)
     for(int j=ia[old_row]; j<ia[old_row+1]; ++j)
     { 
       ja2[ia2[i]+count] = Pinv[ja[j]];
-      val2[ia2[i]+count]=A->val[j];
+      for(int kk=0;kk<ldblock;++kk)
+	val2[ia2[i*ldblock+kk]+count]=A->val[j*ldblock+kk];
+
       count++;
     }
     ia2[i+1]=ia2[i]+count;
@@ -125,7 +128,7 @@ void reorder_csr_indices(data_d_matrix* A, int* P, int* Pinv)
 typedef struct
 {
    int index;
-   dataType val;
+   dataType* val;
 } element;
 
 //function passed to qsort to compare matrix elements in row
@@ -137,8 +140,10 @@ int comparator(const void *p, const void *q)
 };
 
 //use qsort to take reordered rows and sort by col index number
+extern "C"
 void sort_csr_rows(data_d_matrix* A)
 {
+  int ldblock = A->ldblock;
   element* current_row;
   current_row = (element*)calloc(A->num_rows,sizeof(element)); 
 
@@ -146,8 +151,10 @@ void sort_csr_rows(data_d_matrix* A)
     //load row into entries
     int count=0;
     for(int j=A->row[i]; j<A->row[i+1]; ++j){
+       current_row[count].val = (dataType*)calloc(ldblock,sizeof(dataType));
        current_row[count].index=A->col[j];
-       current_row[count].val=A->val[j];
+       for(int kk=0;kk<ldblock;++kk)
+	 current_row[count].val[kk]=A->val[j*ldblock+kk];
        count++;
     }
 
@@ -158,12 +165,16 @@ void sort_csr_rows(data_d_matrix* A)
     count=0;
     for(int j=A->row[i];j<A->row[i+1];++j){
        A->col[j]=current_row[count].index;
-       A->val[j]=current_row[count].val;
+       for(int kk=0;kk<ldblock;++kk)
+	 {A->val[j*ldblock+kk]=current_row[count].val[kk];}
+       free(current_row[count].val);
        count++;
     }
   }
+  free(current_row);
 };
 
+extern "C"
 int data_sparse_reorder(data_d_matrix* A, int* P, int* Pinv, int reorder)
 {
   //reorder A
@@ -238,12 +249,12 @@ int data_sparse_reorder(data_d_matrix* A, int* P, int* Pinv, int reorder)
   printf ("\nPlot of reordered matrix pattern:\n") ;
   print_char_Matrix(A->row, A->col, A->num_rows);
 #endif
-
+  //print actual values of matrix
 #if 0
   for(int i=0;i<A->num_rows;++i){
      printf("\nrow[%d]: ",i);
      for(int j=A->row[i];j<A->row[i+1];++j){
-        printf(" %d:%2.2e",A->col[j],A->val[j]);
+        printf(" %d:%2.2e",A->col[j],A->val[j*A->ldblock]);
      }
     printf("\n");
   }
