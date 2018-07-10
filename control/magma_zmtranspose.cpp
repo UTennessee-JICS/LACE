@@ -96,15 +96,17 @@ z_transpose_csr(
     B->num_cols = A.num_rows;
     B->pad_rows = A.pad_cols;
     B->pad_cols = A.pad_rows;
+
+    B->blocksize = A.blocksize;
+    B->ldblock = A.ldblock;
+    B->numblocks = A.numblocks;
+
     int rowlimit = A.num_rows;
     //int collimit = A.num_rows;
     if (A.pad_rows > 0 && A.pad_cols > 0) {
        rowlimit = A.pad_rows;
        //collimit = A.pad_rows;
     }
-    // B->row = (int*) malloc( (rowlimit+1)*sizeof(int) );
-    // B->col = (int*) malloc( A.nnz*sizeof(int) );
-    // B->val = (dataType*) malloc( A.nnz*sizeof(dataType) );
     LACE_CALLOC( B->row, (rowlimit+1) );
     LACE_CALLOC( B->col, A.nnz );
     LACE_CALLOC( B->val, A.nnz);
@@ -189,7 +191,8 @@ z_transpose_csr(
         for( k=A.row[i]; k < A.row[i+1]; k++ ) {
             j = A.col[k];
             B->col[ B->row[ j ] ] = i;
-            B->val[ B->row[ j ] ] = A.val[k];
+            //for(int kk=0; kk<B->ldblock; ++kk){B->val[ B->row[ j*B->ldblock+kk ] ] = A.val[k*A.ldblock+kk];}
+            B->val[ B->row[j] ] = A.val[k];
             B->row[ j ]++;
         }
     }
@@ -238,7 +241,6 @@ z_transpose_bcsr(
     data_d_matrix A,
     data_d_matrix *B )
 {
-
     data_int_t info = 0;
     data_int_t workaround = 0;
 
@@ -261,12 +263,9 @@ z_transpose_bcsr(
        rowlimit = A.pad_rows;
        //collimit = A.pad_rows;
     }
-    // B->row = (int*) malloc( (rowlimit+1)*sizeof(int) );
-    // B->col = (int*) malloc( A.nnz*sizeof(int) );
-    // B->val = (dataType*) malloc( A.nnz*sizeof(dataType) );
     LACE_CALLOC( B->row, (rowlimit+1) );
     LACE_CALLOC( B->col, A.nnz );
-    LACE_CALLOC( B->val, A.nnz);
+    LACE_CALLOC( B->val, A.nnz*A.ldblock);
     B->storage_type = A.storage_type;
 
     // this workaround should resolve the problem with the 1 indexing in case of MKL
@@ -351,17 +350,22 @@ z_transpose_bcsr(
         for( k=A.row[i]; k < A.row[i+1]; k++ ) {
             j = A.col[k];
             B->col[ B->row[ j ] ] = i;
+	    //printf("B->col[ B->row[ %d ]=%d ] = %d\n",j,B->row[j],i);
             //B->val[ B->row[ j ] ] = A.val[k];
-            // transpose dense block
-            //for (int ii=0; ii < B->blocksize; ii++) {
-            //    for (int jj=0; jj < B->blocksize; jj++) {
-            //        B->val[B->row[j]*B->ldblock+ii*B->blocksize+jj] = A.val[k*B->ldblock+jj*B->blocksize+ii];
-            //    }
-            //}
-            // do not tanspose dense block
-            for ( int kk=0; kk< B->ldblock; kk++) {
-              B->val[B->row[j]*B->ldblock+kk] = A.val[k*B->ldblock+kk];
+
+#if 0 //ceb, technically the transpose should include submatrices   
+    // transpose dense block
+            for (int ii=0; ii < B->blocksize; ii++) {
+                for (int jj=0; jj < B->blocksize; jj++) {
+                    B->val[B->row[j]*B->ldblock+ii*B->blocksize+jj] = 
+		      A.val[k*B->ldblock+jj*B->blocksize+ii];
+                }
             }
+#else       // do not tanspose dense block
+            for ( int kk=0; kk< B->ldblock; kk++) {
+	      B->val[B->row[j]*B->ldblock+kk] = A.val[k*B->ldblock+kk];
+            }
+#endif
             B->row[ j ]++;
         }
     }

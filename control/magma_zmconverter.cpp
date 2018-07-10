@@ -140,6 +140,10 @@ data_z_csr_compressor(
   return info;
 }
 
+
+/**
+Create map from index into sparse matrix to the corresponding row number 
+**/
 extern "C"
 int
 data_rowindex(
@@ -151,7 +155,9 @@ data_rowindex(
     free((*rowidx));
     (*rowidx) = NULL;
   }
-  LACE_CALLOC( (*rowidx), A->nnz );
+  LACE_CALLOC( (*rowidx), A->nnz*A->ldblock ) ;
+  
+
   int rowlimit = A->num_rows;
   if (A->pad_rows > 0 && A->pad_cols > 0) {
     rowlimit = A->pad_rows;
@@ -218,6 +224,8 @@ data_zmconvert(
   dataType one = dataType(1.0);
   dataType zero = dataType(0.0);
 
+  //data_zmfree(B);//resets blocksize to 0 when converting A_csr to B_bsr
+
   if (B->val != NULL ) {
     free(B->val);
     B->val = NULL;
@@ -254,12 +262,12 @@ data_zmconvert(
     collimit = A.pad_cols;
   }
 
-
   // CSR to anything
   if ( old_format == Magma_CSR
       || old_format == Magma_CSRL
       || old_format == Magma_CSRU )
   {
+
     // CSR to CSR
     if ( new_format == Magma_CSR ) {
       // fill in information for B
@@ -275,12 +283,10 @@ data_zmconvert(
       B->max_nnz_row = A.max_nnz_row;
       B->diameter = A.diameter;
 
-      //CHECK( data_zmalloc_cpu( &B->val, A.nnz ));
-      //CHECK( data_index_malloc_cpu( &B->row, rowlimit+1 ));
-      //CHECK( data_index_malloc_cpu( &B->col, A.nnz ));
-      // B->val = (dataType*) calloc( A.nnz, sizeof(dataType) );
-      // B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
-      // B->col = (int*) calloc( A.nnz, sizeof(int) );
+      B->blocksize= A.blocksize;
+      B->ldblock= A.ldblock;
+      B->numblocks= A.nnz;
+
       LACE_CALLOC( B->val, A.nnz );
       LACE_CALLOC( B->row, (rowlimit+1) );
       LACE_CALLOC( B->col, A.nnz );
@@ -293,6 +299,7 @@ data_zmconvert(
         B->row[i] = A.row[i];
       }
     }
+
     // CSR to CUCSR
     else if ( new_format == Magma_CUCSR ){
       //CHECK(data_zmconvert(A, B, Magma_CSR, Magma_CSR, queue));
@@ -311,10 +318,15 @@ data_zmconvert(
       B->pad_rows = A.pad_rows;
       B->pad_cols = A.pad_cols;
       B->diameter = A.diameter;
+      B->blocksize=1;
+      B->ldblock=1;
 
+      //count number of elements in lower triangle
       int numzeros=0;
       for( int i=0; i < rowlimit; i++) {
         for( int j=A.row[i]; j < A.row[i+1]; j++) {
+	  //printf("A.val[%d]=%e\n",j,A.val[j]);
+
           if ( A.col[j] < i) {
             numzeros++;
           }
@@ -324,14 +336,11 @@ data_zmconvert(
           }
         }
       }
+
       B->nnz = numzeros;
+      B->numblocks= numzeros;
       B->true_nnz = numzeros;
-      //CHECK( data_zmalloc_cpu( &B->val, numzeros ));
-      //CHECK( data_index_malloc_cpu( &B->row, rowlimit+1 ));
-      //CHECK( data_index_malloc_cpu( &B->col, numzeros ));
-      // B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
-      // B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
-      // B->col = (int*) calloc( B->nnz, sizeof(int) );
+
       LACE_CALLOC( B->val, B->nnz );
       LACE_CALLOC( B->row, (rowlimit+1) );
       LACE_CALLOC( B->col, B->nnz );
@@ -375,6 +384,7 @@ data_zmconvert(
         }
       }
       B->row[rowlimit] = numzeros;
+
     }
 
     // CSR to CSRU
@@ -388,6 +398,8 @@ data_zmconvert(
       B->pad_rows = A.pad_rows;
       B->pad_cols = A.pad_cols;
       B->diameter = A.diameter;
+      B->blocksize=1;
+      B->ldblock=1;
 
       int numzeros=0;
       for( int i=0; i < rowlimit; i++) {
@@ -402,13 +414,9 @@ data_zmconvert(
         }
       }
       B->nnz = numzeros;
+      B->numblocks= numzeros;
       B->true_nnz = numzeros;
-      //CHECK( data_zmalloc_cpu( &B->val, numzeros ));
-      //CHECK( data_index_malloc_cpu( &B->row, rowlimit+1 ));
-      //CHECK( data_index_malloc_cpu( &B->col, numzeros ));
-      // B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
-      // B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
-      // B->col = (int*) calloc( B->nnz, sizeof(int) );
+
       LACE_CALLOC( B->val, B->nnz );
       LACE_CALLOC( B->row, (rowlimit+1) );
       LACE_CALLOC( B->col, B->nnz );
@@ -473,12 +481,10 @@ data_zmconvert(
       B->max_nnz_row = A.max_nnz_row;
       B->diameter = A.diameter;
 
-      //CHECK( data_zmalloc_cpu( &B->val, A.nnz ));
-      //CHECK( data_index_malloc_cpu( &B->row, rowlimit+1 ));
-      //CHECK( data_index_malloc_cpu( &B->col, A.nnz ));
-      // B->val = (dataType*) calloc( A.nnz, sizeof(dataType) );
-      // B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
-      // B->col = (int*) calloc( A.nnz, sizeof(int) );
+      B->blocksize = 1;
+      B->ldblock = 1;
+      B->numblocks = A.nnz;
+
       LACE_CALLOC( B->val, A.nnz );
       LACE_CALLOC( B->row, (rowlimit+1) );
       LACE_CALLOC( B->col, A.nnz );
@@ -508,9 +514,11 @@ data_zmconvert(
       B->storage_type = Magma_COO;
       B->major = MagmaRowMajor;
 
+      B->blocksize = 1;
+      B->ldblock = 1;
+      B->numblocks = B->nnz;
+
       free( B->row );
-      //CHECK( data_index_malloc_cpu( &B->row, A.nnz ));
-      // B->row = (int*) calloc( A.nnz, sizeof(int) );
       LACE_CALLOC( B->row, A.nnz );
 
       for(int i=0; i < rowlimit; i++) {
@@ -527,8 +535,10 @@ data_zmconvert(
       B->storage_type = Magma_CSRCOO;
       B->major = MagmaRowMajor;
 
-      //CHECK( data_index_malloc_cpu( &B->rowidx, A.nnz ));
-      // B->rowidx = (int*) calloc( A.nnz, sizeof(int) );
+      B->blocksize = 1;
+      B->ldblock = 1;
+      B->numblocks = B->nnz;
+
       LACE_CALLOC( B->rowidx, B->nnz );
 
       for(int i=0; i < rowlimit; i++) {
@@ -554,7 +564,6 @@ data_zmconvert(
       B->ld = A.num_cols;
 
       // conversion
-      // B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
       LACE_CALLOC( B->val, B->nnz );
 
       for(int i=0; i < A.num_rows; ++i ) {
@@ -580,7 +589,6 @@ data_zmconvert(
       B->storage_type = Magma_DENSED;
       B->diagorder_type = Magma_VALUE;
       B->nnz = MIN(rowlimit, collimit);
-      // B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
       LACE_CALLOC( B->val, B->nnz );
 
       // conversion
@@ -601,6 +609,7 @@ data_zmconvert(
       B->storage_type = Magma_CSC;
       B->major = MagmaColMajor;
     }
+
     // CSR to CSCL
     else if ( new_format == Magma_CSCL ) {
       data_d_matrix C = {Magma_CSR};
@@ -610,6 +619,7 @@ data_zmconvert(
       B->major = MagmaColMajor;
       data_zmfree( &C );
     }
+
     // CSR to CSCU
     else if ( new_format == Magma_CSCU ) {
       data_d_matrix C = {Magma_CSRU};
@@ -619,11 +629,11 @@ data_zmconvert(
       B->major = MagmaColMajor;
       data_zmfree( &C );
     }
+
     // CSR to CSCCOO
     else if ( new_format == Magma_CSCCOO ) {
       data_zmconvert( A, B, Magma_CSR, Magma_CSR );
 
-      // B->rowidx = (int*) calloc( A.nnz, sizeof(int) );
       LACE_CALLOC( B->rowidx, B->nnz );
 
       for(int i=0; i < rowlimit; i++) {
@@ -636,11 +646,11 @@ data_zmconvert(
       B->major = MagmaColMajor;
 
     }
+
     // CSR to BCSR
     else if ( new_format == Magma_BCSR ) {
       if (B->blocksize > 0) {
         B->storage_type = Magma_BCSR;
-        B->nnz = A.nnz;
         B->numblocks = 0;
         B->true_nnz = A.nnz;
         B->ldblock = B->blocksize*B->blocksize;
@@ -664,8 +674,7 @@ data_zmconvert(
         mkl_dcsrbsr(job, &A.num_rows, &B->blocksize, &B->ldblock,
             A.val, A.col, A.row, B->val, B->col, B->row, &info);
 
-        B->nnz = B->numblocks*B->ldblock;
-
+        B->nnz = B->numblocks;
       }
       else {
         printf("error: conversion from %d to %d requires blocksize to be set.\n",
@@ -759,18 +768,17 @@ data_zmconvert(
       B->max_nnz_row = A.max_nnz_row;
       B->diameter = A.diameter;
 
+      B->blocksize = 1;
+      B->ldblock = 1;
+      B->numblocks = A.nnz;
+
       // conversion
       B->nnz=0;
       for( int i=0; i<(A.num_rows)*(A.num_cols); i++ ) {
         if ( DEV_D_REAL(A.val[i]) != zero )
           (B->nnz)++;
       }
-      //CHECK( data_zmalloc_cpu( &B->val, B->nnz));
-      //CHECK( data_index_malloc_cpu( &B->row, rowlimit+1 ));
-      //CHECK( data_index_malloc_cpu( &B->col, B->nnz ));
-      // B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
-      // B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
-      // B->col = (int*) calloc( B->nnz, sizeof(int) );
+
       LACE_CALLOC( B->val, B->nnz );
       LACE_CALLOC( B->row, (rowlimit+1) );
       LACE_CALLOC( B->col, B->nnz );
@@ -806,10 +814,10 @@ data_zmconvert(
         B->storage_type = Magma_BCSR;
         B->nnz = A.numblocks*A.ldblock;
         B->major = MagmaRowMajor;
-        B->numblocks = 0;
-        B->blocksize = 0;
-        B->true_nnz = A.nnz;
-        B->ldblock = 0;
+        B->numblocks = B->nnz;
+        B->blocksize = 1;
+        B->true_nnz = B->nnz;
+        B->ldblock = 1;
 
         // One based indexing is associated with column major storage in
         //    mkl_dcsrbsr!
@@ -819,20 +827,11 @@ data_zmconvert(
 
         B->num_rows = A.num_rows*A.blocksize;
         B->num_cols = A.num_cols*A.blocksize;
-        //LACE_CALLOC(B->val, B->nnz);
-        //LACE_CALLOC(B->row, (B->num_rows+1));
-        //LACE_CALLOC(B->col, B->nnz);
-        // B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
-        // B->row = (int*) calloc( (B->num_rows+1), sizeof(int) );
-        // B->col = (int*) calloc( B->nnz, sizeof(int) );
+
         LACE_CALLOC( B->val, B->nnz );
         LACE_CALLOC( B->row, (rowlimit+1) );
         LACE_CALLOC( B->col, B->nnz );
 
-        //printf("\nBSCSR to CSR A.numblocks=%d\n", A.numblocks);
-        //printf("\nBSCSR to CSR A.blocksize=%d\n", A.blocksize);
-        //printf("\nBSCSR to CSR B->num_rows=%d\n", B->num_rows);
-        //fflush(stdout);
         mkl_dcsrbsr(job, &A.num_rows, &A.blocksize, &A.ldblock,
             B->val, B->col, B->row, A.val, A.col, A.row, &info);
         //printf("\ninfo_bsrcsr=%d\n",info);
@@ -862,9 +861,11 @@ data_zmconvert(
       B->pad_rows = A.pad_rows;
       B->pad_cols = A.pad_cols;
       B->major = MagmaRowMajor;
-      // B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
-      // B->col = (int*) calloc( A.nnz, sizeof(int) );
-      // B->val = (dataType*) calloc( A.nnz, sizeof(dataType) );
+
+      B->blocksize = 1;
+      B->ldblock = 1;
+      B->numblocks = B->nnz;
+
       LACE_CALLOC( B->val, A.nnz );
       LACE_CALLOC( B->row, (rowlimit+1) );
       LACE_CALLOC( B->col, A.nnz );
@@ -1060,7 +1061,6 @@ data_zmconvert(
       B->storage_type = Magma_DENSEL;
       B->fill_mode = MagmaLower;
 
-      // B->val = (dataType*) calloc( rowlimit*collimit, sizeof(dataType) );
       LACE_CALLOC( B->val, (rowlimit*collimit) );
 
       if (A.major == MagmaRowMajor) {
@@ -1142,7 +1142,6 @@ data_zmconvert(
       B->storage_type = Magma_DENSEU;
       B->fill_mode = MagmaUpper;
 
-      // B->val = (dataType*) calloc( rowlimit*collimit, sizeof(dataType) );
       LACE_CALLOC( B->val, (rowlimit*collimit) );
 
       if (A.major == MagmaRowMajor) {
@@ -1235,7 +1234,6 @@ data_zmconvert(
       B->storage_type = Magma_DENSED;
       B->diagorder_type = Magma_VALUE;
       B->nnz = MIN(rowlimit, collimit);
-      //B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
       LACE_CALLOC( B->val, B->nnz );
 
       for(int i=0; i < B->nnz; i++ ) {
@@ -1245,10 +1243,52 @@ data_zmconvert(
     }
 
   }
+  // BCSR to BCSR //copy
+  else if ( ( old_format == Magma_BCSR  &&  new_format == Magma_BCSR  ) ||
+	    ( old_format == Magma_BCSRL &&  new_format == Magma_BCSRL ) ||
+	    ( old_format == Magma_BCSRU &&  new_format == Magma_BCSRU ) ||
+	    ( old_format == Magma_BCSC  &&  new_format == Magma_BCSC  ) ||
+	    ( old_format == Magma_BCSCL &&  new_format == Magma_BCSCL ) ||
+	    ( old_format == Magma_BCSCU &&  new_format == Magma_BCSCU ) 
+	    ) {
+
+      // fill in information for B
+      B->storage_type = old_format;
+      B->major = A.major;
+      B->fill_mode = A.fill_mode;
+      B->num_rows = A.num_rows;
+      B->num_cols = A.num_cols;
+      B->pad_rows = A.pad_rows;
+      B->pad_cols = A.pad_cols;
+      B->nnz = A.nnz;
+      B->true_nnz = A.true_nnz;
+      B->max_nnz_row = A.max_nnz_row;
+      B->diameter = A.diameter;
+
+      B->blocksize= A.blocksize;
+      B->ldblock= A.ldblock;
+      B->numblocks= A.numblocks;
+
+      LACE_CALLOC( B->val, (B->numblocks*B->ldblock) );
+      LACE_CALLOC( B->row, (B->num_rows+1) );
+      LACE_CALLOC( B->col, B->numblocks );
+
+      for( int i=0; i < B->nnz; i++) {
+        B->col[i] = A.col[i];
+      }
+      for( int i=0; i < B->numblocks*B->ldblock; i++) {
+        B->val[i] = A.val[i];
+      }
+      for( int i=0; i < B->num_rows+1; i++) {
+        B->row[i] = A.row[i];
+      }
+
+    }
   // BCSR to BCSRL
   else if ( ( old_format == Magma_BCSR ) && ( new_format == Magma_BCSRL ) ) {
+
     // fill in information for B
-    B->storage_type = Magma_BCSR;
+    B->storage_type = Magma_BCSRL;
     B->major = MagmaRowMajor;
     B->fill_mode = MagmaLower;
     B->num_rows = A.num_rows;
@@ -1274,14 +1314,9 @@ data_zmconvert(
       }
     }
     B->numblocks = numblocks;
-    B->nnz = numblocks*B->ldblock;
-    //CHECK( data_zmalloc_cpu( &B->val, numzeros ));
-    //CHECK( data_index_malloc_cpu( &B->row, rowlimit+1 ));
-    //CHECK( data_index_malloc_cpu( &B->col, numzeros ));
-    // B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
-    // B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
-    // B->col = (int*) calloc( B->numblocks, sizeof(int) );
-    LACE_CALLOC( B->val, B->nnz );
+    B->nnz = numblocks;
+
+    LACE_CALLOC( B->val, B->nnz*B->ldblock );
     LACE_CALLOC( B->row, (rowlimit+1) );
     LACE_CALLOC( B->col, B->numblocks );
 
@@ -1303,6 +1338,7 @@ data_zmconvert(
           //for (int k=0; k< B->ldblock; k++) {
           //    B->val[numblocks*B->ldblock+k] = one;
           //}
+	  //put ones on diagonal of diagonal blocks
           for (int k=0; k<B->blocksize; k++) {
             B->val[numblocks*B->ldblock+k*B->blocksize+k] = one;
           }
@@ -1312,6 +1348,7 @@ data_zmconvert(
         // add option of including diagonal
         else if ( A.col[j] == i &&
             B->diagorder_type == Magma_VALUE) {
+          //copy value of diagonal blocks
           for (int k=0; k< B->ldblock; k++) {
             B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
           }
@@ -1338,6 +1375,7 @@ data_zmconvert(
   }
   // BCSR to BCSRU
   else if ( ( old_format == Magma_BCSR ) && ( new_format == Magma_BCSRU ) ) {
+
     // fill in information for B
     B->storage_type = Magma_BCSRU;
     B->major = MagmaRowMajor;
@@ -1365,14 +1403,10 @@ data_zmconvert(
       }
     }
     B->numblocks = numblocks;
-    B->nnz = numblocks*B->ldblock;
-    //CHECK( data_zmalloc_cpu( &B->val, numzeros ));
-    //CHECK( data_index_malloc_cpu( &B->row, rowlimit+1 ));
-    //CHECK( data_index_malloc_cpu( &B->col, numzeros ));
-    // B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
-    // B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
-    // B->col = (int*) calloc( B->numblocks, sizeof(int) );
-    LACE_CALLOC( B->val, B->nnz );
+    B->nnz = numblocks;
+    B->true_nnz = B->nnz*B->ldblock;
+
+    LACE_CALLOC( B->val, B->nnz*B->ldblock );
     LACE_CALLOC( B->row, (rowlimit+1) );
     LACE_CALLOC( B->col, B->numblocks );
 
@@ -1380,7 +1414,8 @@ data_zmconvert(
     for( int i=0; i < rowlimit; i++) {
       B->row[i]=numblocks;
       for( int j=A.row[i]; j < A.row[i+1]; j++) {
-        if ( A.col[j] > i) {
+        
+	if ( A.col[j] > i) {//if col>row add entry to U
           for (int k=0; k< B->ldblock; k++) {
             B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
           }
@@ -1389,11 +1424,13 @@ data_zmconvert(
         }
         else if ( A.col[j] == i &&
             B->diagorder_type == Magma_UNITY) {
-          //for (int k=0; k< B->ldblock; k++) {
-          //    B->val[numblocks*B->ldblock+k] = one;
-          //}
+          //put ones on diagonal of diagonal blocks
           for (int k=0; k<B->blocksize; k++) {
             B->val[numblocks*B->ldblock+k*B->blocksize+k] = one;
+          }
+          //zero out lower triangle of block
+          for (int k=1; k<B->blocksize; k++) {
+            for(int kk=0; kk<k; ++kk)B->val[numblocks*B->ldblock+k*B->blocksize+kk] = 0.0;
           }
           B->col[numblocks] = A.col[j];
           numblocks++;
@@ -1401,6 +1438,7 @@ data_zmconvert(
         // explicit option of including diagonal
         else if ( A.col[j] == i &&
             B->diagorder_type == Magma_VALUE) {
+          //copy values of diagonal blocks
           for (int k=0; k< B->ldblock; k++) {
             B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
           }
@@ -1433,7 +1471,6 @@ data_zmconvert(
     }
     B->row[rowlimit] = numblocks;
   }
-
   // BCSR to BCSCU
   else if ( ( old_format == Magma_BCSR ) && ( new_format == Magma_BCSCU ) ) {
     data_d_matrix C = {Magma_BCSR};
@@ -1443,6 +1480,26 @@ data_zmconvert(
     B->major = MagmaColMajor;
     data_zmfree( &C );
   }
+  // BCSC to BCSR
+  else if ((old_format == Magma_BCSC )  && ( new_format == Magma_BCSR )){
+      data_d_matrix C = {Magma_BCSC};
+      data_zmconvert(A, &C, Magma_BCSC, Magma_BCSC );
+      data_zmtranspose(C, B);
+      B->storage_type = Magma_BCSR;
+      B->major = MagmaRowMajor;
+      data_zmfree( &C );
+  }
+
+  //else if (old_format == Magma_BCSCU ) {
+  //    data_zmconvert(A, B, Magma_BCSR, Magma_BCSC );
+  //    B->storage_type = new_format;
+  //    B->major = MagmaRowMajor;
+  //}
+  //else if (old_format == Magma_BCSCL ) {
+  //    data_zmconvert(A, B, Magma_BCSR, Magma_BCSC );
+  //    B->storage_type = new_format;
+  //    B->major = MagmaRowMajor;
+  //}
 
   else {
     printf("error: conversion not supported %d to %d.\n",
@@ -1462,7 +1519,6 @@ data_zcheckupperlower(
     data_d_matrix * A ) {
 
   int info = 0;
-
   if (A->storage_type == Magma_CSRL) {
     for( int i=0; i < A->num_rows; i++) {
       for( int j=A->row[i]; j < A->row[i+1]; j++) {
@@ -1483,6 +1539,26 @@ data_zcheckupperlower(
       }
     }
   }
+  else if (A->storage_type == Magma_BCSRL) {
+    for( int i=0; i < A->num_rows; i++) {
+      for( int j=A->row[i]; j < A->row[i+1]; j++) {
+        if ( A->col[j] > i ) {
+          printf("%d, %d : %e \n", i, A->col[j], A->val[j*A->ldblock]);
+          info = -1;
+        }
+      }
+    }
+  }
+  else if (A->storage_type == Magma_BCSRU) {
+    for( int i=0; i < A->num_rows; i++) {
+      for( int j=A->row[i]; j < A->row[i+1]; j++) {
+        if ( A->col[j] < i ) {
+          printf("%d, %d : %e \n", i, A->col[j], A->val[j*A->ldblock]);
+          info = -1;
+        }
+      }
+    }
+  }
 
   return info;
 
@@ -1494,11 +1570,8 @@ data_zmcopy(
     data_d_matrix A,
     data_d_matrix *B )
 {
-
   printf("data_zmcopy\n");
   int info = 0;
-  //dataType one = dataType(1.0);
-  //dataType zero = dataType(0.0);
 
   B->val = NULL;
   B->col = NULL;
@@ -1514,7 +1587,6 @@ data_zmcopy(
     rowlimit = A.pad_rows;
     //collimit = A.pad_cols;
   }
-
 
   // CSR
   if ( A.storage_type == Magma_CSR
@@ -1534,10 +1606,10 @@ data_zmcopy(
     B->true_nnz = A.true_nnz;
     B->max_nnz_row = A.max_nnz_row;
     B->diameter = A.diameter;
+    B->blocksize = A.blocksize;
+    B->ldblock = A.ldblock;
+    B->numblocks = A.nnz;
 
-    // B->val = (dataType*) calloc( A.nnz, sizeof(dataType) );
-    // B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
-    // B->col = (int*) calloc( A.nnz, sizeof(int) );
     LACE_CALLOC( B->val, A.nnz );
     LACE_CALLOC( B->row, (rowlimit+1) );
     LACE_CALLOC( B->col, A.nnz );
@@ -1569,16 +1641,11 @@ data_zmcopy(
 
     B->blocksize = A.blocksize;
     B->ldblock = A.ldblock;
-    printf("%s %d B->ldblock=%d\n", __FILE__, __LINE__, B->ldblock);
+    //printf("%s %d B->ldblock=%d\n", __FILE__, __LINE__, B->ldblock);
     B->numblocks = A.numblocks;
     B->nnz = A.nnz;
-    //CHECK( data_zmalloc_cpu( &B->val, numzeros ));
-    //CHECK( data_index_malloc_cpu( &B->row, rowlimit+1 ));
-    //CHECK( data_index_malloc_cpu( &B->col, numzeros ));
-    // B->val = (dataType*) calloc( B->nnz, sizeof(dataType) );
-    // B->row = (int*) calloc( (rowlimit+1), sizeof(int) );
-    // B->col = (int*) calloc( B->numblocks, sizeof(int) );
-    LACE_CALLOC( B->val, B->nnz );
+
+    LACE_CALLOC( B->val, (B->numblocks*B->ldblock) );
     LACE_CALLOC( B->row, (rowlimit+1) );
     LACE_CALLOC( B->col, B->numblocks );
 
