@@ -18,7 +18,6 @@
 #include "../include/sparse.h" 
 #include "../include/dense_types.h"
 
-//extern "C" int compare_degree ( const void *a, const void *b );
 
 struct node
 {
@@ -49,7 +48,7 @@ extern "C" int compare_degree ( const void *a, const void *b )
 //  
 //
 //=============================================================
-
+extern "C"
 void data_reorder_cuthill_mckee (data_d_matrix* A, int* nn_map, bool reverse)
 {
   int i,j;//,k;                             // Loop counters.
