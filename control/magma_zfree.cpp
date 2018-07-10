@@ -81,20 +81,20 @@ data_zmfree(
         A->nnz = 0;
         A->true_nnz = 0;
     }
-    else if ( A->storage_type == Magma_CSR || A->storage_type == Magma_CSRD
-                                    || A->storage_type == Magma_CSRL
-                                    || A->storage_type == Magma_CSRU
-                                    || A->storage_type == Magma_CSC
-                                    || A->storage_type == Magma_CSCD
-                                    || A->storage_type == Magma_CSCL
-                                    || A->storage_type == Magma_CSCU ) {
+    else if ( A->storage_type == Magma_CSR  ||
+	      A->storage_type == Magma_CSRD || 
+	      A->storage_type == Magma_CSRL || 
+	      A->storage_type == Magma_CSRU || 
+	      A->storage_type == Magma_CSC  || 
+	      A->storage_type == Magma_CSCD || 
+	      A->storage_type == Magma_CSCL || 
+	      A->storage_type == Magma_CSCU ) {
 
-        free( A->val );
-        free( A->col );
-        free( A->row );
-        if ( A->rowidx != NULL ) {
-          free( A->rowidx );
-        }
+        if ( A->val != NULL )    free( A->val );
+        if ( A->col != NULL )    free( A->col );
+        if ( A->row != NULL )    free( A->row );
+        if ( A->rowidx != NULL ) free( A->rowidx );
+        
         A->num_rows = 0;
         A->num_cols = 0;
         A->pad_rows = 0;
@@ -109,6 +109,7 @@ data_zmfree(
         free( A->col );
         free( A->row );
         free( A->rowidx );
+
         A->num_rows = 0;
         A->num_cols = 0;
         A->pad_rows = 0;
@@ -118,11 +119,21 @@ data_zmfree(
         A->major = (data_order_t) 0;
         A->diameter = 0;
     }
-    else if ( A->storage_type == Magma_BCSR ) {
-        free( A->val );
-        free( A->col );
-        free( A->row );
-        free( A->blockinfo );
+    else if ( A->storage_type == Magma_BCSR  ||
+	      A->storage_type == Magma_BCSC  || 
+	      A->storage_type == Magma_BCSRU || 
+	      A->storage_type == Magma_BCSRL || 
+	      A->storage_type == Magma_BCSCU || 
+	      A->storage_type == Magma_BCSCL || 
+	      A->storage_type == Magma_BCSRD || 
+	      A->storage_type == Magma_BCSCD ) {
+
+        if(A->val != NULL)       free( A->val );
+        if(A->col != NULL)       free( A->col );
+        if(A->row != NULL)       free( A->row );
+        if(A->blockinfo != NULL) free( A->blockinfo );
+        if(A->rowidx != NULL)    free( A->rowidx );
+
         A->num_rows = 0;
         A->num_cols = 0;
         A->pad_rows = 0;
@@ -132,6 +143,7 @@ data_zmfree(
         A->blockinfo = 0;
         A->major = (data_order_t) 0;
         A->diameter = 0;
+        A->ldblock = 0;
     }
     else if ( A->storage_type == Magma_DENSE  || A->storage_type == Magma_DENSEL
                                          || A->storage_type == Magma_DENSEU
@@ -146,6 +158,7 @@ data_zmfree(
         A->true_nnz = 0;
         A->major = (data_order_t) 0;
     }
+
     A->val = NULL;
     A->col = NULL;
     A->row = NULL;
