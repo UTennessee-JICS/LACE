@@ -38,15 +38,15 @@ LIBS		 = $(LIBDIR) $(LIB)
 EXAMPLES = testing/exampleGoogleTest_01 testing/exampleGoogleTest_02
 
 TESTS = \
-  testing/test_vector_io \
-  testing/test_matrix_io \
-  testing/test_matrix_ops \
-  testing/test_LU_ops \
+  	testing/test_vector_io \
+  	testing/test_matrix_io \
+  	testing/test_matrix_ops \
+  	testing/test_LU_ops \
 	testing/test_LU_larnv \
 	testing/test_LU \
 	testing/test_iLU_ops \
 	testing/test_iLU \
-	testing/test_linearSolver
+	testing/test_linearSolver 
 
 DRIVERS = \
 	drivers/generate_iLU \
@@ -105,7 +105,7 @@ testing/test_LU_larnv_OBJS = testing/test_LU_larnv.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
 	src/parlu_v0_0.o src/parlu_v0_1.o src/parlu_v1_0.o \
-  testing/test_cmd_line_main.o libgmock.a
+  	testing/test_cmd_line_main.o libgmock.a
 
 testing/test_LU_OBJS = testing/test_LU.o \
 	control/constants.o control/magma_zmio.o \
@@ -118,7 +118,7 @@ testing/test_LU_OBJS = testing/test_LU.o \
 	src/parlu_v1_1.o src/parlu_v1_2.o src/parlu_v1_3.o \
 	src/parlu_v2_0.o src/parlu_v2_1.o \
 	src/parlu_v3_0.o src/parlu_v3_1.o \
-  testing/test_cmd_line_main.o libgmock.a
+  	testing/test_cmd_line_main.o libgmock.a
 
 testing/test_iLU_ops_OBJS = testing/test_iLU_operations.o \
 	control/constants.o control/magma_zmio.o \
@@ -137,8 +137,13 @@ testing/test_iLU_OBJS = testing/test_iLU.o \
 	control/init.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
-	src/parilu_v0_0.o src/parilu_v0_3.o \
-  testing/test_cmd_line_main.o libgmock.a
+	src/parilu_v0_0.o \
+	src/parilu_v0_3.o \
+	src/parilu_v0_3_bcsr.o \
+        src/cuthill_mckee.o \
+        src/reorder.o \
+	testing/test_cmd_line_main.o libgmock.a
+
 # Note: to see detailed output from parilu_v0_3 set debug mode:
 # $ make -f makefile_autodepend testing/test_iLU CPPFLAGS+=-DDEBUG_PARILU -B
 
@@ -153,12 +158,13 @@ testing/test_linearSolver_OBJS = testing/test_linearSolver.o \
 	src/mkl_fgmres.o src/fgmres.o src/fgmres_restart.o \
 	src/fgmres_householder_opt4.o src/fgmres_householder_restart.o \
         src/cuthill_mckee.o \
-	src/trisolve.cpp \
-	src/gram_schmidt.cpp \
+	src/trisolve.o \
+	src/gram_schmidt.o \
 	src/givens.cpp \
-	src/orthogonality_error.cpp \
-        src/reorder.cpp \
-  testing/test_cmd_line_main.o libgmock.a
+	src/orthogonality_error.o \
+        src/reorder.o \
+  	testing/test_cmd_line_main.o libgmock.a
+	
 
 define generateTester
 
@@ -190,7 +196,9 @@ drivers/generate_iLU_OBJS = drivers/generate_iLU.o \
 	control/init.o control/magma_zmscale.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
-	src/parilu_v0_3_prescribedSweeps.o
+	src/parilu_v0_3_prescribedSweeps.o \
+        src/cuthill_mckee.cpp \
+        src/reorder.cpp
 
 drivers/generate_GE_OBJS = drivers/generate_GE.o \
 	control/constants.o control/magma_zmio.o \
