@@ -160,12 +160,6 @@ int read_z_csr_from_mtx(
     *n_col    = num_cols;
     *nnz      = num_nonzeros;
 
-    //( data_index_malloc_cpu( &coo_col, *nnz ) );
-    //( data_index_malloc_cpu( &coo_row, *nnz ) );
-    //( data_zmalloc_cpu( &coo_val, *nnz ) );
-    // coo_row = (int*) malloc( *nnz*sizeof(int) );
-    // coo_col = (int*) malloc( *nnz*sizeof(int) );
-    // coo_val = (dataType*) malloc( *nnz*sizeof(dataType) );
     LACE_CALLOC( coo_row, *nnz );
     LACE_CALLOC( coo_col, *nnz );
     LACE_CALLOC( coo_val, *nnz );
@@ -231,12 +225,6 @@ int read_z_csr_from_mtx(
 
         //printf("%% total number of nonzeros: %d\n%%", int(*nnz));
 
-        //( data_index_malloc_cpu( &new_row, true_nonzeros ));
-        //( data_index_malloc_cpu( &new_col, true_nonzeros ));
-        //( data_zmalloc_cpu( &new_val, true_nonzeros ));
-        // new_row = (int*) malloc( true_nonzeros*sizeof(int) );
-        // new_col = (int*) malloc( true_nonzeros*sizeof(int) );
-        // new_val = (dataType*) malloc( true_nonzeros*sizeof(dataType) );
         LACE_CALLOC( new_row, true_nonzeros );
         LACE_CALLOC( new_col, true_nonzeros );
         LACE_CALLOC( new_val, true_nonzeros );
@@ -272,14 +260,6 @@ int read_z_csr_from_mtx(
         *nnz = true_nonzeros;
     } // end symmetric case
 
-    //( data_zmalloc_cpu( val, *nnz ) );
-    //
-    //( data_index_malloc_cpu( col, *nnz ) );
-    //( data_index_malloc_cpu( row, (*n_row+1) ) );
-    //( data_zmalloc_cpu( val, *nnz ) );
-    // *row = (int*) malloc( (*n_row+1)*sizeof(int) );
-    // *col = (int*) malloc( *nnz*sizeof(int) );
-    // *val = (dataType*) malloc( *nnz*sizeof(dataType) );
     LACE_CALLOC( *row, (*n_row+1) );
     LACE_CALLOC( *col, *nnz );
     LACE_CALLOC( *val, *nnz );
@@ -421,12 +401,6 @@ int read_z_coo_from_mtx(
     *n_col    = num_cols;
     *nnz      = num_nonzeros;
 
-    //( data_index_malloc_cpu( &coo_col, *nnz ) );
-    //( data_index_malloc_cpu( &coo_row, *nnz ) );
-    //( data_zmalloc_cpu( &coo_val, *nnz ) );
-    // coo_rowh = (int*) malloc( *nnz*sizeof(int) );
-    // coo_colh = (int*) malloc( *nnz*sizeof(int) );
-    // coo_valh = (dataType*) malloc( *nnz*sizeof(dataType) );
     LACE_CALLOC( coo_rowh, *nnz );
     LACE_CALLOC( coo_colh, *nnz );
     LACE_CALLOC( coo_valh, *nnz );
@@ -441,7 +415,6 @@ int read_z_coo_from_mtx(
             coo_rowh[ i ] = ROW - 1;
             coo_colh[ i ] = COL - 1;
             coo_valh[ i ] = VAL;
-
         }
         // printf(" ...successfully read real matrix... ");
     } else if (mm_is_pattern(matcode) ) {
@@ -494,12 +467,6 @@ int read_z_coo_from_mtx(
 
         //printf("%% total number of nonzeros: %d\n%%", int(*nnz));
 
-        //( data_index_malloc_cpu( &new_row, true_nonzeros ));
-        //( data_index_malloc_cpu( &new_col, true_nonzeros ));
-        //( data_zmalloc_cpu( &new_val, true_nonzeros ));
-        // new_row = (int*) malloc( true_nonzeros*sizeof(int) );
-        // new_col = (int*) malloc( true_nonzeros*sizeof(int) );
-        // new_val = (dataType*) malloc( true_nonzeros*sizeof(dataType) );
         LACE_CALLOC( new_row, true_nonzeros );
         LACE_CALLOC( new_col, true_nonzeros );
         LACE_CALLOC( new_val, true_nonzeros );
@@ -880,16 +847,19 @@ data_zprint_bcsr(
   int info = 0;
 
   printf("blocksize = %d\n", A->blocksize);
+  printf("ldblock = %d\n", A->ldblock);
   printf("numblocks = %d\n", A->numblocks);
   printf("nnz = %d\n", A->nnz);
   printf("true_nnz = %d\n", A->true_nnz);
   printf("bsr_num_rows = %d\n", A->num_rows);
+  if(A->num_rows > 0){
   for (int i=0; i<A->num_rows; i++ ) {
     printf("row %d:\n", i);
     for (int j=A->row[i]; j<A->row[i+1]; j++) {
       printf("block %d bcol %d\n", j, A->col[j]);
       for (int k=0; k<A->ldblock; k++ ) {
         printf("%e ", A->val[j*A->ldblock+k]);
+
         if ((k+1)%A->blocksize==0)
           printf("\n");
       }
@@ -910,6 +880,7 @@ data_zprint_bcsr(
     printf("%e, ", A->val[i]);
   }
   printf("\n");
+  }
     return info;
 }
 
@@ -948,6 +919,9 @@ data_z_csr_mtx(
     &A->row, &A->col, filename );
   A->true_nnz = A->nnz;
   A->major = MagmaRowMajor;
+  A->blocksize=1;
+  A->ldblock=1;
+  A->numblocks=A->nnz;
   return info;
 }
 
@@ -963,6 +937,9 @@ data_z_coo_mtx(
   data_storage_t A_storage = Magma_COO;
   read_z_coo_from_mtx( &A_storage, &A->num_rows, &A->num_cols, &A->nnz, &A->val,
     &A->row, &A->col, filename );
+  A->blocksize=1;
+  A->ldblock=1;
+  A->numblocks=A->nnz;
   return info;
 }
 
@@ -979,9 +956,6 @@ data_z_pad_csr(
   dataType * valtmp;
   int * coltmp;
   int * rowtmp;
-  // valtmp = (dataType*) malloc( A->nnz*sizeof(dataType) );
-  // coltmp = (int*) malloc( A->nnz*sizeof(int) );
-  // rowtmp = (int*) malloc( (A->num_rows+1)*sizeof(int) );
   LACE_CALLOC( valtmp, A->nnz );
   LACE_CALLOC( coltmp, A->nnz );
   LACE_CALLOC( rowtmp, (A->num_rows+1) );
@@ -1006,9 +980,7 @@ data_z_pad_csr(
 
   A->true_nnz = A->nnz;
   A->nnz = A->nnz + (A->pad_rows - A->num_rows);
-  // A->val = (dataType*) malloc( A->nnz*sizeof(dataType) );
-  // A->col = (int*) malloc( A->nnz*sizeof(int) );
-  // A->row = (int*) malloc( (A->pad_rows+1)*sizeof(int) );
+
   LACE_CALLOC( A->val, A->nnz );
   LACE_CALLOC( A->col, A->nnz );
   LACE_CALLOC( A->row, (A->pad_rows+1) );
@@ -1126,10 +1098,8 @@ int read_z_dense_from_mtx(
 
     //( data_index_malloc_cpu( &coo_col, *nnz ) );
     //( data_index_malloc_cpu( &coo_row, *nnz ) );
-    //( data_zmalloc_cpu( &coo_val, *nnz ) );
     //coo_row = (int*) malloc( *nnz*sizeof(int) );
     //coo_col = (int*) malloc( *nnz*sizeof(int) );
-    // coo_val = (dataType*) malloc( *nnz*sizeof(dataType) );
     LACE_CALLOC( coo_val, *nnz );
 
     if (mm_is_real(matcode) || mm_is_integer(matcode)) {
@@ -1365,7 +1335,6 @@ data_z_pad_dense(
   int info = 0;
   int old_nnz = A->num_rows*A->num_cols;
   dataType * valtmp;
-  // valtmp = (dataType*) malloc( old_nnz*sizeof(dataType) );
   LACE_CALLOC( valtmp, old_nnz );
 
   //#pragma omp parallel
@@ -1385,7 +1354,6 @@ data_z_pad_dense(
 
   printf("tile_size = %d num_rows = %d pad_rows = %d \n", tile_size, A->num_rows, A->pad_rows);
 
-  //A->val = (dataType*) calloc( A->nnz, sizeof(dataType) );
   LACE_CALLOC( A->val, A->nnz );
 
   if ( A->major == MagmaRowMajor ) {
