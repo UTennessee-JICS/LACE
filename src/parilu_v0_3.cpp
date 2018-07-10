@@ -26,7 +26,6 @@ data_PariLU_v0_3( data_d_matrix* A,
   U->diagorder_type = Magma_VALUE;
   data_zmconvert(*A, U, Magma_CSR, Magma_CSCU);
 
-
   dataType Ares = 0.0;
   dataType Anonlinres = 0.0;
   data_d_matrix LU = {Magma_CSR};
@@ -34,6 +33,8 @@ data_PariLU_v0_3( data_d_matrix* A,
   data_zilures(*A, *L, *U, &LU, &Ares, &Anonlinres);
   PARILUDBG("PariLUv0_3_csrilu0_init_res = %e\n", Ares);
   PARILUDBG("PariLUv0_3_csrilu0_init_nonlinres = %e\n", Anonlinres);
+  printf("PariLUv0_3_csrilu0_init_res = %e\n", Ares);
+  printf("PariLUv0_3_csrilu0_init_nonlinres = %e\n", Anonlinres);
 
   // ParLU element wise
   int i, j;
@@ -44,6 +45,7 @@ data_PariLU_v0_3( data_d_matrix* A,
   tol = reduction*Ares;
   int itermax=20;
   PARILUDBG("PariLU_v0_3_tol = %e\n", tol);
+  printf("PariLU_v0_3_tol = %e\n", tol);
   int num_threads = 0;
 
   dataType s = 0.0;
@@ -55,22 +57,23 @@ data_PariLU_v0_3( data_d_matrix* A,
 
   data_zfrobenius(*A, &Anorm);
   PARILUDBG("PariLUv0_3_Anorm = %e\n", Anorm);
+  printf("PariLUv0_3_Anorm = %e\n", Anorm);
   recipAnorm = 1.0/Anorm;
 
   dataType wstart = omp_get_wtime();
   data_rowindex(A, &(A->rowidx) );
   while ( (step > tol) && (iter < itermax) ) {
     step = 0.0;
-
     sp = 0.0;
 
     #pragma omp parallel
     {
-      #pragma omp for private(i, j, il, iu, jl, ju, s, sp, tmp) reduction(+:step) nowait
+    #pragma omp for private(i, j, il, iu, jl, ju, s, sp, tmp) reduction(+:step) nowait
       for (int k=0; k<A->nnz; k++ ) {
         i = A->rowidx[k];
         j = A->col[k];
         s = A->val[k];
+	//printf("0: s=%e\n",s);fflush(stdout);
 
         il = L->row[i];
         iu = U->row[j];
@@ -85,6 +88,8 @@ data_PariLU_v0_3( data_d_matrix* A,
             s = ( jl == ju ) ? s-sp : s;
             il = ( jl <= ju ) ? il+1 : il;
             iu = ( jl >= ju ) ? iu+1 : iu;
+	    //printf("sp=%e\n",sp);fflush(stdout);
+	    //printf("s=%e\n",s);fflush(stdout);
         }
         // undo the last operation (it must be the last)
         s += sp;
@@ -114,10 +119,12 @@ data_PariLU_v0_3( data_d_matrix* A,
     num_threads = omp_get_num_threads();
   }
 
-  PARILUDBG("%% PariLU v0.3 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n",
-    num_threads, iter, wend-wstart, ompwtime );
-  PARILUDBG("PariLUv0_3_OpenMP = %d \nPariLUv0_3_iter = %d \nPariLUv0_3_wall = %e \nPariLUv0_3_avgWall = %e \n",
-    num_threads, iter, wend-wstart, ompwtime );
+  PARILUDBG("%% PariLU v0.3 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n",num_threads, iter, wend-wstart, ompwtime );
+  printf("%% PariLU v0.3 used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n",num_threads, iter, wend-wstart, ompwtime );
+
+  PARILUDBG("PariLUv0_3_OpenMP = %d \nPariLUv0_3_iter = %d \nPariLUv0_3_wall = %e \nPariLUv0_3_avgWall = %e \n", num_threads, iter, wend-wstart, ompwtime );
+  printf("PariLUv0_3_OpenMP = %d \nPariLUv0_3_iter = %d \nPariLUv0_3_wall = %e \nPariLUv0_3_avgWall = %e \n", num_threads, iter, wend-wstart, ompwtime );
+
   //data_zmfree( &Atmp );
   data_zmfree( &LU );
 
