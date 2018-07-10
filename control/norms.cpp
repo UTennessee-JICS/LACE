@@ -20,13 +20,27 @@ data_zfrobenius_csr(
     data_d_matrix A,
     dataType *res )
 {
-    int i,j;
+  int i,j,k;
     *res = 0.0;
 
-    for (i=0; i<A.num_rows; i++) {
-        for (j=A.row[i]; j<A.row[i+1]; j++) {
-            (*res) = (*res) + A.val[j] * A.val[j];
-        }
+    if(A.storage_type == Magma_BCSR){
+
+       for (i=0; i<A.num_rows; i++) {
+           for (j=A.row[i]; j<A.row[i+1]; j++) {
+	     for (k=0; k< A.ldblock; ++k ) {
+               (*res) = (*res) + A.val[j*A.ldblock+k] * A.val[j*A.ldblock+k];
+	     }
+           }
+       }
+
+    }
+    else{
+
+       for (i=0; i<A.num_rows; i++) {
+           for (j=A.row[i]; j<A.row[i+1]; j++) {
+               (*res) = (*res) + A.val[j] * A.val[j];
+           }
+       }
     }
 
     (*res) =  sqrt((*res));
@@ -79,7 +93,8 @@ data_zfrobenius(
       || A.storage_type == Magma_CSCD
       || A.storage_type == Magma_CSCL
       || A.storage_type == Magma_CSCU
-      || A.storage_type == Magma_CSCCOO ) {
+      || A.storage_type == Magma_CSCCOO 
+      || A.storage_type == Magma_BCSR ) {
     info = data_zfrobenius_csr(A, res);
   }
   else if ( A.storage_type == Magma_DENSE
@@ -328,8 +343,6 @@ data_zilures(
         free( LL.col );
         free( LL.val );
         LL.nnz = L.nnz+L.num_rows;
-        // LL.val = (dataType*) malloc( LL.nnz*sizeof(dataType) );
-        // LL.col = (int*) malloc( LL.nnz*sizeof(int) );
         LACE_CALLOC( LL.val, LL.nnz );
         LACE_CALLOC( LL.col, LL.nnz );
         int z=0;
@@ -372,6 +385,7 @@ data_zilures(
     data_zmfree( &LU_d );
 
     // compute Frobenius norm of A-LU
+    //include only LU elements that correspond with nonzero elements in A
     for(i=0; i<A.num_rows; i++){
       for(j=A.row[i]; j<A.row[i+1]; j++){
             int lcol = A.col[j];
@@ -386,6 +400,8 @@ data_zilures(
         }
     }
 
+    // compute Frobenius norm of A-LU
+    //include all LU elements
     for(i=0; i<LU->num_rows; i++){
         #pragma nounroll
         for(j=LU->row[i]; j<LU->row[i+1]; j++){
@@ -414,24 +430,68 @@ data_zilures_bcsr(
     dataType *res,
     dataType *nonlinres )
 {
-  int info = 0;
-  *res = 0.0;
-  *nonlinres = 0.0;
-  dataType tmp;
-  int i, j, k;
-  dataType one = 1.0;
+  //multiply L and U into single matrix LU, subtract A from LU and return the l2 norm of the sum
+  // of the elements of the subtraction.
+    int info = 0;
+    *res = 0.0;
+    *nonlinres = 0.0;
+    dataType* tmp;
+    LACE_CALLOC(tmp,A.ldblock);
+    int i, j, k;
+    dataType one = 1.0;
 
-  DEV_CHECKPT
-  data_d_matrix Lcsr = {Magma_CSR};
-  data_zmconvert(L, &Lcsr, Magma_BCSR, Magma_CSR);
-  Lcsr.storage_type = Magma_CSR;
-  data_d_matrix Ucsr = {Magma_CSR};
-  data_zmconvert(U, &Ucsr, Magma_BCSR, Magma_CSR);
-  Ucsr.storage_type = Magma_CSR;
-  DEV_CHECKPT
+    data_d_matrix LL={Magma_BCSR}, L_d={Magma_BCSR}, U_d={Magma_BCSR}, LU_d={Magma_BCSR};
 
-  //data_zmcopy( A, LU );
-  data_z_spmm( one, Lcsr, Ucsr, LU );
+    if( L.row[1]==1 ){        // lower triangular with unit diagonal
+      //printf("L lower triangular.\n");
+        LL.diagorder_type = Magma_UNITY;
+        data_zmconvert( L, &LL, Magma_BCSR, Magma_BCSRL );
+    }
+    else if ( L.row[1]==0 ){ // strictly lower triangular
+      //printf("L strictly lower triangular.\n");
+        data_zmconvert( L, &LL, Magma_BCSR, Magma_BCSR );
+        free( LL.col );
+        free( LL.val );
+        LL.nnz = L.nnz+L.num_rows;
+        LACE_CALLOC( LL.val, LL.nnz*LL.ldblock );
+        LACE_CALLOC( LL.col, LL.nnz );
+        int z=0;
+        for (i=0; i < L.num_rows; i++) {
+            LL.row[i] = z;
+            for (j=L.row[i]; j < L.row[i+1]; j++) {
+	      for(int zz=0; zz<LL.ldblock; ++zz){LL.val[z*LL.ldblock+zz] = L.val[j*LL.ldblock+zz];}
+                LL.col[z] = L.col[j];
+                z++;
+            }
+            // add unit diagonal
+            for(int zz=0; zz<LL.blocksize;++zz){LL.val[z*LL.ldblock+zz*LL.blocksize+zz] = 1.0;}
+            LL.col[z] = i;
+            z++;
+        }
+        LL.row[LL.num_rows] = z;
+    }
+    else {
+        printf("error: L neither lower nor strictly lower triangular!\n");
+    }
+
+    data_zmconvert( LL, &L_d, Magma_BCSR, Magma_BCSR );
+    if ( U.storage_type == Magma_BCSR || U.storage_type == Magma_BCSRU ) {
+        //printf("U is BCSR\n");
+        data_zmconvert( U, &U_d, Magma_BCSR, Magma_BCSR );
+    }
+    else if ( U.storage_type == Magma_BCSC || U.storage_type == Magma_BCSCU ) {
+      //printf("U is BCSC\n");
+        data_zmconvert( U, &U_d, Magma_BCSC, Magma_BCSR );
+    }
+    data_zmfree( &LL );
+    data_z_spmm( one, L_d, U_d, &LU_d );
+    data_zmconvert( LU_d, LU, Magma_BCSR, Magma_BCSR );
+    data_zrowentries( LU );
+    data_zdiameter( LU );
+
+    data_zmfree( &L_d );
+    data_zmfree( &U_d );
+    data_zmfree( &LU_d );
 
   // compute Frobenius norm of A-LU
   for(i=0; i<A.num_rows; i++){
@@ -439,9 +499,16 @@ data_zilures_bcsr(
           int lcol = A.col[j];
           for(k=LU->row[i]; k<LU->row[i+1]; k++){
               if( LU->col[k] == lcol ){
-                  tmp =  LU->val[k] -  A.val[j];
-                  LU->val[k] = tmp;
-                  (*nonlinres) = (*nonlinres) + tmp*tmp;
+		  //tmp =  LU->val[k] -  A.val[j];
+		  for(int kk=0; kk< A.ldblock; ++kk){
+                     tmp[kk]= LU->val[k*A.ldblock+kk]-A.val[j*A.ldblock+kk];
+		  }
+		  for(int kk=0; kk< A.ldblock; ++kk){
+                     LU->val[k*A.ldblock+kk] = tmp[kk];
+		  }
+                  for(int kk=0; kk< A.ldblock; ++kk){
+                     (*nonlinres) = (*nonlinres) + tmp[kk]*tmp[kk];
+		  }
                   break;
               }
           }
@@ -450,8 +517,11 @@ data_zilures_bcsr(
 
   for(i=0; i<LU->num_rows; i++){
       for(j=LU->row[i]; j<LU->row[i+1]; j++){
-          tmp = LU->val[j];
-          (*res) = (*res) + tmp * tmp;
+     	  //tmp = LU->val[j];
+	  for(int kk=0; kk< A.ldblock; ++kk){
+             tmp[kk]= LU->val[j*A.ldblock+kk];
+	  }
+          for(int kk=0; kk< A.ldblock; ++kk){(*res) = (*res) + tmp[kk] * tmp[kk];}
       }
   }
 
@@ -459,15 +529,15 @@ data_zilures_bcsr(
   (*nonlinres) =  sqrt((*nonlinres));
 
 //cleanup:
+  free(tmp);
   if( info !=0 ){
     data_zmfree( LU );
   }
-  data_zmfree( &Lcsr );
-  data_zmfree( &Ucsr );
   return info;
 }
 
 
+//ceb infinity norm for dense or elemental sparse matrix
 extern "C"
 int
 data_infinity_norm(
@@ -482,6 +552,7 @@ data_infinity_norm(
   for (i=0; i<A->num_rows; i++) {
     tmp = 0.0;
     for (j=0; j<A->num_cols; j++) {
+      //tmp += fabs( A->val[i*A->ld+j] );
       tmp += fabs( A->val[i*A->ld+j] );
     }
     if ( (*max) < tmp ) {
@@ -507,12 +578,15 @@ data_maxfabs_csr(
 
     for (i=0; i<A.num_rows; i++) {
         for (j=A.row[i]; j<A.row[i+1]; j++) {
-            tmp = fabs( A.val[j] );
+	  //tmp = fabs( A.val[j] );
+	  for(int kk=0;kk<A.ldblock;++kk){ 
+	    tmp = fabs( A.val[j*A.ldblock+kk] );
             if ( (*max) < tmp ) {
               (*max) = tmp;
               (*imax) = i;
               (*jmax) = A.col[j];
             }
+	  }
         }
     }
 

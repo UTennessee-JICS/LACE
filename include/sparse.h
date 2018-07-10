@@ -151,6 +151,11 @@ data_zvinit(
     dataType values,
     data_order_t major = MagmaColMajor );
 
+data_int_t
+data_zvinit_gen(
+	    data_d_matrix *x);
+
+
 int
 data_z_csr_compressor(
     dataType ** val,
@@ -393,6 +398,15 @@ data_zmcopy(
     data_d_matrix A,
     data_d_matrix *B );
 
+void 
+data_reorder_cuthill_mckee(
+  data_d_matrix* A,
+  int* nn_map,
+  bool reverse=false);
+
+void 
+sort_csr_rows(
+    data_d_matrix* A);
 
 int 
 data_sparse_reorder(
@@ -658,11 +672,7 @@ data_diagbcsr_mult_bcsr(
   data_d_matrix* diagA,
   data_d_matrix* A );
 
-void 
-data_reorder_cuthill_mckee(
-  data_d_matrix* A,
-  int* nn_map,
-  bool reverse=false);
+
 
 //======================================
 // dense factorizations
@@ -794,6 +804,14 @@ data_PariLU_v0_3_gpu(
   dataType reduction,
   data_d_preconditioner_log* log,
   int nthreads);
+
+void
+data_PariLU_v0_3_bcsr( 
+  data_d_matrix* A, 
+  data_d_matrix* L, 
+  data_d_matrix* U, 
+  dataType reduction,
+  data_d_preconditioner_log* log);
 
 void
 data_PariLU_v0_3_gpu_prescribedSweeps(
