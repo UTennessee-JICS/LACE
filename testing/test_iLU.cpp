@@ -270,18 +270,17 @@ TEST_F(iLUTest, PariLUv0_3_bcsr) {
 
   // Separate the strictly lower and upper elements
   // into L, and U respectively.
-//write bcsr version for this function
-//ultimately work this in to a single function 
+  //write bcsr version for this function
+  //ultimately work this in to a single function 
   data_PariLU_v0_3_bcsr( &A_BCSR, &L, &U, reduction, &parilu_log );
-  // Check ||A-LU||_Frobenius
 
+  // Check ||A-LU||_Frobenius
   dataType Ares = 0.0;
   dataType Anonlinres = 0.0;
-//ceb should this be a copy A to LU? 
-  LU.blocksize=A_BCSR.blocksize; 
+  LU.blocksize=A_BCSR.blocksize;//set blocksize for LU
+  
   data_zmconvert((*A), &LU, Magma_CSR, Magma_BCSR);
 
-  //data_zilures((*A), L, U, &LU, &Ares, &Anonlinres);
   data_zilures_bcsr(A_BCSR, L, U, &LU, &Ares, &Anonlinres);
 
   printf("PariLU_v0_3_bcsr_omp_num_threads = %d\n", parilu_log.omp_num_threads );

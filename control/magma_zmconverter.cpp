@@ -1374,6 +1374,7 @@ data_zmconvert(
     B->row[rowlimit] = numblocks;
   }
   // BCSR to BCSRU
+  // copy only upper triangular part of A into B, including complete block diagonals (if Magma_VALUE)
   else if ( ( old_format == Magma_BCSR ) && ( new_format == Magma_BCSRU ) ) {
 
     // fill in information for B

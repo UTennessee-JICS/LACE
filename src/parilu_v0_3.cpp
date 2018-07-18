@@ -70,35 +70,44 @@ data_PariLU_v0_3( data_d_matrix* A,
     {
     #pragma omp for private(i, j, il, iu, jl, ju, s, sp, tmp) reduction(+:step) nowait
       for (int k=0; k<A->nnz; k++ ) {
+        //get row index i and column index j for element in A
         i = A->rowidx[k];
         j = A->col[k];
+        //store element in s
         s = A->val[k];
 	//printf("0: s=%e\n",s);fflush(stdout);
 
-        il = L->row[i];
-        iu = U->row[j];
+        il = L->row[i];//get number of corresponding row in L
+        iu = U->row[j];//get number of corresponding column in U (CSC form)
+        //while still traversing current row i and column j
         while (il < L->row[i+1] && iu < U->row[j+1])
         {
             sp = 0.0;
-            jl = L->col[il];
-            ju = U->col[iu];
+
+            jl = L->col[il];//get number of corresponding column in L
+            ju = U->col[iu];//get number of corresponding row in U (CSC form)
 
             // avoid branching
+	    //if on diagonal block 
             sp = ( jl == ju ) ? L->val[il] * U->val[iu] : sp;
+
             s = ( jl == ju ) ? s-sp : s;
+	    //if not on diagonal, increment row index in L
             il = ( jl <= ju ) ? il+1 : il;
+	    //if not on diagonal, increment col index in U
             iu = ( jl >= ju ) ? iu+1 : iu;
-	    //printf("sp=%e\n",sp);fflush(stdout);
-	    //printf("s=%e\n",s);fflush(stdout);
         }
+
         // undo the last operation (it must be the last)
         s += sp;
 
+        //row greater than column
         if ( i > j ) {     // modify l entry
             tmp = s / U->val[U->row[j+1]-1];
             step += pow( L->val[il-1] - tmp, 2 );
             L->val[il-1] = tmp;
         }
+        //column greater than or equal to row
         else {            // modify u entry
             tmp = s;
             step += pow( U->val[iu-1] - tmp, 2 );

@@ -25,6 +25,11 @@ data_PariLU_v0_3_bcsr( data_d_matrix* A,
   U->diagorder_type = Magma_VALUE;
   data_zmconvert(*A, U, Magma_BCSR, Magma_BCSCU); 
 
+  //printf("L:\n");
+  //data_zprint_bcsr(L);
+  //printf("U:\n");
+  //data_zprint_bcsr(U);
+
   dataType Ares = 0.0;
   dataType Anonlinres = 0.0;
 
@@ -51,17 +56,19 @@ data_PariLU_v0_3_bcsr( data_d_matrix* A,
   int num_threads = 0;
   dataType wstart, wend;
 
-  dataType* s;
-  dataType* sp;
-  dataType* tmp;
-  //printf("A->ldblock=%d\n",A->ldblock);
-  LACE_CALLOC(s, A->ldblock);
-  LACE_CALLOC(sp, A->ldblock);
-  LACE_CALLOC(tmp, A->ldblock);
+  //These arrays need to be static so that they can be private vars in omp parallel region
+  dataType s[A->ldblock];
+  dataType sp[A->ldblock];
+  dataType tmp[A->ldblock];
+  dataType Uinv[A->ldblock];
 
   dataType step = FLT_MAX;
   dataType Anorm = 0.0;
   dataType recipAnorm = 0.0;
+
+  dataType one = 1.0;
+  dataType zero = 0.0;
+  int layout = LAPACK_ROW_MAJOR;
 
   data_zfrobenius(*A, &Anorm);
   PARILUDBG("PariLUv0_3_bcsr_Anorm = %e\n", Anorm);
@@ -70,129 +77,129 @@ data_PariLU_v0_3_bcsr( data_d_matrix* A,
 
   wstart = omp_get_wtime();
   data_rowindex(A, &(A->rowidx) );
-
   while ( (step > tol) && (iter < itermax) ) {
-    step = 0.0;
+      step = 0.0;
+      for(int kk=0; kk< A->ldblock; ++kk){sp[kk]=0.0;} //sp = 0.0; 
 
-    for(int kk=0; kk< A->ldblock; ++kk){sp[kk]=0.0;} //sp = 0.0;  
-    //#pragma omp parallel
-    {
-      //#pragma omp for private(i, j, il, iu, jl, ju, s, sp, tmp) reduction(+:step) nowait
+#pragma omp parallel
+      {
+      #pragma omp for private(i, j, il, iu, jl, ju, s, sp, tmp, Uinv) reduction(+:step) //nowait
       for (int k=0; k<A->nnz; k++ ) {
-        i = A->rowidx[k];
-        j = A->col[k];
-        for(int kk=0; kk< A->ldblock; ++kk){s[kk] = A->val[k*A->ldblock+kk];} //s = A->val[k]
-        il = L->row[i];
-        iu = U->row[j];
-        while (il < L->row[i+1] && iu < U->row[j+1])
-        {
-	    for(int kk=0; kk< A->ldblock; ++kk){sp[kk]=0.0;} //sp = 0
-            
-            jl = L->col[il];
-            ju = U->col[iu];
-#if 0
-            //if(A->ldblock==1){
-               // avoid branching
-               //sp[0] = ( jl == ju ) ? L->val[il] * U->val[iu] : sp[0];
-               //s[0] = ( jl == ju ) ? s[0]-sp[0] : s[0];
-	       //}
-	       //else{
-#else
-            if(jl == ju) //diagonal blocks
-	    { 
-              //sp=L[il]*U[iu] (small matrix multiply)
-               for(int ii=0; ii< A->blocksize; ++ii){
-                  for(int jj=0; jj< A->blocksize; ++jj){
-                     for(int kk=0; kk< A->blocksize; ++kk)
-		       {sp[ii*A->blocksize+jj] += 
-	                  L->val[il*A->ldblock+ii*A->blocksize+kk] *
-                          U->val[iu*A->ldblock+kk*A->blocksize+jj];
-		       }
-                  }
-               }
- //data_dgemm_mkl(layout,transA,transB,A->blocksize,A->blocksize,A->blocksize,alpha,A,lda,B,ldb,beta,C,ldc);
-	       //DEV_CHECKPT
-               for(int kk=0; kk< A->ldblock; ++kk){s[kk] -= sp[kk];} //s=s-sp
-            }
-#endif
-	    //}
+          //int id=omp_get_thread_num();
+  	  //printf("id=%d k=%d\n",id,k);
 
-            il = ( jl <= ju ) ? il+1 : il;
-            iu = ( jl >= ju ) ? iu+1 : iu;
+          //get row index i and column index j for block element in A
+          i = A->rowidx[k];
+          j = A->col[k];
+          //store block element in s
+          for(int kk=0; kk< A->ldblock; ++kk){s[kk] = A->val[k*A->ldblock+kk];} //s = A->val[k]
+
+          il = L->row[i];//get number of corresponding row in L
+          iu = U->row[j];//get number of corresponding column in U (CSC form)
+          //while still traversing current row i in L and column j in U
+
+          while (il < L->row[i+1] && iu < U->row[j+1]){
+
+              for(int kk=0; kk< A->ldblock; ++kk){sp[kk]=0.0;} //sp = 0
+     
+              jl = L->col[il];//get number of corresponding column in L
+              ju = U->col[iu];//get number of corresponding row in U (CSC form)
+
+              if(jl == ju){ //if on diagonal block 
+                  //sp=L[il]*U[iu] (small matrix multiply)
+                  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+	                      A->blocksize, A->blocksize, A->blocksize, one,  
+	                      &(L->val[il*A->ldblock]), 
+			      A->blocksize, &(U->val[iu*A->ldblock]), A->blocksize, 
+			      zero, sp, A->blocksize);
+
+                  for(int kk=0; kk< A->ldblock; ++kk){s[kk] -= sp[kk];}
+              }
+
+	      //if not on diagonal, increment row index in L
+              il = ( jl <= ju ) ? il+1 : il;
+	      //if not on diagonal, increment col index in U
+              iu = ( jl >= ju ) ? iu+1 : iu;
+          }
+
+          // undo the last operation (it must be the last)
+          for(int kk=0; kk< A->ldblock; ++kk){s[kk]+=sp[kk];}
+
+          //row greater than column
+          if ( i > j ) {     // modify l entry
+	    //#pragma omp critical
+	      {
+	      //compute inverse of U->val[U->row[j+1]-1], 
+              int ipiv[A->blocksize];
+              //copy U 
+              for(int kk=0; kk< A->ldblock; ++kk){
+	          Uinv[kk]=U->val[(U->row[j+1]-1)*U->ldblock+kk];
+	      }
+
+              //compute inverse of  U->val[(U->row[j+1]-1)]
+	      //put diagonal block in LU form
+              LAPACKE_dgetrf(LAPACK_ROW_MAJOR, U->blocksize, U->blocksize, &(Uinv[0]), 
+	                     U->blocksize, ipiv);
+              //compute inverse of U
+	      LAPACKE_dgetri(LAPACK_ROW_MAJOR, U->blocksize, Uinv, 
+	                     U->blocksize, ipiv);
+
+              //tmp[] = s[] / U->val[U->row[j+1]-1];
+              cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+	        	  A->blocksize, A->blocksize,  A->blocksize, one, s, 
+	       	          A->blocksize, Uinv, A->blocksize, 
+	       	          zero, tmp, A->blocksize);
+
+
+              //step += pow( L->val[il-1] - tmp, 2 );
+              //compute        L->val[il-1] - tmp
+              for(int kk=0; kk< A->ldblock; ++kk){L->val[(il-1)*A->ldblock+kk] -= tmp[kk];} 
+              //compute l2 norm of result and add scalar result to step
+              step += cblas_dnrm2(L->ldblock, &(L->val[(il-1)*L->ldblock]), one);
+              for(int kk=0; kk< A->ldblock; ++kk){L->val[(il-1)*A->ldblock+kk]=tmp[kk];} 
+	      }
+          }
+          //row less than column
+          else {            // modify u entry
+              for(int kk=0; kk< A->ldblock; ++kk){tmp[kk]=s[kk];}
+	      //#pragma omp critical
+	      {
+              for(int kk=0; kk< U->ldblock; ++kk){U->val[(iu-1)*U->ldblock+kk] -= tmp[kk];} 
+              //multiply (U[iu-1])*(U[iu-1])
+              step += cblas_dnrm2(U->ldblock, &(U->val[(iu-1)*U->ldblock]), one);
+              for(int kk=0; kk< U->ldblock; ++kk){U->val[(iu-1)*U->ldblock+kk]=tmp[kk];}
+	      }
+          }
         }
-        // undo the last operation (it must be the last)
-        for(int kk=0; kk< A->ldblock; ++kk){s[kk]+=sp[kk];} //s += sp;
-
-        if ( i > j ) {     // modify l entry
-            //for(int k=0; k<A->ldblock; ++k) tmp[] = s[] / U->val[U->row[j+1]-1];
-            //copy tmp = s
-            for(int kk=0; kk< A->ldblock; ++kk){tmp[kk]=s[kk];} 
-            //compute inverse of  U->val[(U->row[j+1]-1)]
-            if(A->ldblock==1){for(int kk=0; kk< A->ldblock; ++kk){tmp[kk]/= U->val[(U->row[j+1]-1)*U->ldblock+kk];} 
-	    }
-	    else{
-	      //compute matrix multiply s*Uinv;
-//ceb fix this here!!
-	    }
-
-            //step += pow( L->val[il-1] - tmp, 2 );
-            //compute        L->val[il-1] - tmp
-            for(int kk=0; kk< A->ldblock; ++kk){L->val[(il-1)*A->ldblock+kk] -= tmp[kk];} 
-
-            //compute l2 norm of result
-	    //double result = l2norm(L->val[(il-1)*A.ldblock]);
-            //add scalar result to step
-
-            //same as dot product of vector
-            //step += l2norm(L->val[(il-1)*A.ldblock], A.ldblock);
-            step += data_zdot_mkl(A->ldblock, &(L->val[(il-1)*A->ldblock]), 1, &(L->val[(il-1)*A->ldblock]), 1);
-
-            //L->val[il-1] = tmp;
-            for(int kk=0; kk< A->ldblock; ++kk){L->val[(il-1)*A->ldblock+kk]=tmp[kk];} 
-
-        }
-        else {            // modify u entry
-            for(int kk=0; kk< A->ldblock; ++kk){tmp[kk]=s[kk];} //tmp = s;
-            //for(int kk=0; kk< A->ldblock; ++kk){U->val[(iu-1)*A->ldblock+kk] -= tmp[kk];} 
-            for(int kk=0; kk<U->ldblock;++kk){step += pow( U->val[(iu-1)*U->ldblock+kk] - tmp[kk], 2 );}
-            //step = data_zdot_mkl(A->ldblock, &(U->val[(iu-1)*A->ldblock]), 1, &(U->val[(iu-1)*A->ldblock]), 1);
-            for(int kk=0; kk< A->ldblock; ++kk){U->val[(iu-1)*A->ldblock+kk]=tmp[kk];}//U->val[iu-1] = tmp;
-        }
-
       }
+      step *= recipAnorm;
+      iter++;
+      //PARILUDBG("%% PariLUv0_3_iteration = %d step = %e\n", iter, step);
+      printf("%% PariLUv0_3_bcsr_iteration = %d step = %e\n", iter, step);
     }
-    step *= recipAnorm;
-    iter++;
-    //PARILUDBG("%% PariLUv0_3_iteration = %d step = %e\n", iter, step);
-    printf("%% PariLUv0_3_bcsr_iteration = %d step = %e\n", iter, step);
-  }
 
-  wend = omp_get_wtime();
-  dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
+    wend = omp_get_wtime();
+    dataType ompwtime = (dataType) (wend-wstart)/((dataType) iter);
 
-  #pragma omp parallel
-  {
-    num_threads = omp_get_num_threads();
-  }
+    #pragma omp parallel
+    {
+        num_threads = omp_get_num_threads();
+    }
 
-  PARILUDBG("%% PariLU v0.3 bcsr used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n",
+    PARILUDBG("%% PariLU v0.3 bcsr used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n",
     num_threads, iter, wend-wstart, ompwtime );
-  PARILUDBG("PariLUv0_3_bcsr_OpenMP = %d \nPariLUv0_3_iter = %d \nPariLUv0_3_wall = %e \nPariLUv0_3_avgWall = %e \n",
+    printf("%% PariLU v0.3 bcsr used %d OpenMP threads and required %d iterations, %f wall clock seconds, and an average of %f wall clock seconds per iteration as measured by omp_get_wtime()\n",
     num_threads, iter, wend-wstart, ompwtime );
+    PARILUDBG("PariLUv0_3_bcsr_OpenMP = %d \nPariLUv0_3_iter = %d \nPariLUv0_3_wall = %e \nPariLUv0_3_avgWall = %e \n",num_threads, iter, wend-wstart, ompwtime );
+    printf("PariLUv0_3_bcsr_OpenMP = %d \nPariLUv0_3_iter = %d \nPariLUv0_3_wall = %e \nPariLUv0_3_avgWall = %e \n",num_threads, iter, wend-wstart, ompwtime );
+    //data_zmfree( &Atmp );
+    data_zmfree( &LU );
 
-  //data_zmfree( &Atmp );
-  data_zmfree( &LU );
-
-  free(s);
-  free(sp);
-  free(tmp);
-
-  log->sweeps = iter;
-  log->tol = tol;
-  log->A_Frobenius = Anorm;
-  log->precond_generation_time = wend-wstart;
-  log->initial_residual = Ares;
-  log->initial_nonlinear_residual = Anonlinres;
-  log->omp_num_threads = num_threads;
-
+    log->sweeps = iter;
+    log->tol = tol;
+    log->A_Frobenius = Anorm;
+    log->precond_generation_time = wend-wstart;
+    log->initial_residual = Ares;
+    log->initial_nonlinear_residual = Anonlinres;
+    log->omp_num_threads = num_threads;
 }

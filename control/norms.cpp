@@ -480,7 +480,7 @@ data_zilures_bcsr(
         data_zmconvert( U, &U_d, Magma_BCSR, Magma_BCSR );
     }
     else if ( U.storage_type == Magma_BCSC || U.storage_type == Magma_BCSCU ) {
-      //printf("U is BCSC\n");
+        //printf("U is BCSC\n");
         data_zmconvert( U, &U_d, Magma_BCSC, Magma_BCSR );
     }
     data_zmfree( &LL );
