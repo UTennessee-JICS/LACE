@@ -942,6 +942,21 @@ data_parcsrtrsv(
   int *iter );
 
 int
+data_parbsrtrsv( 
+  const data_uplo_t uplo, 
+  const data_storage_t storage,
+  const data_diagorder_t diag,
+  const int num_rows, 
+  const int blocksize,
+  const dataType *Aval, 
+  const int *row, 
+  const int *col,
+  const dataType *rhsval, 
+  dataType *yval,
+  const dataType tol, 
+  int *iter  );
+
+int
 data_partrsv(
   const data_order_t major,
   const data_uplo_t uplo,
@@ -1043,6 +1058,13 @@ data_gmres_householder_precond(
 
 int
 data_fgmres(
+    data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
+    data_d_matrix *L, data_d_matrix *U,
+    data_d_gmres_param *gmres_par,
+    data_d_gmres_log *gmres_log );
+
+int
+data_fgmres_bcsr(
     data_d_matrix *A, data_d_matrix *b, data_d_matrix *x0,
     data_d_matrix *L, data_d_matrix *U,
     data_d_gmres_param *gmres_par,

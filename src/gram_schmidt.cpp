@@ -52,7 +52,7 @@ data_modified_gram_schmidt( int search,
   data_d_matrix* h,
   data_d_matrix* u )
 {
-  GMRESDBG("data_modified_gram_schmidt begin\n");
+  GMRESDBG("%s","data_modified_gram_schmidt begin\n");
 
   data_int_t n = krylov->num_rows;
 

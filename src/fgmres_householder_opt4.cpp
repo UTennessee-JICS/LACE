@@ -651,7 +651,7 @@ data_fgmres_householder(
               + givens_sin.val[j]*temp1;
           }
         }
-        GMRESDBG("\n\tApply Givens rotations search = %d temp = %e\n", j, temp);
+        GMRESDBG("\n\tApply Givens rotations search = %d temp = %e\n", j, temp1);
       }
       for ( int j=0; j <= search1; ++j ) {
         for ( int i=0; i<n; ++i ) {

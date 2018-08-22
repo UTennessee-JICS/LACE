@@ -87,6 +87,49 @@ data_zmlumerge(
         A->nnz = z;
 
     }
+    //else if( L.storage_type == Magma_BCSR && U.storage_type == Magma_BCSR ) {
+    else if( L.storage_type == Magma_BCSRL && U.storage_type == Magma_BCSRU ) {
+
+        CHECK( data_zmconvert( L, A, Magma_BCSR, Magma_BCSR ));
+        free( A->col );
+        free( A->val );
+        // make sure only values from strictly lower triangular elements of L are used
+        data_int_t z = 0;
+        for(data_int_t i=0; i<A->num_rows; i++){
+            for(data_int_t j=L.row[i]; j<L.row[i+1]; j++){
+                if( L.col[j] < i ){ // skip diagonal elements
+                    z++;
+                }
+            }
+            for(data_int_t j=U.row[i]; j<U.row[i+1]; j++){
+                z++;
+            }
+        }
+        A->nnz = z;
+        // fill A with the new structure
+        LACE_CALLOC( A->col, A->nnz );
+        LACE_CALLOC( A->val, A->nnz*A->ldblock );
+        z = 0;
+        for(data_int_t i=0; i<A->num_rows; i++){
+            A->row[i] = z;
+            for(data_int_t j=L.row[i]; j<L.row[i+1]; j++){
+                if( L.col[j] < i ){ // skip diagonal elements
+                    A->col[z] = L.col[j];
+                    for(int jj=0; jj<A->ldblock; ++jj){A->val[z*A->ldblock+jj] = L.val[j*A->ldblock+jj];}
+                    z++;
+                }
+            }
+            for(data_int_t j=U.row[i]; j<U.row[i+1]; j++){
+                A->col[z] = U.col[j];
+                //A->val[z] = U.val[j];
+                for(int jj=0; jj<A->ldblock; ++jj){A->val[z*A->ldblock+jj] = U.val[j*A->ldblock+jj];}
+                z++;
+            }
+        }
+        A->row[A->num_rows] = z;
+        A->nnz = z;
+
+    }
     else {
       DEV_PRINTF("%% warning: %s , within %s ; matrix in wrong formats L = %d, U = %d.\n",
           __FILE__, __FUNCTION__, L.storage_type, U.storage_type );

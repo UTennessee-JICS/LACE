@@ -54,7 +54,7 @@ data_z_spmv(
 {
     data_int_t info = 0;
 
-    if ( A->num_cols == x->num_rows && x->num_cols == 1 ) {
+    if ( A->num_cols*A->blocksize == x->num_rows && x->num_cols == 1 ) {
          if ( A->storage_type == Magma_CSR || A->storage_type == Magma_CUCSR
                         || A->storage_type == Magma_CSRL
                         || A->storage_type == Magma_CSRU ) {
@@ -62,6 +62,14 @@ data_z_spmv(
                         &alpha, "GFNC", A->val,
                         A->col, A->row, A->row+1,
                         x->val, &beta, y->val );
+         }
+         else if ( A->storage_type == Magma_BCSR 
+                        || A->storage_type == Magma_BCSRL
+                        || A->storage_type == Magma_BCSRU ) {
+            mkl_dbsrmv( "N", &A->num_rows, &A->num_cols, &A->blocksize,
+                      &alpha, "GFNC", A->val,
+                      A->col, A->row, A->row+1,
+                      x->val, &beta, y->val );
          }
          else {
              printf("error: format not supported.\n");

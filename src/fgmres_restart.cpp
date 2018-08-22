@@ -435,7 +435,7 @@ data_fgmres_restart(
         for ( int i=0; i<h.ld; i++ ) {
           GMRESDBG("h.val[idx(%d,%d,%d)] = %e\n", i, j, h.ld, h.val[idx(i,j,h.ld)]);
         }
-        GMRESDBG("\n");
+        GMRESDBG("%s","\n");
       }
       for ( int i=0; i<search_max; i++ ) {
         GMRESDBG("c.val[%d] = %e\n", i, givens_cos.val[i]);
@@ -457,7 +457,7 @@ data_fgmres_restart(
       // update the solution
       // solve the least squares problem
       if ( fabs(givens.val[(search1)]) < rtol  || (search == (search_max-1)) ) {
-        GMRESDBG(" !!!!!!! update the solution !!!!!!!\n");
+        GMRESDBG("%s"," !!!!!!! update the solution !!!!!!!\n");
         for ( int i = 0; i <= search; i++ ) {
           alpha.val[i] = givens.val[i]/h.val[idx(i,i,h.ld)];
         }
@@ -493,13 +493,13 @@ data_fgmres_restart(
         break;
       }
 
-    }
+	  //}
 
     for ( int i=0; i<Minvvj.ld; i++ ) {
       GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n",
         i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
     }
-
+	}
     }
 
     fflush(stdout);

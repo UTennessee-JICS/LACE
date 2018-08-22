@@ -204,17 +204,19 @@ TEST_F(iLUTest, PariLUv0_0) {
 
 TEST_F(iLUTest, PariLUv0_3) {
   // =========================================================================
-  // PariLU v0.0
+  // PariLU v0.3
   // =========================================================================
   printf("%% PariLU v0.3\n");
 
   data_d_matrix L = {Magma_CSRL};
   data_d_matrix U = {Magma_CSRU};
+  //data_d_matrix U = {Magma_CSCU};
   dataType reduction = 1.0e-20;
   data_d_preconditioner_log parilu_log;
   // Separate the strictly lower and upper elements
   // into L, and U respectively.
   data_PariLU_v0_3( A, &L, &U, reduction, &parilu_log );
+
   // Check ||A-LU||_Frobenius
   dataType Ares = 0.0;
   dataType Anonlinres = 0.0;
@@ -230,6 +232,14 @@ TEST_F(iLUTest, PariLUv0_3) {
   printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
   printf("PariLU_v0_3_csrilu0_res = %e\n", Ares);
   printf("PariLU_v0_3_csrilu0_nonlinres = %e\n", Anonlinres);
+
+
+
+  printf("L:\n");
+  data_zprint_csr(L);
+  printf("\nU:\n");
+  data_zprint_csr(U);
+
 
   fflush(stdout);
 
@@ -251,7 +261,8 @@ TEST_F(iLUTest, PariLUv0_3_bcsr) {
   printf("%% PariLU v0.3 BCSR\n");
   data_d_matrix A_BCSR = {Magma_BCSR};
   data_d_matrix L = {Magma_BCSRL};
-  data_d_matrix U = {Magma_BCSRU};
+  //data_d_matrix U = {Magma_BCSRU};
+  data_d_matrix U = {Magma_BCSCU};
   data_d_matrix LU = {Magma_BCSR};
 
   //copy A csr to A BCSR
@@ -259,7 +270,6 @@ TEST_F(iLUTest, PariLUv0_3_bcsr) {
   A_BCSR.blocksize=2;
   data_zmconvert((*A), &A_BCSR, Magma_CSR, Magma_BCSR);
   sort_csr_rows(&A_BCSR);
-
   data_rowindex(&A_BCSR, &(A_BCSR.rowidx) );
 
   //printf("A_BCSR:\n");
@@ -292,6 +302,13 @@ TEST_F(iLUTest, PariLUv0_3_bcsr) {
   printf("PariLU_v0_3_bcsr_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
   printf("PariLU_v0_3_bcsr_csrilu0_res = %e\n", Ares);
   printf("PariLU_v0_3_bcsr_csrilu0_nonlinres = %e\n", Anonlinres);
+
+
+  printf("L:\n");
+  data_zprint_bcsr(&L);
+  printf("\nU:\n");
+  data_zprint_bcsr(&U);
+
 
   fflush(stdout);
 
