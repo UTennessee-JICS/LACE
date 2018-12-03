@@ -88,15 +88,15 @@
 // ========================================
 // To use int64_t, link with mkl_intel_ilp64 or similar (instead of mkl_intel_lp64).
 // Similar to data_int_t we declare data_index_t used for row/column indices in sparse
+
 #if defined(DEV_ILP64) || defined(MKL_ILP64)
-//typedef int64_t data_int_t;
-typedef long long int data_int_t;  // MKL uses long long int, not int64_t
+  //typedef int64_t data_int_t;
+  typedef long long int data_int_t;  // MKL uses long long int, not int64_t
 #else
-typedef int data_int_t;
+  typedef int data_int_t;
 #endif
 
 typedef int data_index_t;
-typedef int data_int_t;
 
 // Define new type that the precision generator will not change (matches PLASMA)
 

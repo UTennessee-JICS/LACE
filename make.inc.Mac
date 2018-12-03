@@ -1,5 +1,5 @@
 #
 #
 # Override Mac compiler to use OpenMP
-CXX				 = g++-6
+CXX				 = g++-8
 CXXFLAGS	 = -std=c++11 -Wall -g -O3 -fopenmp -pthread

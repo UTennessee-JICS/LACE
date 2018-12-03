@@ -157,12 +157,8 @@ data_MKL_FGMRES(
   dpar[30]=1.E-20;
   dpar[31]=1.E-16;
 
-  //MKL's iLU0
-  dcsrilu0(&ivar, A->val, ia, ja, bilu0MKL, ipar, dpar, &ierr);
-  ref_norm2=dnrm2(&matsize, bilu0MKL, &incx );
-
-  MKL_PRINTF("%s %d A->num_rows = %d\n", __FILE__, __LINE__, A->num_rows);
-  // TODO: return an int from parilu factorizations and check it
+  
+#if 0 //Use parilu preconditioner
   data_PariLU_v0_2( A, &L, &U, solverParam->parilu_reduction );
   MKL_PRINTF("%s %d A->num_rows = %d\n", __FILE__, __LINE__, A->num_rows);
 
@@ -172,6 +168,7 @@ data_MKL_FGMRES(
   MKL_PRINTF("PariLUv0_2_csrilu0_nonlinres = %e\n", Anonlinres);
 
   data_zmlumerge( L, U, &LU );
+  
   #pragma omp parallel
   {
     #pragma omp for nowait
@@ -179,6 +176,21 @@ data_MKL_FGMRES(
       bilu0[i] = LU.val[i];
     }
   }
+#else //use MKL preconditioner
+  //MKL's iLU0
+  dcsrilu0(&ivar, A->val, ia, ja, bilu0MKL, ipar, dpar, &ierr);
+  ref_norm2=dnrm2(&matsize, bilu0MKL, &incx );
+  MKL_PRINTF("%s %d A->num_rows = %d\n", __FILE__, __LINE__, A->num_rows);
+  
+  #pragma omp parallel
+  {
+    #pragma omp for nowait
+    for (int i=0; i<A->nnz; i++) {
+      bilu0[i] = bilu0MKL[i];
+    }
+  } 
+#endif
+  
   nrm2=dnrm2(&matsize, bilu0, &incx );
 
   ierr = 0;
@@ -222,7 +234,6 @@ data_MKL_FGMRES(
 
   MKL_PRINTF("ipar[4]=%d\n", ipar[4]);
   MKL_PRINTF("ipar[14]=%d\n", ipar[14]);
-
 
   /*---------------------------------------------------------------------------
      Check the correctness and consistency of the newly set parameters
@@ -307,7 +318,9 @@ data_MKL_FGMRES(
      Compute the solution by RCI (P)FGMRES solver with preconditioning
      Reverse Communication starts here
     ---------------------------------------------------------------------------*/
+
 ONE:  dfgmres(&ivar, computed_solution, rhs, &RCI_request, ipar, dpar, tmp);
+
   MKL_PRINTF("after dfgmres on line %d RCI_request = %d\n", __LINE__, RCI_request);
   /*---------------------------------------------------------------------------
      If RCI_request=0, then the solution was found with the required precision
@@ -504,8 +517,6 @@ FAILED1:
   data_zmfree( &L );
   data_zmfree( &U );
   data_zmfree( &LU );
-
-
 
   return info;
 }

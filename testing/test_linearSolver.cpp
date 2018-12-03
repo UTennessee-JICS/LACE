@@ -33,8 +33,13 @@ protected:
     }
     fflush(stdout);
 
-    //char default_matrix[] = "matrices/Trefethen_20.mtx";
-    char default_matrix[] = "matrices/sparisty2x2_test.mtx";
+    block_size = new int();
+
+    //char default_matrix[] = "matrices/Trefethen_20.mtx";//19x19
+    //char default_matrix[] = "matrices/sparsity6x6_dense.mtx";//6x6
+    //char default_matrix[] = "matrices/30p30n.mtx";//211685x211685
+    char default_matrix[] = "matrices/steam3.mtx";//80x80
+    (*block_size) = 5;
 
     char* matrix_name = NULL;
 
@@ -91,7 +96,7 @@ protected:
     A = new data_d_matrix();
     A->storage_type = Magma_CSR;
     CHECK( data_z_csr_mtx( A, matrix_name ) );
-
+    
     rhs_vector = new data_d_matrix();
     rhs_vector->storage_type = Magma_DENSE;
     rhs_vector->major = MagmaRowMajor;
@@ -108,11 +113,11 @@ protected:
     initialGuess_vector->storage_type = Magma_DENSE;
     initialGuess_vector->major = MagmaRowMajor;
     if ( strcmp( initialGuess_name, "ZEROS" ) == 0 ) {
-      printf("%% creating a vector of %d zeros for the initial guess.\n", A->num_rows);
+      printf("%% creating a vector of %d zeros for the initial guess.\n\n", A->num_rows);
       CHECK( data_zvinit( initialGuess_vector, A->num_rows, 1, zero ) );
     }
     else {
-      printf("%% initial guess will be read from %s\n", initialGuess_name);
+      printf("%% initial guess will be read from %s\n\n", initialGuess_name);
       CHECK( data_z_dense_mtx( initialGuess_vector, initialGuess_vector->major, initialGuess_name ) );
     }
   }
@@ -126,6 +131,9 @@ protected:
     delete rhs_vector;
     delete initialGuess_vector;
     delete tolerance;
+    if (block_size != NULL ) {
+      delete block_size;
+    }
   }
 
   // per-test set-up and tear-down
@@ -137,12 +145,14 @@ protected:
   static data_d_matrix* rhs_vector;
   static data_d_matrix* initialGuess_vector;
   static dataType* tolerance;
+  static int* block_size;
 };
 
 data_d_matrix* LinearSolverTest::A = NULL;
 data_d_matrix* LinearSolverTest::rhs_vector = NULL;
 data_d_matrix* LinearSolverTest::initialGuess_vector = NULL;
 dataType* LinearSolverTest::tolerance = NULL;
+int* LinearSolverTest::block_size = NULL;
 
 
 
@@ -151,6 +161,9 @@ dataType* LinearSolverTest::tolerance = NULL;
 
 
 #if 0
+// =========================================================================
+// MKL FGMRES no precondition  (Benchmark)
+// =========================================================================
 TEST_F(LinearSolverTest, MKLFGMRESnonPreconditioned) {
   printf("%% MKL FGMRES non-preconditioned\n");
 
@@ -162,8 +175,8 @@ TEST_F(LinearSolverTest, MKLFGMRESnonPreconditioned) {
 
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 20;
-  solverParam.restart_max = 20;
+  solverParam.search_max = 200;
+  solverParam.restart_max = 200;
   solverParam.reorth = 0;
   solverParam.precondition = 0;
   solverParam.parilu_reduction = 1.0e-15;
@@ -200,6 +213,9 @@ TEST_F(LinearSolverTest, MKLFGMRESnonPreconditioned) {
 
 
 #if 1
+// =========================================================================
+// MKL FGMRES precondition ILU0  (Benchmark)
+// =========================================================================
 TEST_F(LinearSolverTest, MKLFGMRESPreconditioned) {
   printf("%% MKL FGMRES preconditioned\n");
 
@@ -211,19 +227,19 @@ TEST_F(LinearSolverTest, MKLFGMRESPreconditioned) {
 
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 2000;
-  solverParam.restart_max = 2000;
+  solverParam.search_max = 200;
+  solverParam.restart_max = 200;
   solverParam.reorth = 0;
   solverParam.precondition = 1;
   solverParam.parilu_reduction = 1.0e-15;
   solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 0;
-
+DEV_CHECKPT
   // solve
   data_MKL_FGMRES( A, &solution_vector, rhs_vector, &solverParam );
+DEV_CHECKPT
 
   // print solver summary
-
 
   // caclulate residual
   dataType residual = 0.0;
@@ -232,9 +248,19 @@ TEST_F(LinearSolverTest, MKLFGMRESPreconditioned) {
 
   data_z_spmv( negone, A, &solution_vector, zero, &r );
   data_zaxpy( A->num_rows, one, rhs_vector->val, 1, r.val, 1);
+
+#if 0
+  for (int i=0; i<A->num_rows; i++) {
+    GMRESDBG("x.val[%d] = %.16e\n", i, solution_vector.val[i]);
+   printf("x.val[%d] = %.16e\n", i, solution_vector.val[i]);
+  }
+#endif
+  
+#if 0
   for (int i=0; i<A->num_rows; ++i) {
     GMRESDBG("r.val[%d] = %.16e\n", i, r.val[i]);
   }
+#endif
   residual = data_dnrm2( A->num_rows, r.val, 1 );
   printf("%% external check of rnorm2 = %.16e;\n\n", residual);
 
@@ -250,6 +276,9 @@ TEST_F(LinearSolverTest, MKLFGMRESPreconditioned) {
 
 
 #if 0
+// =========================================================================
+// MKL FGMRES_Restart precondition ILU0 
+// =========================================================================
 TEST_F(LinearSolverTest, MKLFGMRESPreconditionedRestart) {
   printf("%% MKL FGMRES preconditioned restarted\n");
 
@@ -261,7 +290,7 @@ TEST_F(LinearSolverTest, MKLFGMRESPreconditionedRestart) {
 
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 2000;
+  solverParam.search_max = 200;
   solverParam.restart_max = 20;
   solverParam.reorth = 0;
   solverParam.precondition = 1;
@@ -271,9 +300,6 @@ TEST_F(LinearSolverTest, MKLFGMRESPreconditionedRestart) {
 
   // solve
   data_MKL_FGMRES( A, &solution_vector, rhs_vector, &solverParam );
-
-  // print solver summary
-
 
   // caclulate residual
   dataType residual = 0.0;
@@ -294,131 +320,16 @@ TEST_F(LinearSolverTest, MKLFGMRESPreconditionedRestart) {
 
   data_zmfree( &solution_vector );
   data_zmfree( &r );
-
-}
-#endif
-
-#if 0
-TEST_F(LinearSolverTest, FGMRESPreconditioned) {
-  printf("%% FGMRES preconditioned ParILU\n");
-
-  // store initial guess in solution_vector
-  data_d_matrix solution_vector = {Magma_DENSE};
-  CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
-
-  data_z_gmres_param solverParam;
-  data_d_gmres_log gmresLog;
-
-  solverParam.tol_type = 0;
-  solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 2000;
-  solverParam.restart_max = 2000;
-  solverParam.reorth = 0;
-  solverParam.precondition = 1;
-  solverParam.parilu_reduction = 1.0e-15;
-  solverParam.monitorOrthog = 1;
-  solverParam.user_csrtrsv_choice = 0;
-
-  gmresLog.restarts = 0;
-
-  int maxthreads = 0;
-  int numprocs = 0;
-  #pragma omp parallel
-  {
-    maxthreads = omp_get_max_threads();
-    numprocs = omp_get_num_procs();
-  }
-
-  printf("maxthreads = %d numprocs = %d\n", maxthreads, numprocs );
-
-  // generate preconditioner
-  data_d_matrix L = {Magma_CSRL};
-  data_d_matrix U = {Magma_CSCU};
-  data_d_preconditioner_log parilu_log;
-
-  // PariLU is efficient when L is CSRL and U is CSCU
-  // data_PariLU_v0_3 is hard coded to expect L is CSRL and U is CSCU
-  data_PariLU_v0_3( A, &L, &U, solverParam.parilu_reduction, &parilu_log );
-  printf("PariLU_v0_3_sweeps = %d\n", parilu_log.sweeps );
-  printf("PariLU_v0_3_tol = %e\n", parilu_log.tol );
-  printf("PariLU_v0_3_A_Frobenius = %e\n", parilu_log.A_Frobenius );
-  printf("PariLU_v0_3_generation_time = %e\n", parilu_log.precond_generation_time );
-  printf("PariLU_v0_3_initial_residual = %e\n", parilu_log.initial_residual );
-  printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
-  printf("PariLU_v0_3_omp_num_threads = %d\n", parilu_log.omp_num_threads );
-
-  data_d_matrix Ucsr = {Magma_CSRU};
-  CHECK( data_zmconvert( U, &Ucsr, Magma_CSC, Magma_CSR ) );
-  Ucsr.storage_type = Magma_CSRU;
-  Ucsr.fill_mode = MagmaUpper;
-
-
-  printf("L:\n");
-  data_zprint(&L);
-
-  printf("\nUcsr:\n");
-  data_zprint(&Ucsr);
-
-
-
-  omp_set_num_threads(numprocs);
-  #pragma omp parallel
-  {
-    maxthreads = omp_get_max_threads();
-    numprocs = omp_get_num_procs();
-  }
-  printf("maxthreads = %d numprocs = %d\n", maxthreads, numprocs );
-  data_fgmres( A, rhs_vector, &solution_vector, &L, &Ucsr, &solverParam, &gmresLog );
-
-  for (int i=0; i<A->num_rows; i++) {
-    GMRESDBG("x.val[%d] = %.16e\n", i, x.val[i]);
-  }
-
-  data_d_matrix r={Magma_DENSE};
-  data_zvinit( &r, A->num_rows, 1, zero );
-  data_z_spmv( negone, A, &solution_vector, zero, &r );
-  data_zaxpy( A->num_rows, one, rhs_vector->val, 1, r.val, 1);
-  for (int i=0; i<A->num_rows; i++) {
-    GMRESDBG("r.val[%d] = %.16e\n", i, r.val[i]);
-  }
-  dataType residual = 0.0;
-  residual = data_dnrm2( A->num_rows, r.val, 1 );
-  printf("%% external check of rnorm2 = %.16e;\n\n", residual);
-
-  printf("gmres_search_directions = %d;\n", gmresLog.search_directions );
-  printf("gmres_solve_time = %e;\n", gmresLog.solve_time );
-  printf("gmres_initial_residual = %e;\n", gmresLog.initial_residual );
-  printf("gmres_final_residual = %e;\n", gmresLog.final_residual );
-
-  printf("\n\n");
-  printf("%% ################################################################################\n");
-  // printf("%% Matrix: %s\n%% \t%d -by- %d with %d non-zeros\n",
-  //   sparse_filename, A->num_rows, A->num_cols, A->nnz );
-  printf("%% Solver: FGMRES\n");
-  printf("%% \trestarts: %d\n", gmresLog.restarts );
-  printf("%% \tsearch directions: %d\n", gmresLog.search_directions );
-  printf("%% \tsolve time [s]: %e\n", gmresLog.solve_time );
-  printf("%% \tinitial residual: %e\n", gmresLog.initial_residual );
-  printf("%% \tfinal residual: %e\n", gmresLog.final_residual );
-  printf("%% ################################################################################\n");
-  printf("\n\n");
-  printf("%% Done.\n");
-  fflush(stdout);
-
-  EXPECT_LE( residual, (*LinearSolverTest::tolerance) );
-
-  data_zmfree( &solution_vector );
-  data_zmfree( &r );
-  data_zmfree( &L );
-  data_zmfree( &U );
-  data_zmfree( &Ucsr );
-
 }
 #endif
 
 
 
+
 #if 0
+// =========================================================================
+// FGMRES_Restart precondition ParILU v0.3  
+// =========================================================================
 TEST_F(LinearSolverTest, FGMRESPreconditionedRestart) {
   printf("%% FGMRES preconditioned restarted\n");
 
@@ -431,10 +342,10 @@ TEST_F(LinearSolverTest, FGMRESPreconditionedRestart) {
 
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 20;
+  solverParam.search_max = 200;
   solverParam.restart_max = 100;
   solverParam.reorth = 0;
-  solverParam.precondition = 1;
+  solverParam.precondition = 2;
   solverParam.parilu_reduction = 1.0e-15;
   solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 0;
@@ -481,6 +392,7 @@ TEST_F(LinearSolverTest, FGMRESPreconditionedRestart) {
   printf("maxthreads = %d numprocs = %d\n", maxthreads, numprocs );
   data_fgmres_restart( A, rhs_vector, &solution_vector, &L, &Ucsr, &solverParam, &gmresLog );
 
+  
   for (int i=0; i<A->num_rows; i++) {
     GMRESDBG("x.val[%d] = %.16e\n", i, x.val[i]);
   }
@@ -489,9 +401,11 @@ TEST_F(LinearSolverTest, FGMRESPreconditionedRestart) {
   data_zvinit( &r, A->num_rows, 1, zero );
   data_z_spmv( negone, A, &solution_vector, zero, &r );
   data_zaxpy( A->num_rows, one, rhs_vector->val, 1, r.val, 1);
+  
   for (int i=0; i<A->num_rows; i++) {
     GMRESDBG("r.val[%d] = %.16e\n", i, r.val[i]);
   }
+  
   dataType residual = 0.0;
   residual = data_dnrm2( A->num_rows, r.val, 1 );
   printf("%% external check of rnorm2 = %.16e;\n\n", residual);
@@ -523,13 +437,15 @@ TEST_F(LinearSolverTest, FGMRESPreconditionedRestart) {
   data_zmfree( &L );
   data_zmfree( &U );
   data_zmfree( &Ucsr );
-
 }
 #endif
 
 
 
 #if 0
+// =========================================================================
+// FGMRES_Householder precondition ParILU v0.3  
+// =========================================================================
 TEST_F(LinearSolverTest, FGMRESHouseholderPreconditioned) {
   printf("%% FGMRES Householder preconditioned\n");
 
@@ -542,10 +458,10 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditioned) {
 
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 2000;
+  solverParam.search_max = 200;
   solverParam.restart_max = 0;
   solverParam.reorth = 0;
-  solverParam.precondition = 1;
+  solverParam.precondition = 2;
   solverParam.parilu_reduction = 1.0e-15;
   solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 0;
@@ -634,7 +550,6 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditioned) {
   data_zmfree( &L );
   data_zmfree( &U );
   data_zmfree( &Ucsr );
-
 }
 #endif
 
@@ -642,6 +557,9 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditioned) {
 
 
 #if 0
+// =========================================================================
+// FGMRES_Householder_Restart precondition ParILU v0.3  
+// =========================================================================
 TEST_F(LinearSolverTest, FGMRESHouseholderPreconditionedRestart) {
   printf("%% FGMRES Householder preconditioned restarted\n");
 
@@ -654,10 +572,10 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditionedRestart) {
 
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 20;
-  solverParam.restart_max = 20;
+  solverParam.search_max = 200;
+  solverParam.restart_max = 200;
   solverParam.reorth = 0;
-  solverParam.precondition = 1;
+  solverParam.precondition = 2;
   solverParam.parilu_reduction = 1.0e-15;
   solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 0;
@@ -752,6 +670,9 @@ TEST_F(LinearSolverTest, FGMRESHouseholderPreconditionedRestart) {
 
 
 #if 0
+// =========================================================================
+// FGMRES (no preconditioner)
+// =========================================================================
 TEST_F(LinearSolverTest, FGMRESNoPrecondition) {
   printf("%% FGMRES No Preconditioner\n");
 
@@ -764,10 +685,10 @@ TEST_F(LinearSolverTest, FGMRESNoPrecondition) {
 
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 2000;
-  solverParam.restart_max = 2000;
+  solverParam.search_max = 200;
+  solverParam.restart_max = 200;
   solverParam.reorth = 0;
-  solverParam.precondition = 1;
+  solverParam.precondition = 0;
   solverParam.parilu_reduction = 1.0e-15;
   solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 2;
@@ -789,22 +710,6 @@ TEST_F(LinearSolverTest, FGMRESNoPrecondition) {
   data_d_matrix U = {Magma_CSCU};
   data_d_matrix Ucsr = {Magma_CSRU};
   data_d_preconditioner_log parilu_log;
-#if 0
-  // PariLU is efficient when L is CSRL and U is CSCU
-  // data_PariLU_v0_3 is hard coded to expect L is CSRL and U is CSCU
-  data_PariLU_v0_3( A, &L, &U, solverParam.parilu_reduction, &parilu_log );
-  printf("PariLU_v0_3_sweeps = %d\n", parilu_log.sweeps );
-  printf("PariLU_v0_3_tol = %e\n", parilu_log.tol );
-  printf("PariLU_v0_3_A_Frobenius = %e\n", parilu_log.A_Frobenius );
-  printf("PariLU_v0_3_generation_time = %e\n", parilu_log.precond_generation_time );
-  printf("PariLU_v0_3_initial_residual = %e\n", parilu_log.initial_residual );
-  printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
-  printf("PariLU_v0_3_omp_num_threads = %d\n", parilu_log.omp_num_threads );
-
-  CHECK( data_zmconvert( U, &Ucsr, Magma_CSC, Magma_CSR ) );
-  Ucsr.storage_type = Magma_CSRU;
-  Ucsr.fill_mode = MagmaUpper;
-#endif
 
   omp_set_num_threads(numprocs);
   #pragma omp parallel
@@ -857,12 +762,15 @@ TEST_F(LinearSolverTest, FGMRESNoPrecondition) {
   data_zmfree( &L );
   data_zmfree( &U );
   data_zmfree( &Ucsr );
-
 }
 #endif
 
 
+
 #if 1
+// =========================================================================
+// FGMRES precondition ParILU v0.3  
+// =========================================================================
 TEST_F(LinearSolverTest, FGMRESPrecondition) {
   printf("%% FGMRES pariluv03 Preconditioner\n");
 
@@ -875,10 +783,10 @@ TEST_F(LinearSolverTest, FGMRESPrecondition) {
 
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 2000;
-  solverParam.restart_max = 2000;
+  solverParam.search_max = 200;
+  solverParam.restart_max = 200;
   solverParam.reorth = 0;
-  solverParam.precondition = 1;
+  solverParam.precondition = 2;
   solverParam.parilu_reduction = 1.0e-15;
   solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 1;
@@ -895,19 +803,19 @@ TEST_F(LinearSolverTest, FGMRESPrecondition) {
   omp_set_num_threads(numprocs);
 
   printf("maxthreads = %d numprocs = %d\n", maxthreads, numprocs );
-
+  
   // generate preconditioner
   data_d_matrix L = {Magma_CSRL};
   data_d_matrix U = {Magma_CSCU};
-  //data_d_matrix U = {Magma_CSCR};
+  
   data_d_matrix Ucsr = {Magma_CSRU};
   data_d_preconditioner_log parilu_log;
-  if(solverParam.user_csrtrsv_choice != 2){//precondition
+  if(solverParam.precondition != 0){//precondition
 
     // PariLU is efficient when L is CSRL and U is CSCU
     // data_PariLU_v0_3 is hard coded to expect L is CSRL and U is CSCU
-
     data_PariLU_v0_3( A, &L, &U, solverParam.parilu_reduction, &parilu_log );
+
     printf("PariLU_v0_3_sweeps = %d\n", parilu_log.sweeps );
     printf("PariLU_v0_3_tol = %e\n", parilu_log.tol );
     printf("PariLU_v0_3_A_Frobenius = %e\n", parilu_log.A_Frobenius );
@@ -919,29 +827,37 @@ TEST_F(LinearSolverTest, FGMRESPrecondition) {
     CHECK( data_zmconvert( U, &Ucsr, Magma_CSC, Magma_CSR ) );
     Ucsr.storage_type = Magma_CSRU;
     Ucsr.fill_mode = MagmaUpper;
-
-    //printf("L:\n");
-    //data_zprint_csr(L);
+    
+#if 0
+    printf("L:\n");
+    data_zprint_csr(L);
 
     printf("\nUcsr:\n");
     data_zprint_csr(Ucsr);
+#endif
+    
   }//end precondition
-
 
   data_fgmres( A, rhs_vector, &solution_vector, &L, &Ucsr, &solverParam, &gmresLog );
 
+#if 0
   for (int i=0; i<A->num_rows; i++) {
     GMRESDBG("x.val[%d] = %.16e\n", i, solution_vector.val[i]);
+    printf("x.val[%d] = %.16e\n", i, solution_vector.val[i]);
   }
-
+#endif
+ 
   data_d_matrix r={Magma_DENSE};
   data_zvinit( &r, A->num_rows, 1, zero );
   data_z_spmv( negone, A, &solution_vector, zero, &r );
   data_zaxpy( A->num_rows, one, rhs_vector->val, 1, r.val, 1);
-
+  
+#if 0
   for (int i=0; i<A->num_rows; i++) {
     GMRESDBG("r.val[%d] = %.16e\n", i, r.val[i]);
   }
+#endif
+  
   dataType residual = 0.0;
   residual = data_dnrm2( A->num_rows, r.val, 1 );
   printf("%% external check of rnorm2 = %.16e;\n\n", residual);
@@ -973,7 +889,6 @@ TEST_F(LinearSolverTest, FGMRESPrecondition) {
   data_zmfree( &L );
   data_zmfree( &U );
   data_zmfree( &Ucsr );
-
 }
 #endif
 
@@ -981,11 +896,14 @@ TEST_F(LinearSolverTest, FGMRESPrecondition) {
 
 
 #if 0
+// =========================================================================
+// FGMRES BCSR (no preconditioner)
+// =========================================================================
 TEST_F(LinearSolverTest, FGMRESNoPreconditionBCSR) {
   printf("%% FGMRES BCSR No Preconditioner\n");
 
   data_d_matrix A_BCSR = {Magma_BCSR};
-  A_BCSR.blocksize = 2;
+  A_BCSR.blocksize= *block_size;
   data_zmconvert(*A, &A_BCSR, Magma_CSR, Magma_BCSR);
   sort_csr_rows(&A_BCSR);
   data_rowindex(&A_BCSR, &(A_BCSR.rowidx) );
@@ -996,16 +914,16 @@ TEST_F(LinearSolverTest, FGMRESNoPreconditionBCSR) {
   // store initial guess in solution_vector
   data_d_matrix solution_vector = {Magma_DENSE};
   CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
-DEV_CHECKPT
+
   data_z_gmres_param solverParam;
   data_d_gmres_log gmresLog;
 
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 2000;
-  solverParam.restart_max = 2000;
+  solverParam.search_max = 200;
+  solverParam.restart_max = 200;
   solverParam.reorth = 0;
-  solverParam.precondition = 1;
+  solverParam.precondition = 0;
   solverParam.parilu_reduction = 1.0e-15;
   solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 2;
@@ -1028,25 +946,7 @@ DEV_CHECKPT
   data_d_matrix U = {Magma_BCSCU};
   data_d_matrix Ucsr = {Magma_CSRU};
   data_d_preconditioner_log parilu_log;
-  if(solverParam.user_csrtrsv_choice != 2){//precondition
-
-    // PariLU is efficient when L is CSRL and U is CSCU
-    // data_PariLU_v0_3 is hard coded to expect L is CSRL and U is CSCU
-    data_PariLU_v0_3( &A_BCSR, &L, &U, solverParam.parilu_reduction, &parilu_log );
-    printf("PariLU_v0_3_sweeps = %d\n", parilu_log.sweeps );
-    printf("PariLU_v0_3_tol = %e\n", parilu_log.tol );
-    printf("PariLU_v0_3_A_Frobenius = %e\n", parilu_log.A_Frobenius );
-    printf("PariLU_v0_3_generation_time = %e\n", parilu_log.precond_generation_time );
-    printf("PariLU_v0_3_initial_residual = %e\n", parilu_log.initial_residual );
-    printf("PariLU_v0_3_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
-    printf("PariLU_v0_3_omp_num_threads = %d\n", parilu_log.omp_num_threads );
-
-    CHECK( data_zmconvert( U, &Ucsr, Magma_BCSC, Magma_BCSR ) );
-    Ucsr.storage_type = Magma_CSRU;
-    Ucsr.fill_mode = MagmaUpper;
-  }//end precondition
-
-
+  
   data_fgmres_bcsr( &A_BCSR, rhs_vector, &solution_vector, &L, &Ucsr, &solverParam, &gmresLog );
 
   for (int i=0; i<A->num_rows; i++) {
@@ -1092,29 +992,31 @@ DEV_CHECKPT
   data_zmfree( &L );
   data_zmfree( &U );
   data_zmfree( &Ucsr );
-DEV_CHECKPT
-
 }
 #endif
 
 
 
 
-#if 1
+#if 0
+// =========================================================================
+// FGMRES BCSR  precondition ParILU v0.3 
+// =========================================================================
 TEST_F(LinearSolverTest, FGMRES_BCSR_PreconditionParILU) {
   printf("%% FGMRES BCSR ParILU v03 Preconditioner\n");
-DEV_CHECKPT
 
   //convert input matrix to block sparse format
   data_d_matrix A_BCSR = {Magma_BCSR};
-  A_BCSR.blocksize = 2;
+  A_BCSR.blocksize= *block_size;
   data_zmconvert((*A), &A_BCSR, Magma_CSR, Magma_BCSR);
   sort_csr_rows(&A_BCSR);
   data_rowindex(&A_BCSR, &(A_BCSR.rowidx) );
   
-  //printf("A_BCSR:\n");
-  //data_zprint_bcsr(&A_BCSR);
-
+#if 0
+  printf("A_BCSR:\n");
+  data_zprint_bcsr(&A_BCSR);
+#endif
+  
   // store initial guess in solution_vector
   data_d_matrix solution_vector = {Magma_DENSE};
   CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
@@ -1124,10 +1026,10 @@ DEV_CHECKPT
 
   solverParam.tol_type = 0;
   solverParam.rtol = (*LinearSolverTest::tolerance);
-  solverParam.search_max = 2000;
-  solverParam.restart_max = 2000;
+  solverParam.search_max = 200;
+  solverParam.restart_max = 200;
   solverParam.reorth = 0;
-  solverParam.precondition = 1;
+  solverParam.precondition = 2;
   solverParam.parilu_reduction = 1.0e-20;
   solverParam.monitorOrthog = 1;
   solverParam.user_csrtrsv_choice = 1;//triangular solve option
@@ -1152,15 +1054,13 @@ DEV_CHECKPT
   data_d_matrix U = {Magma_BCSCU};//for parilu
   data_d_matrix Ucsr = {Magma_BCSRU};//for gmres
 
-  if(solverParam.user_csrtrsv_choice != 2){//precondition
+  if(solverParam.precondition != 0){//precondition
 
     // PariLU is efficient when L is CSRL and U is CSCU
     // data_PariLU_v0_3 is hard coded to expect L is CSRL and U is CSCU
     data_PariLU_v0_3_bcsr( &A_BCSR, &L, &U, solverParam.parilu_reduction, &parilu_log );
-
-
-
-    //printf("PariLU_v0_3_bcsr_omp_num_threads = %d\n", parilu_log.omp_num_threads );
+  
+    printf("PariLU_v0_3_bcsr_omp_num_threads = %d\n", parilu_log.omp_num_threads );
     printf("PariLU_v0_3_sweeps = %d\n", parilu_log.sweeps );
     printf("PariLU_v0_3_tol = %e\n", parilu_log.tol );
     printf("PariLU_v0_3_A_Frobenius = %e\n", parilu_log.A_Frobenius );
@@ -1172,29 +1072,174 @@ DEV_CHECKPT
     CHECK( data_zmconvert( U, &Ucsr, Magma_BCSC, Magma_BCSR ) );
     Ucsr.storage_type = Magma_BCSRU;
     Ucsr.fill_mode = MagmaUpper;
-
+    
+#if 0
     printf("L:\n");
     data_zprint_bcsr(&L);
 
-    printf("\nUbsr:\n");
+    printf("\nUbcsr:\n");
     data_zprint_bcsr(&Ucsr);
+#endif
   }//end precondition
 
 
   data_fgmres_bcsr( &A_BCSR, rhs_vector, &solution_vector, &L, &Ucsr, &solverParam, &gmresLog );
-
+ 
+  data_d_matrix r={Magma_DENSE};
+  data_zvinit( &r, A->num_rows, 1, zero );
+  data_z_spmv( negone, &A_BCSR, &solution_vector, zero, &r );
+  data_zaxpy( A->num_rows, one, rhs_vector->val, 1, r.val, 1);
+  
+#if 0
   for (int i=0; i<A->num_rows; i++) {
-    GMRESDBG("x.val[%d] = %.16e\n", i, solution_vector.val[i]);
+    GMRESDBG("r.val[%d] = %.16e\n", i, r.val[i]);
+  }
+#endif
+  
+  dataType residual = 0.0;
+  residual = data_dnrm2( A->num_rows, r.val, 1 );
+  printf("%% external check of rnorm2 = %.16e;\n\n", residual);
+
+  
+  printf("gmres_search_directions = %d;\n", gmresLog.search_directions );
+  printf("gmres_solve_time = %e;\n", gmresLog.solve_time );
+  printf("gmres_initial_residual = %e;\n", gmresLog.initial_residual );
+  printf("gmres_final_residual = %e;\n", gmresLog.final_residual );
+
+  printf("\n\n");
+  printf("%% ################################################################################\n");
+  // printf("%% Matrix: %s\n%% \t%d -by- %d with %d non-zeros\n",
+  //   sparse_filename, A->num_rows, A->num_cols, A->nnz );
+  printf("%% Solver: FGMRES\n");
+  printf("%% \trestarts: %d\n", gmresLog.restarts );
+  printf("%% \tsearch directions: %d\n", gmresLog.search_directions );
+  printf("%% \tsolve time [s]: %e\n", gmresLog.solve_time );
+  printf("%% \tinitial residual: %e\n", gmresLog.initial_residual );
+  printf("%% \tfinal residual: %e\n", gmresLog.final_residual );
+  printf("%% ################################################################################\n");
+  printf("\n\n");
+  printf("%% Done.\n");
+  fflush(stdout);
+
+  EXPECT_LE( residual, (*LinearSolverTest::tolerance) );
+
+  data_zmfree( &solution_vector );
+  data_zmfree( &r );
+  data_zmfree( &L );
+  data_zmfree( &U );
+  data_zmfree( &Ucsr );
+
+}
+#endif
+
+
+
+#if 1
+// =========================================================================
+// FGMRES BCSR  precondition ILU0 
+// =========================================================================
+TEST_F(LinearSolverTest, FGMRES_BCSR_PreconditionILU0) {
+  printf("%% FGMRES BCSR Blk_ILU0 Preconditioner\n");
+
+  //convert input matrix to block sparse format
+  data_d_matrix A_BCSR = {Magma_BCSR};
+  A_BCSR.blocksize= *block_size;
+  data_zmconvert((*A), &A_BCSR, Magma_CSR, Magma_BCSR);
+  sort_csr_rows(&A_BCSR);
+  data_rowindex(&A_BCSR, &(A_BCSR.rowidx) );
+  
+#if 0
+  printf("A_BCSR:\n");
+  data_zprint_bcsr(&A_BCSR);
+#endif
+  
+  // store initial guess in solution_vector
+  data_d_matrix solution_vector = {Magma_DENSE};
+  CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
+
+  data_z_gmres_param solverParam;
+  data_d_gmres_log gmresLog;
+
+  solverParam.tol_type = 0;
+  solverParam.rtol = (*LinearSolverTest::tolerance);
+  solverParam.search_max = 200;
+  solverParam.restart_max = 200;
+  solverParam.reorth = 0;
+  solverParam.precondition = 2;
+  solverParam.parilu_reduction = 1.0e-20;
+  solverParam.monitorOrthog = 1;
+  solverParam.user_csrtrsv_choice = 1;//triangular solve option
+
+  gmresLog.restarts = 0;
+
+  int maxthreads = 0;
+  int numprocs = 0;
+  #pragma omp parallel
+  {
+    maxthreads = omp_get_max_threads();
+    numprocs = omp_get_num_procs();
   }
 
+  data_d_preconditioner_log parilu_log;
+
+  printf("PariLU_v0_3_bcsr_omp_num_threads = %d\n", parilu_log.omp_num_threads );
+  printf("maxthreads = %d numprocs = %d\n", maxthreads, numprocs );
+
+  // generate preconditioner
+  data_d_matrix L = {Magma_BCSRL};
+  data_d_matrix U = {Magma_BCSCU};//for parilu
+  data_d_matrix Ucsr = {Magma_BCSRU};//for gmres
+
+  if(solverParam.precondition != 0){//precondition
+    data_ILU0_bcsr_v1_0( &A_BCSR, &L, &U, solverParam.parilu_reduction, &parilu_log );
+
+#if 0
+    printf("L:\n");
+    data_zprint_bcsr(&L);
+    printf("\nUbsr:\n");
+    data_zprint_bcsr(&U);
+#endif
+
+    printf("ILU0_bcsr_v1_0_omp_num_threads = %d\n", parilu_log.omp_num_threads ); 
+    printf("PariLU_v0_3_bcsr_omp_num_threads = %d\n", parilu_log.omp_num_threads );
+    printf("ILU0_bcsr_v1_0_A_Frobenius = %e\n", parilu_log.A_Frobenius );
+    printf("ILU0_bcsr_v1_0_generation_time = %e\n", parilu_log.precond_generation_time );
+    printf("ILU0_bcsr_v1_0_initial_residual = %e\n", parilu_log.initial_residual );
+    printf("ILU0_bcsr_v1_0_initial_nonlinear_residual = %e\n", parilu_log.initial_nonlinear_residual );
+
+    //copy to Ucsr
+    CHECK( data_zmconvert( U, &Ucsr, Magma_BCSR, Magma_BCSR ) );
+    Ucsr.storage_type = Magma_BCSRU;
+    Ucsr.fill_mode = MagmaUpper;
+    
+#if 0
+    printf("L:\n");
+    data_zprint_bcsr(&L);
+    printf("\nUbcsr:\n");
+    data_zprint_bcsr(&Ucsr);
+#endif
+  }//end precondition
+  
+  data_fgmres_bcsr( &A_BCSR, rhs_vector, &solution_vector, &L, &Ucsr, &solverParam, &gmresLog );
+
+#if 0
+  for (int i=0; i<A->num_rows; i++) {
+    GMRESDBG("x.val[%d] = %.16e\n", i, solution_vector.val[i]);
+   printf("x.val[%d] = %.16e\n", i, solution_vector.val[i]);
+  }
+#endif
+ 
   data_d_matrix r={Magma_DENSE};
   data_zvinit( &r, A->num_rows, 1, zero );
   data_z_spmv( negone, &A_BCSR, &solution_vector, zero, &r );
   data_zaxpy( A->num_rows, one, rhs_vector->val, 1, r.val, 1);
 
+#if 0
   for (int i=0; i<A->num_rows; i++) {
     GMRESDBG("r.val[%d] = %.16e\n", i, r.val[i]);
   }
+#endif
+  
   dataType residual = 0.0;
   residual = data_dnrm2( A->num_rows, r.val, 1 );
   printf("%% external check of rnorm2 = %.16e;\n\n", residual);
@@ -1225,7 +1270,6 @@ DEV_CHECKPT
   data_zmfree( &r );
   data_zmfree( &L );
   data_zmfree( &U );
-  //data_zmfree( &Ucsr );
-
+  data_zmfree( &Ucsr );
 }
 #endif

@@ -891,6 +891,15 @@ data_PariLU_v4_0(
   data_d_matrix* L,
   data_d_matrix* U );
 
+  
+void
+data_ILU0_bcsr_v1_0(
+  data_d_matrix* A,
+  data_d_matrix* L,
+  data_d_matrix* U,
+  dataType reduction,
+  data_d_preconditioner_log* log );
+  
 //======================================
 // Tri-solves
 //======================================

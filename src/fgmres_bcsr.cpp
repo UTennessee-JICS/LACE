@@ -57,7 +57,7 @@
 
     @ingroup datasparse_linsolvers
     ********************************************************************/
-
+#define USE_OMP 1
 
 extern "C"
 int
@@ -93,48 +93,47 @@ data_fgmres_bcsr(
     data_d_matrix LU = {Magma_BCSR};
     int* ia=NULL;
     int* ja=NULL;
+    
     #pragma omp parallel
     {
       maxThreads = omp_get_max_threads();
       chunk = n/maxThreads;
-      //chunk = A->num_rows/maxThreads;
     }
 
-
-//ceb combining LU is only necessary for (gmres_par->user_csrtrsv_choice == 0)
-//where we use mkl_dbsrtrsv
-    //if ( gmres_par->user_csrtrsv_choice != 2 ) {//preconditioning
-    if ( gmres_par->user_csrtrsv_choice == 0 ) {//preconditioning
-
+    //ceb combining LU is only necessary for (gmres_par->user_csrtrsv_choice == 0)
+    // where we use mkl_dbsrtrsv.
+    if ( gmres_par->precondition == 1 ) {//mkl preconditioning
       data_zmlumerge( *L, *U, &LU );
-
       LACE_CALLOC( ia, (LU.num_rows+1) );
       LACE_CALLOC( ja, LU.nnz );
-
+#if USE_OMP
       #pragma omp parallel
+#endif
       {
-        //maxThreads = omp_get_max_threads();
-        //chunk = n/maxThreads;
-
-        #pragma omp for simd schedule(static,chunk) nowait
+        maxThreads = omp_get_max_threads();
+        chunk = n/maxThreads;
+#if USE_OMP
+        //#pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for simd nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
+#endif
         for (int i=0; i<LU.num_rows+1; i++) {
           ia[i] = LU.row[i] + 1;
         }
-
-        #pragma omp for simd schedule(static,chunk) nowait
+#if USE_OMP
+        //#pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for simd nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
+#endif
         for (int i=0; i<LU.nnz; i++) {
           ja[i] = LU.col[i] + 1;
         }
       }
     }//end preconditioning setup
-
-
 
 
     data_d_matrix tmp={Magma_DENSE};
@@ -191,35 +190,9 @@ data_fgmres_bcsr(
     alpha.major = MagmaColMajor;
 
     // initial residual
-
-//ceb make block version
-#if 1
     data_z_spmv( negone, A, &x, zero, &r );
-#else
-      #pragma omp parallel
-      #pragma omp for simd schedule(static,chunk) nowait
-      #pragma vector aligned
-      #pragma vector vecremainder
-      #pragma nounroll_and_jam
-      //for ( int i=0; i<n; i++ ) {//loop over rows
-      for ( int i=0; i<A->num_rows; i++ ) {//loop over rows
-         for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {//loop over cols
-             //u.val[i] = u.val[i] + A->val[j]*Minvvj.val[idx(A->col[j],search,krylov.ld)];
-	     //block matrix vector multiply
-             for(int ii=0; ii<A->blocksize; ++ii){
-	        for(int jj=0;jj<A->blocksize;++jj){
-	 	  r.val[i*A->blocksize+ii] = r.val[i*A->blocksize+ii] + 
-		        -A->val[j*A->ldblock+ii*A->blocksize+jj] *
-		        x.val[A->col[j]*A->blocksize+jj];}
-            }
-         }
-      }
-#endif    
-
     data_zaxpy( n, one, b->val, 1, r.val, 1);
-
     rnorm2 = data_dnrm2( n, r.val, 1 );
-
     printf("rnorm2 = %e; tol = %e; rtol = %e;\n", rnorm2, rtol, rtol*rnorm2 );
     if ( gmres_par->tol_type == 1 ) {
       rtol = rtol*rnorm2;
@@ -230,11 +203,14 @@ data_fgmres_bcsr(
     }
 
     // fill first column of Kylov subspace for Arnoldi iteration
+#if USE_OMP
     #pragma omp parallel
-    #pragma omp for simd schedule(static,chunk) nowait
+    //#pragma omp for simd schedule(static,chunk) nowait
+    #pragma omp for simd nowait
     #pragma vector aligned
     #pragma vector vecremainder
     #pragma nounroll_and_jam
+#endif
     for ( int i=0; i<n; i++ ) {
       krylov.val[idx(i,0,krylov.ld)] = r.val[i]/rnorm2;
     }
@@ -256,72 +232,64 @@ data_fgmres_bcsr(
       for ( int i=0; i<krylov.ld; i++ ) {
         GMRESDBG("\tkrylov.val[idx(%d,%d,%d)] = %e\n", i, search, krylov.ld, krylov.val[idx(i,search,krylov.ld)]);
       }
+      
+      //if ( gmres_par->user_csrtrsv_choice == 1 ) {
+      if ( gmres_par->precondition == 1 ) {
 
-      if ( gmres_par->user_csrtrsv_choice == 0 ) {
         // Apply preconditioner to krylov.val[idx(A->col[j],search,krylov.ld)]
-
         cvar1='L';
         cvar='N';
         cvar2='U';
-	//need  block version
-        //mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
-	//&(krylov.val[idx(0,search,krylov.ld)]), tmp.val );
-	//printf("LU.blocksize=%d\n",LU.blocksize);
-        mkl_dbsrtrsv( &cvar1, &cvar, &cvar2, &n, &(LU.blocksize), LU.val, ia, ja,
-          &(krylov.val[idx(0,search,krylov.ld)]), tmp.val );
+	mkl_dbsrtrsv( &cvar1, &cvar, &cvar2, &n, &(LU.blocksize), LU.val, ia, ja,
+		      &(krylov.val[idx(0,search,krylov.ld)]), tmp.val );
 
         cvar1='U';
         cvar='N';
         cvar2='N';
-	//need block version
-        //mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
-        //  tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]) );
-        mkl_dbsrtrsv( &cvar1, &cvar, &cvar2, &n, &(LU.blocksize), LU.val, ia, ja,
-          tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]) );
+	mkl_dbsrtrsv( &cvar1, &cvar, &cvar2, &n, &(LU.blocksize), LU.val, ia, ja,
+		      tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]) );
+      }
+      else if ( gmres_par->precondition == 2 ) {//LU preconditioning
 
+	data_parbsrtrsv( MagmaLower, L->storage_type, L->diagorder_type,
+			   L->num_rows, L->blocksize, L->val, L->row, L->col,
+			   &(krylov.val[idx(0,search,krylov.ld)]), tmp.val,
+			   ptrsv_tol, &ptrsv_iter );
+        //printf("ParBSRTRSV_L(%d) = %d;\n", search1, ptrsv_iter);
+	
+	data_parbsrtrsv( MagmaUpper, U->storage_type, U->diagorder_type,
+			   U->num_rows, U->blocksize, U->val, U->row, U->col,
+			   tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]),
+			   ptrsv_tol, &ptrsv_iter );
+        //printf("ParBSRTRSV_U(%d) = %d;\n", search1, ptrsv_iter);
       }
-      else if ( gmres_par->user_csrtrsv_choice == 1 ) {
-DEV_CHECKPT
-        data_parbsrtrsv( MagmaLower, L->storage_type, L->diagorder_type,
-			 L->num_rows, L->blocksize, L->val, L->row, L->col,
-			 &(krylov.val[idx(0,search,krylov.ld)]), tmp.val,
-			 ptrsv_tol, &ptrsv_iter );
-        printf("ParBSRTRSV_L(%d) = %d;\n", search1, ptrsv_iter);
-DEV_CHECKPT
-        data_parbsrtrsv( MagmaUpper, U->storage_type, U->diagorder_type,
-			 U->num_rows, U->blocksize, U->val, U->row, U->col,
-			 tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]),
-			 ptrsv_tol, &ptrsv_iter );
-        printf("ParBSRTRSV_U(%d) = %d;\n", search1, ptrsv_iter);
-DEV_CHECKPT
-      }
-      else if ( gmres_par->user_csrtrsv_choice == 2 ) {//no preconditioning
+      else {//no preconditioning
         for ( int i=0; i<Minvvj.ld; i++ ) {
           Minvvj.val[idx(i,search,Minvvj.ld)] = krylov.val[idx(i,search,krylov.ld)];
         }
       }
 
       for ( int i=0; i<Minvvj.ld; i++ ) {
-        GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n",
-          i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
+        GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n", i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
       }
 
-
-#if 0
       //mkl_dcsrmv( "N", &A->num_rows, &A->num_cols,
       //                  &one, "GFNC", A->val,
       //                  A->col, A->row, A->row+1,
       //                  &(krylov.val[idx(0,search,krylov.ld)]), &zero,
       //                  u.val );
-#else
+
+#if USE_OMP
       #pragma omp parallel
-      #pragma omp for simd schedule(static,chunk) nowait
+      //#pragma omp for simd schedule(static,chunk) nowait
+      #pragma omp for simd nowait
       #pragma vector aligned
       #pragma vector vecremainder
       #pragma nounroll_and_jam
+#endif
       for ( int i=0; i<A->num_rows; i++ ) {//loop over rows
-
          for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {//loop over cols
+	   
              //u.val[i] = u.val[i] + A->val[j]*Minvvj.val[idx(A->col[j],search,krylov.ld)];
 	     //block matrix vector multiply
              for(int ii=0; ii<A->blocksize; ++ii){
@@ -334,56 +302,57 @@ DEV_CHECKPT
             }
          }
       }
-#endif
 
       normav = data_dnrm2( n, u.val, 1 );
       for ( int i=0; i<u.ld; i++ ) {
         GMRESDBG("u.val[%d] = %e\n", i, u.val[i]);
       }
+
       for ( int j=0; j <= search; j++ ) {
         for ( int i=0; i<krylov.ld; i++ ) {
           GMRESDBG("krylov.val[idx(%d,%d,%d)] = %e\n", i, j, krylov.ld, krylov.val[idx(i,j,krylov.ld)]);
         }
       }
 
+
       // Modified Gram-Schmidt
       for ( int j=0; j <= search; j++ ) {
         //h.val[idx(j,search,h.ld)] = 0.0;
         dataType tmp = 0.0;
-
+#if USE_OMP
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) reduction(+:tmp) nowait
+        //#pragma omp for simd schedule(static,chunk) reduction(+:tmp) nowait
+        #pragma omp for simd reduction(+:tmp) nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
+#endif
         for ( int i=0; i<n; i++ ) {
           //  h.val[idx(j,search,h.ld)] = h.val[idx(j,search,h.ld)] +
           //    krylov.val[idx(i,j,krylov.ld)]*u.val[i];
           tmp = tmp +
             krylov.val[idx(i,j,krylov.ld)]*u.val[i];
         }
-
         h.val[idx(j,search,h.ld)] = tmp;
-
+#if USE_OMP
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
+        //#pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for simd nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
+#endif
         for ( int i=0; i<n; i++ ) {
-
           u.val[i] = u.val[i]
             - h.val[idx(j,search,h.ld)]*krylov.val[idx(i,j,krylov.ld)];
-
           GMRESDBG("\tu.val[%d] = %e\n", i, u.val[i]);
         }
       }
-
       h.val[idx((search1),search,h.ld)] = data_dnrm2( n, u.val, 1 );
       normav2 = h.val[idx((search1),search,h.ld)];
 
-      GMRESDBG("h.val[idx(search,search,h.ld)] =%e\n", h.val[idx(search,search,h.ld)]);
-      GMRESDBG("h.val[idx((search1),search,h.ld)] =%e\n", h.val[idx((search1),search,h.ld)]);
+      //GMRESDBG("h.val[idx(search,search,h.ld)] =%e\n", h.val[idx(search,search,h.ld)]);
+      //GMRESDBG("h.val[idx((search1),search,h.ld)] =%e\n", h.val[idx((search1),search,h.ld)]);
 
       // Reorthogonalize?
       hr = (normav + 0.001*normav2) - normav;
@@ -391,22 +360,26 @@ DEV_CHECKPT
         printf("Reorthogonalize(%d) = 1;\n", search);
         for ( int j=0; j <= search; j++ ) {
           hr = 0.0;
-
+#if USE_OMP
           #pragma omp parallel
-          #pragma omp for simd schedule(static,chunk) nowait
+          //#pragma omp for simd schedule(static,chunk) nowait
+          #pragma omp for simd nowait
           #pragma vector aligned
           #pragma vector vecremainder
           #pragma nounroll_and_jam
+#endif
           for ( int i=0; i<n; i++ ) {
             hr = hr + krylov.val[idx(i,j,krylov.ld)]*u.val[i];
           }
           h.val[idx(j,search,h.ld)] = h.val[idx(j,search,h.ld)] + hr;
-
+#if USE_OMP
           #pragma omp parallel
-          #pragma omp for simd schedule(static,chunk) nowait
+          //#pragma omp for simd schedule(static,chunk) nowait
+          #pragma omp for simd nowait
           #pragma vector aligned
           #pragma vector vecremainder
           #pragma nounroll_and_jam
+#endif
           for ( int i=0; i<n; i++ ) {
             u.val[i] = u.val[i] - hr*krylov.val[idx(i,j,krylov.ld)];
           }
@@ -416,16 +389,17 @@ DEV_CHECKPT
 
       // Watch out for happy breakdown
       if ( fabs(h.val[idx((search1),search,h.ld)]) > std::numeric_limits<double>::epsilon() ) {
-
+#if USE_OMP
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
+        //#pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for simd nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
+#endif
          for ( int i=0; i<n; i++ ) {
           krylov.val[idx(i,(search1),krylov.ld)] =
             u.val[i]/h.val[idx((search1),search,h.ld)];
-
           GMRESDBG("--\tu.val[%d] = %e\n", i, u.val[i]);
           GMRESDBG("--\tkrylov.val[idx(%d,%d,%d)] = %e\n", i,(search1),krylov.ld, krylov.val[idx(i,(search1),krylov.ld)]);
         }
@@ -457,7 +431,6 @@ DEV_CHECKPT
           printf("FGMRES_partrsv_ortherr_inc(%d) = %.16e;\n", search1, ortherr);
         }
         */
-
       }
 
       // Givens rotations
@@ -475,6 +448,7 @@ DEV_CHECKPT
         h.val[idx(search,search,h.ld)]*h.val[idx(search,search,h.ld)] +
         h.val[idx((search1),search,h.ld)]*h.val[idx((search1),search,h.ld)] );
       GMRESDBG("gamma = %e\n", gamma);
+      
       if ( gamma > 0.0 ) {
         givens_cos.val[search] = h.val[idx(search,search,h.ld)]/gamma;
         givens_sin.val[search] = -h.val[idx((search1),search,h.ld)]/gamma;
@@ -491,7 +465,8 @@ DEV_CHECKPT
         givens.val[(search1)] =
           givens_sin.val[search]*delta + givens_cos.val[search]*givens.val[(search1)];
       }
-#if 1
+
+#if 0
       for ( int j=0; j <search_max; j++ ) {
         for ( int i=0; i<h.ld; i++ ) {
           GMRESDBG("h.val[idx(%d,%d,%d)] = %e\n", i, j, h.ld, h.val[idx(i,j,h.ld)]);
@@ -522,7 +497,6 @@ DEV_CHECKPT
       // solve the least squares problem
       //if ( fabs(givens.val[(search1)]) < rtol  || (search == (search_max-1)) || std::isfinite(givens.val[(search1)]) == 0 ) {
       if ( fabs(givens.val[(search1)]) < rtol  || (search == (search_max-1)) || isfinite(givens.val[(search1)]) == 0 ) {
-
         GMRESDBG("%s"," !!!!!!! update the solution !!!!!!!\n");
         for ( int i = 0; i <= search; i++ ) {
           alpha.val[i] = givens.val[i]/h.val[idx(i,i,h.ld)];
@@ -536,24 +510,28 @@ DEV_CHECKPT
         }
 
         // use preconditioned vectors to form the update (GEMV)
-
+#if USE_OMP
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
+        //#pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for simd nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
+#endif
         for (int i = 0; i < n; i++ ) {
           for (int j = 0; j <= search; j++ ) {
             //z.val[i] = z.val[i] + krylov.val[idx(i,j,krylov.ld)]*alpha.val[j];
             z.val[i] = z.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*alpha.val[j];
           }
         }
-
+#if USE_OMP
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
+        //#pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for simd nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
+#endif
         for (int i = 0; i < n; i++ ) {
           x.val[i] = x.val[i] + z.val[i];
         }
@@ -564,13 +542,11 @@ DEV_CHECKPT
         gmres_log->final_residual = fabs(givens.val[(search1)]);
 
         break;
-      }
-
-    
+      }    
 
        for ( int i=0; i<Minvvj.ld; i++ ) {
          GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n",
-         i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
+         i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);	 
        }
     }
 

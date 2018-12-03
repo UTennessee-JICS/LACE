@@ -58,6 +58,7 @@
     @ingroup datasparse_linsolvers
     ********************************************************************/
 
+#define USE_OMP 1
 
 extern "C"
 int
@@ -94,24 +95,24 @@ data_fgmres(
     data_d_matrix LU = {Magma_CSR};
     int* ia=NULL;
     int* ja=NULL;
-    #pragma omp parallel
+ 
+   #pragma omp parallel
     {
       maxThreads = omp_get_max_threads();
       chunk = n/maxThreads;
     }
 
-    if ( gmres_par->user_csrtrsv_choice != 2 ) {//preconditioning
-
+    if ( gmres_par->precondition == 1 ) {//preconditioning
       data_zmlumerge( *L, *U, &LU );
-
       LACE_CALLOC( ia, (LU.num_rows+1) );
       LACE_CALLOC( ja, LU.nnz );
-
+#if USE_OMP
       #pragma omp parallel
+#endif
       {
-        //maxThreads = omp_get_max_threads();
-        //chunk = n/maxThreads;
-#if 1
+        maxThreads = omp_get_max_threads();
+        chunk = n/maxThreads;
+#if USE_OMP
         #pragma omp for simd schedule(static,chunk) nowait
         #pragma vector aligned
         #pragma vector vecremainder
@@ -120,7 +121,7 @@ data_fgmres(
         for (int i=0; i<LU.num_rows+1; i++) {
           ia[i] = LU.row[i] + 1;
         }
-#if 1
+#if USE_OMP
         #pragma omp for simd schedule(static,chunk) nowait
         #pragma vector aligned
         #pragma vector vecremainder
@@ -132,7 +133,7 @@ data_fgmres(
       }
     }//end preconditioning setup
 
-
+    
     data_d_matrix tmp={Magma_DENSE};
     data_zvinit( &tmp, n, 1, zero );
 
@@ -200,9 +201,10 @@ data_fgmres(
     }
 
     // fill first column of Kylov subspace for Arnoldi iteration
-#if 1
+#if USE_OMP
     #pragma omp parallel
-    #pragma omp for simd schedule(static,chunk) nowait
+    //#pragma omp for simd schedule(static,chunk) nowait
+    #pragma omp for simd nowait
     #pragma vector aligned
     #pragma vector vecremainder
     #pragma nounroll_and_jam
@@ -211,7 +213,6 @@ data_fgmres(
       krylov.val[idx(i,0,krylov.ld)] = r.val[i]/rnorm2;
     }
     givens.val[0] = rnorm2;
-
 
     gmres_log->search_directions = search_directions;
     gmres_log->solve_time = 0.0;
@@ -230,65 +231,62 @@ data_fgmres(
         GMRESDBG("\tkrylov.val[idx(%d,%d,%d)] = %e\n", i, search, krylov.ld, krylov.val[idx(i,search,krylov.ld)]);
       }
 
-      if ( gmres_par->user_csrtrsv_choice == 0 ) {
+      if ( gmres_par->precondition == 1 ) {
         // Apply preconditioner to krylov.val[idx(A->col[j],search,krylov.ld)]
         cvar1='L';
         cvar='N';
         cvar2='U';
         mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
           &(krylov.val[idx(0,search,krylov.ld)]), tmp.val );
+
         cvar1='U';
         cvar='N';
         cvar2='N';
         mkl_dcsrtrsv( &cvar1, &cvar, &cvar2, &n, LU.val, ia, ja,
           tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]) );
       }
-      else if ( gmres_par->user_csrtrsv_choice == 1 ) {
+      else if ( gmres_par->precondition == 2 ) {
+	
         data_parcsrtrsv( MagmaLower, L->storage_type, L->diagorder_type,
           L->num_rows, L->val, L->row, L->col,
           &(krylov.val[idx(0,search,krylov.ld)]), tmp.val,
           ptrsv_tol, &ptrsv_iter );
-        printf("ParCSRTRSV_L(%d) = %d;\n", search1, ptrsv_iter);
+ 	  //printf("ParCSRTRSV_L(%d) = %d;\n", search1, ptrsv_iter);
 
-        data_parcsrtrsv( MagmaUpper, U->storage_type, U->diagorder_type,
+	  data_parcsrtrsv( MagmaUpper, U->storage_type, U->diagorder_type,
           U->num_rows, U->val, U->row, U->col,
           tmp.val, &(Minvvj.val[idx(0,search,krylov.ld)]),
           ptrsv_tol, &ptrsv_iter );
-        printf("ParCSRTRSV_U(%d) = %d;\n", search1, ptrsv_iter);
-      }
-      else if ( gmres_par->user_csrtrsv_choice == 2 ) {//no preconditioning
+          //printf("ParCSRTRSV_U(%d) = %d;\n", search1, ptrsv_iter);
+	  
+     }
+      else {//no preconditioning
         for ( int i=0; i<Minvvj.ld; i++ ) {
           Minvvj.val[idx(i,search,Minvvj.ld)] = krylov.val[idx(i,search,krylov.ld)];
         }
       }
 
       for ( int i=0; i<Minvvj.ld; i++ ) {
-        GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n",
-          i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
+        GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n", i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
       }
-
+      
       //mkl_dcsrmv( "N", &A->num_rows, &A->num_cols,
       //                  &one, "GFNC", A->val,
       //                  A->col, A->row, A->row+1,
       //                  &(krylov.val[idx(0,search,krylov.ld)]), &zero,
       //                  u.val );
-#if 1
+      
+#if USE_OMP
       #pragma omp parallel
-      #pragma omp for simd schedule(static,chunk) nowait
+      //#pragma omp for simd schedule(static,chunk) nowait
+      #pragma omp for simd nowait
       #pragma vector aligned
       #pragma vector vecremainder
       #pragma nounroll_and_jam
 #endif
       for ( int i=0; i<n; i++ ) {
         for ( int j=A->row[i]; j<A->row[i+1]; j++ ) {
-
-
           u.val[i] = u.val[i] + A->val[j]*Minvvj.val[idx(A->col[j],search,krylov.ld)];
-
-	  //printf("multiply: u[%d] += A[%d,%d] * Minvvj[(%d,%d,%d)=%d]= %e\n", 
-	  //		 i, i, A->col[j], 
-	  //	A->col[j],search,krylov.ld,idx(A->col[j],search,krylov.ld),u.val[i] );
-
         }
       }
       normav = data_dnrm2( n, u.val, 1 );
@@ -296,19 +294,22 @@ data_fgmres(
       for ( int i=0; i<u.ld; i++ ) {
         GMRESDBG("u.val[%d] = %e\n", i, u.val[i]);
       }
+
       for ( int j=0; j <= search; j++ ) {
         for ( int i=0; i<krylov.ld; i++ ) {
           GMRESDBG("krylov.val[idx(%d,%d,%d)] = %e\n", i, j, krylov.ld, krylov.val[idx(i,j,krylov.ld)]);
         }
       }
 
+
       // Modified Gram-Schmidt
       for ( int j=0; j <= search; j++ ) {
         //h.val[idx(j,search,h.ld)] = 0.0;
         dataType tmp = 0.0;
-#if 1
+#if USE_OMP
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) reduction(+:tmp) nowait
+        //#pragma omp for simd schedule(static,chunk) reduction(+:tmp) nowait
+        #pragma omp for simd reduction(+:tmp) nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
@@ -320,9 +321,10 @@ data_fgmres(
             krylov.val[idx(i,j,krylov.ld)]*u.val[i];
         }
         h.val[idx(j,search,h.ld)] = tmp;
-#if 1
+#if USE_OMP
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
+        //#pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for simd nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
@@ -345,9 +347,10 @@ data_fgmres(
         printf("Reorthogonalize(%d) = 1;\n", search);
         for ( int j=0; j <= search; j++ ) {
           hr = 0.0;
-#if 1
+#if USE_OMP
           #pragma omp parallel
-          #pragma omp for simd schedule(static,chunk) nowait
+          //#pragma omp for simd schedule(static,chunk) nowait
+          #pragma omp for simd nowait
           #pragma vector aligned
           #pragma vector vecremainder
           #pragma nounroll_and_jam
@@ -356,9 +359,10 @@ data_fgmres(
             hr = hr + krylov.val[idx(i,j,krylov.ld)]*u.val[i];
           }
           h.val[idx(j,search,h.ld)] = h.val[idx(j,search,h.ld)] + hr;
-#if 1
+#if USE_OMP
           #pragma omp parallel
-          #pragma omp for simd schedule(static,chunk) nowait
+          //#pragma omp for simd schedule(static,chunk) nowait
+          #pragma omp for simd nowait
           #pragma vector aligned
           #pragma vector vecremainder
           #pragma nounroll_and_jam
@@ -372,9 +376,10 @@ data_fgmres(
 
       // Watch out for happy breakdown
       if ( fabs(h.val[idx((search1),search,h.ld)]) > std::numeric_limits<double>::epsilon() ) {
-#if 1
+#if USE_OMP
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
+        //#pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for simd nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
@@ -417,6 +422,7 @@ data_fgmres(
         */
 
       }
+
       // Givens rotations
       for ( int j = 0; j<search; j++ ) {
         delta = h.val[idx(j,search,h.ld)];
@@ -432,19 +438,24 @@ data_fgmres(
         h.val[idx(search,search,h.ld)]*h.val[idx(search,search,h.ld)] +
         h.val[idx((search1),search,h.ld)]*h.val[idx((search1),search,h.ld)] );
       GMRESDBG("gamma = %e\n", gamma);
+      
       if ( gamma > 0.0 ) {
         givens_cos.val[search] = h.val[idx(search,search,h.ld)]/gamma;
         givens_sin.val[search] = -h.val[idx((search1),search,h.ld)]/gamma;
+	
         h.val[idx(search,search,h.ld)] =
           givens_cos.val[search]*h.val[idx(search,search,h.ld)] -
           givens_sin.val[search]*h.val[idx((search1),search,h.ld)];
+	
         h.val[idx((search1),search,h.ld)] = 0.0;
         delta = givens.val[search];
+	
         givens.val[search] =
           givens_cos.val[search]*delta - givens_sin.val[search]*givens.val[(search1)];
         givens.val[(search1)] =
           givens_sin.val[search]*delta + givens_cos.val[search]*givens.val[(search1)];
       }
+
 #if 0
       for ( int j=0; j <search_max; j++ ) {
         for ( int i=0; i<h.ld; i++ ) {
@@ -476,10 +487,12 @@ data_fgmres(
       // solve the least squares problem
       //if ( fabs(givens.val[(search1)]) < rtol  || (search == (search_max-1)) || std::isfinite(givens.val[(search1)]) == 0 ) {
       if ( fabs(givens.val[(search1)]) < rtol  || (search == (search_max-1)) || isfinite(givens.val[(search1)]) == 0 ) {
+	
         GMRESDBG("%s"," !!!!!!! update the solution !!!!!!!\n");
         for ( int i = 0; i <= search; i++ ) {
           alpha.val[i] = givens.val[i]/h.val[idx(i,i,h.ld)];
         }
+	
         for ( int j = search; j > 0; j-- ) {
           for (int i = j-1; i > -1; i-- ) {
             alpha.val[i] = alpha.val[i]
@@ -488,23 +501,24 @@ data_fgmres(
         }
 
         // use preconditioned vectors to form the update (GEMV)
-#if 1
+#if USE_OMP
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
+        //#pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for simd nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
 #endif
         for (int i = 0; i < n; i++ ) {
-
           for (int j = 0; j <= search; j++ ) {
             //z.val[i] = z.val[i] + krylov.val[idx(i,j,krylov.ld)]*alpha.val[j];
             z.val[i] = z.val[i] + Minvvj.val[idx(i,j,Minvvj.ld)]*alpha.val[j];
           }
         }
-#if 1
+#if USE_OMP
         #pragma omp parallel
-        #pragma omp for simd schedule(static,chunk) nowait
+        //#pragma omp for simd schedule(static,chunk) nowait
+        #pragma omp for simd nowait
         #pragma vector aligned
         #pragma vector vecremainder
         #pragma nounroll_and_jam
@@ -525,7 +539,9 @@ data_fgmres(
          GMRESDBG("Minvvj.val[idx(%d,%d,%d)] = %e\n",
            i, search, Minvvj.ld, Minvvj.val[idx(i,search,krylov.ld)]);
        }
+
     }
+
     fflush(stdout);
     data_zmfree( x0 );
     data_zmconvert( x, x0, Magma_DENSE, Magma_DENSE );

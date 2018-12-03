@@ -9,7 +9,6 @@
 # defaults if nothing else is given in make.inc
 CXX	 	 ?= icpc
 CXXFLAGS	 ?= -std=c++11 -Wall -g -O3 -qopenmp -qopt-assume-safe-padding -qopt-report=5 -xAVX
-
 #CXXFLAGS 	 += -DDEBUG_GMRES
 
 #for AMD reordering
@@ -31,7 +30,6 @@ OBJS = $(SRCFILES:%.cpp=%.o)
 
 LIBDIR		?= -L$(MKLROOT)/lib
 LIB 		?= -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -liomp5 -lpthread -lstdc++ -lm -ldl
-#LIBDIR 		+= -L/lustre/haven/user/chadb/lace_repo_reordering_branch/SuiteSparse/AMD/Lib
 LIBDIR 		+= -L$(S)/lib
 LIB		+= -lamd -lsuitesparseconfig
 LIBS		 = $(LIBDIR) $(LIB)
@@ -48,8 +46,9 @@ TESTS = \
 	testing/test_LU \
 	testing/test_iLU_ops \
 	testing/test_iLU \
-	testing/test_linearSolver \
-	testing/test_linearSolver_reordering
+	testing/test_linearSolver 
+#\
+#	testing/test_linearSolver_reordering
 
 DRIVERS = \
 	drivers/generate_iLU \
@@ -131,6 +130,7 @@ testing/test_iLU_ops_OBJS = testing/test_iLU_operations.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
 	src/parilu_v0_0.o src/parilu_v3_0.o \
+	src/ilu0_bcsr_v1_0.o \
 	testing/test_cmd_line_main.o libgmock.a
 
 testing/test_iLU_OBJS = testing/test_iLU.o \
@@ -143,6 +143,7 @@ testing/test_iLU_OBJS = testing/test_iLU.o \
 	src/parilu_v0_0.o \
 	src/parilu_v0_3.o \
 	src/parilu_v0_3_bcsr.o \
+	src/ilu0_bcsr_v1_0.o \
         src/cuthill_mckee.o \
         src/reorder.o \
 	testing/test_cmd_line_main.o libgmock.a
@@ -161,6 +162,7 @@ testing/test_linearSolver_OBJS = testing/test_linearSolver.o \
 	src/mkl_fgmres.o src/fgmres.o \
 	src/fgmres_bcsr.o \
 	src/parilu_v0_3_bcsr.o \
+	src/ilu0_bcsr_v1_0.o \
 	src/fgmres_restart.o \
 	src/fgmres_householder_opt4.o src/fgmres_householder_restart.o \
         src/cuthill_mckee.o \
@@ -179,6 +181,7 @@ testing/test_linearSolver_reordering_OBJS = testing/test_linearSolver_reordering
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zaxpy.o blas/zspmv.o blas/zspmm.o blas/zcsrilu0.o \
 	src/parilu_v0_2.o src/parilu_v0_3.o \
+	src/ilu0_bcsr_v1_0.o \
 	src/mkl_fgmres.o src/fgmres.o src/fgmres_restart.o \
 	src/fgmres_householder_opt4.o src/fgmres_householder_restart.o \
         src/cuthill_mckee.o \
@@ -240,6 +243,7 @@ drivers/solver_OBJS = drivers/solver_interface.o \
 	blas/zdiff.o blas/zdot.o blas/zgemv.o blas/zgemm.o \
 	blas/zaxpy.o blas/zspmv.o blas/zspmm.o blas/zcsrilu0.o \
 	src/parilu_v0_2.o src/parilu_v0_3.o \
+	src/ilu0_bcsr_v1_0.o \
 	src/mkl_fgmres.o src/fgmres.o \
 	src/fgmres_bcsr.o \
 	src/fgmres_restart.o \

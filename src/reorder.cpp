@@ -56,7 +56,7 @@ void print_char_Matrix(int* Ap, int* Ai, int n)
 void print_char_permuted_Matrix(int* Ap, int* Ai, int* P, int* Pinv, int n)
 {
   char Ac[n][n];
-  int i,j,k,inew,jnew,p;
+  int i,j,inew,jnew,p;
 
   for (jnew = 0 ; jnew < n ; jnew++)
   {

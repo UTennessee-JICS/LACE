@@ -54,15 +54,12 @@ data_forward_solve( data_d_matrix* L, data_d_matrix* x, data_d_matrix* rhs,
       *iter = *iter + 1;
       printf("%% iteration = %d step = %e\n", *iter, step);
     }
-
   }
   else {
     info = -1;
     printf("L matrix storage %d and fill mode %d must be CSRL (%d) and lower (%d) for a forward solve.\n",
       L->storage_type, L->fill_mode, Magma_CSRL, MagmaLower );
-
   }
-
   return info;
 }
 
@@ -85,7 +82,7 @@ data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs,
     const dataType zero = dataType(0.0);
 
     while (step > tol) {
-
+      
       step = zero;
       #pragma omp parallel
       {
@@ -106,15 +103,12 @@ data_backward_solve( data_d_matrix* U, data_d_matrix* x, data_d_matrix* rhs,
       *iter = *iter + 1;
       printf("%% iteration = %d step = %e\n", *iter, step);
     }
-
   }
   else {
     info = -1;
     printf("U matrix storage %d and fill mode %d must be CSRU (%d) and lower (%d) for a backward solve.\n",
       U->storage_type, U->fill_mode, Magma_CSRU, MagmaUpper );
-
   }
-
   return info;
 }
 
@@ -167,21 +161,15 @@ data_forward_solve_permute( data_d_matrix* L, data_d_matrix* x, data_d_matrix* r
       }
       *iter = *iter + 1;
       printf("%% iteration = %d step = %e\n", *iter, step);
-
       std::random_shuffle(c,c+L->num_rows);
-
     }
-
     free( c );
-
   }
   else {
     info = -1;
     printf("L matrix storage %d and fill mode %d must be CSRL (%d) and lower (%d) for a forward solve.\n",
       L->storage_type, L->fill_mode, Magma_CSRL, MagmaLower );
-
   }
-
   return info;
 }
 
@@ -234,11 +222,8 @@ data_backward_solve_permute( data_d_matrix* U, data_d_matrix* x, data_d_matrix* 
       }
       *iter = *iter + 1;
       printf("%% iteration = %d step = %e\n", *iter, step);
-
       std::random_shuffle(c,c+U->num_rows);
-
     }
-
   }
   else {
     info = -1;
@@ -253,48 +238,51 @@ data_backward_solve_permute( data_d_matrix* U, data_d_matrix* x, data_d_matrix* 
 // MKL/LAPACK like interface
 extern "C"
 int
-data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
-  const data_diagorder_t diag,
-  const int num_rows, const dataType *Aval, const int *row, const int *col,
-  const dataType *rhsval, dataType *yval,
-  const dataType tol, int *iter  )
+data_parcsrtrsv(const data_uplo_t uplo,
+		const data_storage_t storage,
+		const data_diagorder_t diag,
+		const int num_rows,
+		const dataType *Aval,
+		const int *row,
+		const int *col,
+		const dataType *rhsval,
+		dataType *yval,
+		const dataType tol,
+		int *iter  )
 {
   int info = 0;
-
+  const dataType zero = dataType(0.0);
+  dataType tmp = 0.0;
+  
   if ( storage == Magma_CSRL
     && uplo == MagmaLower
     && diag != Magma_NODIAG ) {
-
-    //int j = 0;
     *iter = 0;
     dataType step = 1.e8;
-    dataType tmp = 0.0;
-    const dataType zero = dataType(0.0);
 
-    while (step > tol && std::isfinite(step) ) {
-
+    while (step > tol && std::isfinite(step) )
+    {
       step = zero;
       #pragma omp parallel
       {
-        //#pragma omp for private(j, tmp) reduction(+:step) nowait
-        #pragma omp for private(tmp) reduction(+:step) nowait
+	#pragma omp for private(tmp) reduction(+:step) nowait
         for ( int i=0; i < num_rows; i++ ) {
           tmp = zero;
+	  //traverse row up to but not including diagonal
           for ( int k=row[i]; k < row[i+1]-1; k++) {
-            tmp += Aval[k]*yval[ col[k] ];
+            tmp += Aval[k] * yval[col[k]];
           }
-	  //printf("divisor A[row[%d]-1:%d]=%e\n",i+1,row[i+1]-1,Aval[row[i+1] - 1]);
-
-          tmp = (rhsval[i] - tmp)/Aval[row[i+1] - 1];
+          tmp = (rhsval[i] - tmp);
           step += pow((yval[i] - tmp), 2);
           yval[i] = tmp;
         }
       }
+      
       *iter = *iter + 1;
       PARTRSVDBG("%% L iteration = %d step = %e\n", *iter, step);
+      //printf("%% L iteration = %d step = %e\n", *iter, step);
     }
     //printf("ParCSRTRSV_L(%d) = %e\n", *iter, step);
-
   }
   else if ( storage == Magma_CSRL
     || uplo == MagmaLower ) {
@@ -305,26 +293,18 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
   else if ( storage == Magma_CSRU
     && uplo == MagmaUpper
     && diag != Magma_NODIAG ) {
-
-    //int j = 0;
     *iter = 0;
-
     dataType step = 1.e8;
-    dataType tmp = 0.0;
-    const dataType zero = dataType(0.0);
 
-    while (step > tol && std::isfinite(step) ) {
-
+    while (step > tol && std::isfinite(step) )
+    {
       step = zero;
       #pragma omp parallel
       {
-        //#pragma omp for private(j, tmp) reduction(+:step) nowait
         #pragma omp for private(tmp) reduction(+:step) nowait
         for ( int i=num_rows-1; i>=0; i-- ) {
           tmp = zero;
           for ( int k=row[i]+1; k < row[i+1]; k++) {
-            //j = col[k];
-            //tmp += Aval[k]*yval[j];
             tmp += Aval[k]*yval[ col[k] ];
           }
           tmp = (rhsval[i] - tmp)/Aval[row[i]];//divide by diagonal
@@ -334,9 +314,9 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
       }
       *iter = *iter + 1;
       PARTRSVDBG("%% U iteration = %d step = %e\n", *iter, step);
+      //printf("%% U iteration = %d step = %e\n", *iter, step);
     }
     //printf("ParCSRTRSV_U(%d) = %e\n", *iter, step);
-
   }
   else if ( storage == Magma_CSRU
     || uplo == MagmaUpper ) {
@@ -344,8 +324,6 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
     printf("U matrix storage %d and fill mode %d must be CSRU (%d) and lower (%d) for a backward solve.\n",
       storage, uplo, Magma_CSRU, MagmaUpper );
   }
-
-
   return info;
 }
 
@@ -356,139 +334,122 @@ data_parcsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
 // MKL/LAPACK like interface
 extern "C"
 int
-data_parbsrtrsv( const data_uplo_t uplo, const data_storage_t storage,
-	  const data_diagorder_t diag,
-	  const int num_rows, 
-	  const int blocksize,
-	  const dataType *Aval, const int *row, const int *col,
-	  const dataType *rhsval, dataType *yval,
-	  const dataType tol, int *iter  )
+data_parbsrtrsv(const data_uplo_t uplo,
+		const data_storage_t storage,
+		const data_diagorder_t diag,
+		const int num_rows,
+		const int blocksize,
+		const dataType *Aval,
+		const int *row,
+		const int *col,
+		const dataType *rhsval,
+		dataType *yval,
+		const dataType tol,
+		int *iter )
 {
-  int info = 0;
-
+  int info = 0;  
+  int ldblock=blocksize*blocksize;
+  const dataType zero = dataType(0.0);
+  dataType tmp[blocksize];
 
   if ( storage == Magma_BCSRL
     && uplo == MagmaLower
     && diag != Magma_NODIAG ) {
-DEV_CHECKPT
-    //int j = 0;
+    //Aval is L (lower triangular)
     *iter = 0;
     dataType step = 1.e8;
-    dataType* tmp;
-    //tmp = (dataType*) calloc(blocksize,sizeof(dataType));
-    int ldblock=blocksize*blocksize;
-    const dataType zero = dataType(0.0);
 
-    while (step > tol && std::isfinite(step) ) {
-
+    while (step > tol && std::isfinite(step))
+    {
       step = zero;
-      //#pragma omp parallel
+      #pragma omp parallel
       {
-        tmp = (dataType*) calloc(blocksize,sizeof(dataType));
-
-        //#pragma omp for private(tmp) reduction(+:step) nowait
-        for ( int i=0; i < num_rows; i++ ) {
-	  //traverse row up to but not including diagonal
-          //for ( int k=row[i]; k < row[i+1]-1; k++) {
-	  //for bsr we need to include diagonal block
-	  for ( int k=row[i]; k < row[i+1]; k++) {
-	     //block matrix vector multiply
-             for(int ii=0; ii<blocksize; ++ii){
-	        tmp[ii] = zero;
-                //traverse subrow up to but not including diagnonal
-	        for(int kk=0; kk<ii; ++kk){
-		  tmp[ii] += Aval[k*ldblock+ii*blocksize+kk]*
-		    yval[ col[k]*blocksize+kk ];
-		}
-
-		//dataType divisor=Aval[(row[i+1] - 1)*ldblock+ii*blocksize+ii];
-		dataType divisor=Aval[(row[i+1])*ldblock -ldblock +ii*blocksize+ii ];
-	        //if(divisor==0.0)
-		//printf("divisor A[%d]=%e\n",
-		//       (row[i+1])*ldblock -ldblock +ii*blocksize+ii  ,divisor);
-
-		tmp[ii] = (rhsval[i*blocksize+ii] - tmp[ii])/divisor;
-		//Aval[(row[i+1] - 1)*ldblock+ii*blocksize+ii];//divide by diag
-
-		step += pow((yval[i*blocksize+ii] - tmp[ii]), 2);
-		yval[i*blocksize+ii] = tmp[ii];
-	     }
-          } 
-        }
-        free(tmp);
+	#pragma omp for private(tmp) reduction(+:step) nowait
+	for ( int i=0; i < num_rows; i++ ) {  
+	  for(int ii=0; ii<blocksize; ++ii){tmp[ii]=zero;}//reset tmp vector
+	  //loop over subrows
+	  for(int ii=0; ii<blocksize; ++ii){
+	    //traverse block row up to and including diagonal block
+	    for ( int k=row[i]; k<row[i+1]; k++) {
+	      //block matrix vector multiply
+	      //loop over block rows
+	      //if subblock is a diagonal block traverse subrow up to but not including diagonal
+	      //else include entire subrow
+	      int kk_stop = (k==row[i+1]-1) ? ii : blocksize;
+	      for(int kk=0; kk<kk_stop; ++kk){
+		tmp[ii] += Aval[k*ldblock+ii*blocksize+kk] * yval[ col[k]*blocksize+kk ];
+	      }   
+	    }  
+	    tmp[ii] = (rhsval[i*blocksize+ii] - tmp[ii]);
+	    step += pow((yval[i*blocksize+ii] - tmp[ii]), 2);
+	    yval[i*blocksize+ii] = tmp[ii];
+	  }
+	}
+	
       }
-
+      
       *iter = *iter + 1;
       PARTRSVDBG("%% L iteration = %d step = %e\n", *iter, step);
+      //printf("%% L iteration = %d step = %e\n", *iter, step);
     }
     //printf("ParBSRTRSV_L(%d) = %e\n", *iter, step);
-
+    
   }
   else if ( storage == Magma_BCSRL
-    || uplo == MagmaLower ) {
-DEV_CHECKPT
-
+	    || uplo == MagmaLower ) {
     info = -1;
     printf("L matrix storage %d and fill mode %d must be BCSRL (%d) and lower (%d) for a forward solve.\n",
-      storage, uplo, Magma_BCSRL, MagmaLower );
+	   storage, uplo, Magma_BCSRL, MagmaLower );
   }
-
+  
   else if ( storage == Magma_BCSRU
-    && uplo == MagmaUpper
-    && diag != Magma_NODIAG ) {
-DEV_CHECKPT
-    //int j = 0;
+	    && uplo == MagmaUpper
+	    && diag != Magma_NODIAG ) {
     *iter = 0;
-
     dataType step = 1.e8;
-    dataType* tmp;
-
-    int ldblock=blocksize*blocksize;
-    const dataType zero = dataType(0.0);
-
-    while (step > tol && std::isfinite(step) ) {
-
+    //Aval is U (upper triangular)
+    while (step > tol && std::isfinite(step) ){
       step = zero;
-      //#pragma omp parallel
+      #pragma omp parallel
       {
-	tmp = (dataType*) calloc(blocksize,sizeof(dataType));
-
-        //#pragma omp for private(tmp) reduction(+:step) nowait
+        #pragma omp for private(tmp) reduction(+:step) nowait
+	//loop backwards over rows
         for ( int i=num_rows-1; i>=0; i-- ) {
-	  //for ( int k=row[i]+1; k < row[i+1]; k++) {
-           for ( int k=row[i]; k < row[i+1]; k++) {
-	      //block matrix vector multiply
-              for(int ii=0; ii<blocksize; ++ii){
-	         tmp[ii] = zero;
-	         for(int kk=ii+1; kk<blocksize; ++kk){
-		    tmp[ii] += Aval[k*ldblock+ii*blocksize+kk]*
-		      yval[ col[k]*blocksize+kk ];
-		 }
-
-		 tmp[ii] = (rhsval[i*blocksize+ii] - tmp[ii])/
-		   Aval[(row[i])*ldblock+ii*blocksize+ii];
-		 step += pow((yval[i*blocksize+ii] - tmp[ii]), 2);
-		 yval[i*blocksize+ii] = tmp[ii];
+	  
+	  for(int ii=0; ii<blocksize; ++ii){tmp[ii]=zero;}//reset tmp vector
+          for(int ii=0; ii<blocksize; ++ii){
+	    for ( int k=row[i]+1; k < row[i+1]; k++) {
+	      //loop over elements in subblock
+	      //if on diagonal subblock, skip diagonal element
+	      //int kk_start= (i==k) ? ii+1 : 0;
+	      //for(int kk=kk_start; kk<blocksize; ++kk){
+	      for(int kk=0; kk<blocksize; ++kk){
+		tmp[ii] += Aval[k*ldblock +ii*blocksize +kk] * yval[ col[k]*blocksize +kk ];
 	      }
-	   }
-        }
-    free(tmp);
-
-      }
+	    }
+	    tmp[ii] = (rhsval[i*blocksize+ii] - tmp[ii])/ Aval[row[i]*ldblock +ii*blocksize +ii];
+	    step += pow((yval[i*blocksize+ii] - tmp[ii]), 2);
+	    yval[i*blocksize+ii] = tmp[ii];
+	  }
+	  
+	}
+	
+      }      
+      
       *iter = *iter + 1;
       PARTRSVDBG("%% U iteration = %d step = %e\n", *iter, step);
+      //printf("%% U iteration = %d step = %e\n", *iter, step);
     }
     //printf("ParCSRTRSV_U(%d) = %e\n", *iter, step);
   }
   else if ( storage == Magma_BCSRU
-    || uplo == MagmaUpper ) {
-DEV_CHECKPT
-
+	    || uplo == MagmaUpper ) {
     info = -1;
     printf("U matrix storage %d and fill mode %d must be BCSRU (%d) and lower (%d) for a backward solve.\n",
-      storage, uplo, Magma_BCSRU, MagmaUpper );
+	   storage, uplo, Magma_BCSRU, MagmaUpper );
   }
-
+  
+  //free(tmp);
   return info;
 }
 
@@ -520,7 +481,6 @@ data_partrsv(
     if ( storage == Magma_DENSEL
       && uplo == MagmaLower
       && diag != Magma_NODIAG ) {
-
       *iter = 0;
       dataType step = 1.e8;
       dataType tmp = 0.0;
@@ -534,6 +494,7 @@ data_partrsv(
           #pragma omp for private(tmp) reduction(+:step) nowait
           for ( int i=0; i < num_rows; i++ ) {
             tmp = zero;
+	    //traverse row up to but not including diagonal
             for ( int j=0; j <i; j++) {
               tmp += Aval[j+i*lda]*yval[j];
             }
@@ -549,6 +510,7 @@ data_partrsv(
     }
     else if ( storage == Magma_DENSEL
       || uplo == MagmaLower ) {
+      
       info = -1;
       printf("L matrix storage %d and fill mode %d must be DENSEL (%d) and lower (%d) for a forward solve.\n",
         storage, uplo, Magma_DENSEL, MagmaLower );
@@ -557,15 +519,13 @@ data_partrsv(
     else if ( storage == Magma_DENSEU
       && uplo == MagmaUpper
       && diag != Magma_NODIAG ) {
-
+      
       *iter = 0;
-
       dataType step = 1.e8;
       dataType tmp = 0.0;
       const dataType zero = dataType(0.0);
 
       while (step > tol) {
-
         step = zero;
         #pragma omp parallel
         {
@@ -587,13 +547,12 @@ data_partrsv(
     }
     else if ( storage == Magma_DENSEU
       || uplo == MagmaUpper ) {
+
       info = -1;
       printf("U matrix storage %d and fill mode %d must be DENSEU (%d) and lower (%d) for a backward solve.\n",
         storage, uplo, Magma_DENSEU, MagmaUpper );
     }
-
   }
-
   return info;
 }
 
