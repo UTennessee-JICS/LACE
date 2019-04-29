@@ -89,39 +89,40 @@ void reorder_csr_indices(data_d_matrix* A, int* P, int* Pinv)
   int* ia = A->row;
   int* ja = A->col;
 
-  int* ia2;
-  dataType* val2;
-  int* ja2;
+  int* ia_new;
+  dataType* val_new;
+  int* ja_new;
   int ldblock=A->ldblock;
 
-  LACE_CALLOC(ia2, A->num_rows+1);
-  LACE_CALLOC(ja2,A->nnz);
-  LACE_CALLOC(val2, A->nnz*ldblock);
+  LACE_CALLOC(ia_new, A->num_rows+1);
+  LACE_CALLOC(ja_new,A->nnz);
+  LACE_CALLOC(val_new, A->nnz*ldblock);
 
-  ia2[0]=0;
+  ia_new[0]=0;
   /*compute new index offsets for ia2*/
   for(int i=0; i<A->num_rows; ++i)
   {
     int count=0;
-    int old_row = P[i];
+    int old_row = Pinv[i];
     for(int j=ia[old_row]; j<ia[old_row+1]; ++j)
     { 
-      ja2[ia2[i]+count] = Pinv[ja[j]];
-      for(int kk=0;kk<ldblock;++kk)
-	val2[ia2[i*ldblock+kk]+count]=A->val[j*ldblock+kk];
-
+      //ja_new[ia_new[i]+count] = Pinv[ja[j]];//assign new column index
+      ja_new[ia_new[i]+count] = P[ja[j]];//assign new column index
+      for(int kk=0;kk<ldblock;++kk){
+	val_new[(ia_new[i]+count)*ldblock+kk]=A->val[j*ldblock+kk];
+      }
       count++;
     }
-    ia2[i+1]=ia2[i]+count;
+    ia_new[i+1]=ia_new[i]+count;
   }
 
   //eliminate old data and replace with new
   free(A->row);
-  A->row = ia2;
+  A->row = ia_new;
   free(A->col);
-  A->col = ja2;
+  A->col = ja_new;
   free(A->val);
-  A->val = val2;
+  A->val = val_new;
 };
 
 //for use in qsort, defines a tuple with matrix col index and value
@@ -187,10 +188,12 @@ int data_sparse_reorder(data_d_matrix* A, int* P, int* Pinv, int reorder)
   /* print the input matrix */
   int n = A->num_rows;
   //int nz = Ap [n] ;
+#if 0
   /* print a character plot of the original matrix. */
   printf ("\nPlot of original matrix pattern:\n") ;
   print_char_Matrix(Ap, Ai, n);
-
+#endif
+  
   switch (reorder)
   {
      case 1:{ 
@@ -211,7 +214,9 @@ int data_sparse_reorder(data_d_matrix* A, int* P, int* Pinv, int reorder)
         double Info[AMD_INFO];
         amd_defaults (Control) ;
         amd_control  (Control) ;
+DEV_CHECKPT
         int result = amd_order(A->num_rows, Ap, Ai, P, Control, Info);
+DEV_CHECKPT
         amd_control(Control);
         //int status = amd_valid(n,n,Ap,Ai);
         //printf ("return value from amd_order: %d (should be %d)\n", result, AMD_OK) ;
@@ -236,15 +241,27 @@ int data_sparse_reorder(data_d_matrix* A, int* P, int* Pinv, int reorder)
   for (int k = 0 ; k < n ; k++)
   {
     /* row/column j is the kth row/column in the permuted matrix */
-     Pinv [P[k]] = k ;
+     Pinv[P[k]] = k ;
   }
 
+ #if 0
+  for (int k = 0 ; k < n ; k++)
+  {
+    /* row/column j is the kth row/column in the permuted matrix */
+    //printf("P[%d]=%d\n",k,P[k]);
+     printf("Pinv[%d]=%d\n",k,Pinv[k]);
+  }
+#endif
+  
   //reorder the indices for A->row A->col from permutation vector P
+DEV_CHECKPT
   reorder_csr_indices(A,P,Pinv);
   //sort the cols and accociated vals in increasing order for each row
+DEV_CHECKPT
   sort_csr_rows(A);
+DEV_CHECKPT
 
-#if 1
+#if 0
   /* print a character plot of the permuted matrix. */
   printf ("\nPlot of reordered matrix pattern:\n") ;
   print_char_Matrix(A->row, A->col, A->num_rows);
