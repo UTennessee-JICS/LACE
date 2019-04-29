@@ -23,11 +23,11 @@ typedef struct data_d_matrix
     data_int_t         max_nnz_row;             // opt: max number of nonzeros in one row
     data_int_t         diameter;                // opt: max distance of entry from main diagonal
     data_int_t         true_nnz;                // opt: true nnz
-    dataType           *val __attribute__ ((aligned (DEV_ALIGN)));                    // array containing values
-    dataType           *diag __attribute__ ((aligned (DEV_ALIGN)));                   // opt: diagonal entries
-    data_int_t         *row __attribute__ ((aligned (DEV_ALIGN)));                    // row pointer CPU
-    data_int_t         *rowidx __attribute__ ((aligned (DEV_ALIGN)));                 // opt: array containing row
-    data_int_t         *col __attribute__ ((aligned (DEV_ALIGN)));                    // array containing col indices
+    dataType           *val __attribute__ ((aligned (DEV_ALIGN)));  // array containing values
+    dataType           *diag __attribute__ ((aligned (DEV_ALIGN))); // opt: diagonal entries
+    data_int_t         *row __attribute__ ((aligned (DEV_ALIGN)));  // row pointer CPU
+    data_int_t         *rowidx __attribute__ ((aligned (DEV_ALIGN))); // opt: array containing row
+    data_int_t         *col __attribute__ ((aligned (DEV_ALIGN)));  // array containing col indices
     data_int_t         *list;                   // opt: linked list pointing to next element
     data_int_t         *blockinfo;              // opt: for BCSR format CPU case
     data_int_t         blocksize;               // opt: info for SELL-P/BCSR
