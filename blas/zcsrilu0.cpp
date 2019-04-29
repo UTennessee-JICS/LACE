@@ -9,6 +9,7 @@
 #include <mkl.h>
 #include <stdlib.h>
 #include <stdio.h>
+#define USE_OMP 1
 
 extern "C"
 int
@@ -19,12 +20,15 @@ data_dcsrilu0_mkl( data_d_matrix* dA )
   int ipar[128];
   dataType dpar[128];
 
+#if USE_OMP
   #pragma omp parallel
   #pragma omp for nowait
+#endif
   for (int i=0; i<128; i++ ) {
     ipar[i] = 0;
     dpar[i] = 0.0;
   }
+ 
   ipar[0] = n;                  // problem size (number of rows)
   ipar[1] = 6;                  // error log control 6: to screan
   ipar[2] = 1;                  // RCI stage
@@ -44,13 +48,17 @@ data_dcsrilu0_mkl( data_d_matrix* dA )
   dpar[31] = 1.0e-10;   // value that replaces diagonal elements < dpar[30]
 
   // increment to create one-based indexing of the array parameters
+#if USE_OMP
   #pragma omp parallel
   #pragma omp for nowait
+#endif
   for (int i=0; i<dA->nnz; i++) {
     dA->col[i] += 1;
   }
+#if USE_OMP
   #pragma omp parallel
   #pragma omp for nowait
+#endif
   for (int i=0; i<dA->num_rows+1; i++) {
     dA->row[i] += 1;
   }
@@ -61,13 +69,17 @@ data_dcsrilu0_mkl( data_d_matrix* dA )
   //    t_cusparse = end-start;
 
   // decrement to create zero-based indexing of the array parameters
+#if USE_OMP
   #pragma omp parallel
   #pragma omp for nowait
+#endif
   for (int i=0; i<dA->nnz; i++) {
     dA->col[i] -= 1;
   }
+#if USE_OMP
   #pragma omp parallel
   #pragma omp for nowait
+#endif
   for (int i=0; i<dA->num_rows+1; i++) {
     dA->row[i] -= 1;
   }
