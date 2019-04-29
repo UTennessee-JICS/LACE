@@ -124,7 +124,6 @@ data_z_spmm(
        }
   }
 
-
   if(A.storage_type == Magma_CSR) {
      //CALL_AND_CHECK_STATUS( mkl_sparse_d_export_csr( csrC, &indexing,
      //  &rows_C, &cols_C,
@@ -191,7 +190,6 @@ data_z_spmm(
      //printf( "_____________________________________________________________________  \n" );
   }
 
-
   nnz_C = pointerE_C[ rows_C-1 ];
 
   // fill in information for C
@@ -223,8 +221,6 @@ data_z_spmm(
   for( int i=0; i<nnz_C; i++) {
     C->col[i] = columns_C[i];
   }
-
-
 
 
   if( mkl_sparse_destroy( csrA ) != SPARSE_STATUS_SUCCESS) {
