@@ -394,9 +394,13 @@ data_zmextractdiag(
     data_d_matrix *B );
 
 int
+//data_zmcopy(
+//    data_d_matrix A,
+//    data_d_matrix *B );
 data_zmcopy(
     data_d_matrix A,
-    data_d_matrix *B );
+    data_d_matrix *B,
+    bool params_only=false);
 
 void 
 data_reorder_cuthill_mckee(
@@ -899,6 +903,12 @@ data_ILU0_bcsr_v1_0(
   data_d_matrix* U,
   dataType reduction,
   data_d_preconditioner_log* log );
+
+void
+data_ILUK(
+  data_d_matrix* A,
+  data_d_matrix* A_new,
+  int p);
   
 //======================================
 // Tri-solves
