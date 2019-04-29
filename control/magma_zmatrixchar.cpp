@@ -103,9 +103,11 @@ data_zdiameter(
 
     int i, j, tmp,  *dim=NULL, maxdim=0;
 
-    // CSR
-    if ( A->storage_type == Magma_CSR || A->storage_type == Magma_CSC ) {
-        // dim = (int*) malloc( A->num_rows*sizeof(int) );
+    // CSR, BCSR
+    if ( A->storage_type == Magma_CSR || A->storage_type == Magma_CSC ||
+	 A->storage_type == Magma_BCSR || A->storage_type == Magma_BCSC ) {
+         //dim = (int*) malloc( A->num_rows*sizeof(int) );
+
         LACE_CALLOC( dim, A->num_rows );
         for( i=0; i<A->num_rows; i++ ) {
             dim[i] = 0;
@@ -117,8 +119,8 @@ data_zdiameter(
             if ( dim[i] > maxdim )
                  maxdim = dim[i];
         }
-        A->diameter = maxdim;
-    }
+       A->diameter = maxdim;
+   }
     // Dense
     else if ( A->storage_type == Magma_DENSE ) {
         // dim = (int*) malloc( A->num_rows*sizeof(int) );
