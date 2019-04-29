@@ -17,6 +17,7 @@
 #include <cassert>  // for assert
 #include "../include/sparse.h"
 #include <mkl.h>
+#include <omp.h>
 
 
 /**
@@ -150,6 +151,7 @@ data_rowindex(
     data_d_matrix *A,
     int **rowidx )
 {
+  int i;
   int info = 0;
   if ( (*rowidx) != NULL ) {
     free((*rowidx));
@@ -162,7 +164,8 @@ data_rowindex(
   if (A->pad_rows > 0 && A->pad_cols > 0) {
     rowlimit = A->pad_rows;
   }
-  for(int i=0; i < rowlimit; i++) {
+  #pragma omp parallel private(i)
+  for(i=0; i < rowlimit; i++) {
     for(int j=A->row[i]; j < A->row[i+1]; j++) {
       (*rowidx)[j] = i;
       DEV_PRINTF("%d ", i);
@@ -210,6 +213,7 @@ data_zmconvert(
 {
 
   int info = 0;
+  int i,j,k,kk;
   //data_zmfree( B );
   //int *length=NULL;
 
@@ -291,11 +295,13 @@ data_zmconvert(
       LACE_CALLOC( B->row, (rowlimit+1) );
       LACE_CALLOC( B->col, A.nnz );
 
-      for( int i=0; i < A.nnz; i++) {
+      #pragma omp parallel private(i)
+      for( i=0; i < A.nnz; i++) {
         B->val[i] = A.val[i];
         B->col[i] = A.col[i];
       }
-      for( int i=0; i < rowlimit+1; i++) {
+      #pragma omp parallel private(i)
+      for( i=0; i < rowlimit+1; i++) {
         B->row[i] = A.row[i];
       }
     }
@@ -323,8 +329,8 @@ data_zmconvert(
 
       //count number of elements in lower triangle
       int numzeros=0;
-      for( int i=0; i < rowlimit; i++) {
-        for( int j=A.row[i]; j < A.row[i+1]; j++) {
+      for( i=0; i < rowlimit; i++) {
+        for( j=A.row[i]; j < A.row[i+1]; j++) {
 	  //printf("A.val[%d]=%e\n",j,A.val[j]);
 
           if ( A.col[j] < i) {
@@ -346,9 +352,9 @@ data_zmconvert(
       LACE_CALLOC( B->col, B->nnz );
 
       numzeros=0;
-      for( int i=0; i < rowlimit; i++) {
+      for( i=0; i < rowlimit; i++) {
         B->row[i]=numzeros;
-        for( int j=A.row[i]; j < A.row[i+1]; j++) {
+        for( j=A.row[i]; j < A.row[i+1]; j++) {
           // diagonal omitted by default
           if ( A.col[j] < i) {
             B->val[numzeros] = A.val[j];
@@ -402,8 +408,8 @@ data_zmconvert(
       B->ldblock=1;
 
       int numzeros=0;
-      for( int i=0; i < rowlimit; i++) {
-        for( int j=A.row[i]; j < A.row[i+1]; j++) {
+      for( i=0; i < rowlimit; i++) {
+        for( j=A.row[i]; j < A.row[i+1]; j++) {
           if ( A.col[j] > i ) {
             numzeros++;
           }
@@ -422,9 +428,9 @@ data_zmconvert(
       LACE_CALLOC( B->col, B->nnz );
 
       numzeros=0;
-      for( int i=0; i < rowlimit; i++) {
+      for( i=0; i < rowlimit; i++) {
         B->row[i]=numzeros;
-        for( int j=A.row[i]; j < A.row[i+1]; j++) {
+        for( j=A.row[i]; j < A.row[i+1]; j++) {
           if ( A.col[j] > i) {
             B->val[numzeros] = A.val[j];
             B->col[numzeros] = A.col[j];
@@ -489,9 +495,9 @@ data_zmconvert(
       LACE_CALLOC( B->row, (rowlimit+1) );
       LACE_CALLOC( B->col, A.nnz );
 
-      for(int i=0; i < rowlimit; i++) {
+      for(i=0; i < rowlimit; i++) {
         int count = 1;
-        for(int j=A.row[i]; j < A.row[i+1]; j++) {
+        for( j=A.row[i]; j < A.row[i+1]; j++) {
           if ( A.col[j] == i ) {
             B->col[A.row[i]] = A.col[j];
             B->val[A.row[i]] = A.val[j];
@@ -502,7 +508,9 @@ data_zmconvert(
           }
         }
       }
-      for( int i=0; i < rowlimit+1; i++) {
+      
+      #pragma omp parallel private(i)
+      for( i=0; i < rowlimit+1; i++) {
         B->row[i] = A.row[i];
       }
     }
@@ -521,8 +529,9 @@ data_zmconvert(
       free( B->row );
       LACE_CALLOC( B->row, A.nnz );
 
-      for(int i=0; i < rowlimit; i++) {
-        for(int j=A.row[i]; j < A.row[i+1]; j++) {
+      #pragma omp parallel private(i)
+      for(i=0; i < rowlimit; i++) {
+        for( j=A.row[i]; j < A.row[i+1]; j++) {
           B->row[j] = i;
         }
       }
@@ -541,8 +550,9 @@ data_zmconvert(
 
       LACE_CALLOC( B->rowidx, B->nnz );
 
-      for(int i=0; i < rowlimit; i++) {
-        for(int j=A.row[i]; j < A.row[i+1]; j++) {
+      #pragma omp parallel private(i)
+      for(i=0; i < rowlimit; i++) {
+        for( j=A.row[i]; j < A.row[i+1]; j++) {
           B->rowidx[j] = i;
         }
       }
@@ -566,8 +576,9 @@ data_zmconvert(
       // conversion
       LACE_CALLOC( B->val, B->nnz );
 
-      for(int i=0; i < A.num_rows; ++i ) {
-        for(int j=A.row[i]; j < A.row[i+1]; ++j ) {
+      #pragma omp parallel private(i)
+      for(i=0; i < A.num_rows; ++i ) {
+        for( j=A.row[i]; j < A.row[i+1]; ++j ) {
           B->val[i * (B->num_cols) + A.col[j] ] = A.val[ j ];
         }
       }
@@ -592,8 +603,10 @@ data_zmconvert(
       LACE_CALLOC( B->val, B->nnz );
 
       // conversion
-      for(int i=0; i < rowlimit; i++ ) {
-        for(int j=A.row[i]; j < A.row[i+1]; j++) {
+      
+      #pragma omp parallel private(i)
+      for( i=0; i < rowlimit; i++ ) {
+        for( j=A.row[i]; j < A.row[i+1]; j++) {
           if ( A.col[j] == i ) {
             B->val[ i ] = A.val[ j ];
           }
@@ -635,9 +648,10 @@ data_zmconvert(
       data_zmconvert( A, B, Magma_CSR, Magma_CSR );
 
       LACE_CALLOC( B->rowidx, B->nnz );
-
-      for(int i=0; i < rowlimit; i++) {
-        for(int j=A.row[i]; j < A.row[i+1]; j++) {
+      
+      #pragma omp parallel private(i)
+      for( i=0; i < rowlimit; i++) {
+        for( j=A.row[i]; j < A.row[i+1]; j++) {
           B->rowidx[j] = i;
         }
       }
@@ -774,7 +788,7 @@ data_zmconvert(
 
       // conversion
       B->nnz=0;
-      for( int i=0; i<(A.num_rows)*(A.num_cols); i++ ) {
+      for( i=0; i<(A.num_rows)*(A.num_cols); i++ ) {
         if ( DEV_D_REAL(A.val[i]) != zero )
           (B->nnz)++;
       }
@@ -783,9 +797,9 @@ data_zmconvert(
       LACE_CALLOC( B->row, (rowlimit+1) );
       LACE_CALLOC( B->col, B->nnz );
 
-      int i = 0;
-      int j = 0;
-      int k = 0;
+      i = 0;
+      j = 0;
+      k = 0;
 
       for(i=0; i<(rowlimit)*(collimit); i++)
       {
@@ -871,16 +885,16 @@ data_zmconvert(
       LACE_CALLOC( B->col, A.nnz );
 
       // original code from  Nathan Bell and Michael Garland
-      for (int i = 0; i < rowlimit; i++)
+      for ( i = 0; i < rowlimit; i++)
         (B->row)[i] = 0;
 
-      for (int i = 0; i < A.nnz; i++)
+      for ( i = 0; i < A.nnz; i++)
         (B->row)[A.row[i]]++;
 
       // cumulative sum the nnz per row to get row[]
       int cumsum;
       cumsum = 0;
-      for(int i = 0; i < rowlimit; i++) {
+      for( i = 0; i < rowlimit; i++) {
         int temp = (B->row)[i];
         (B->row)[i] = cumsum;
         cumsum += temp;
@@ -888,7 +902,7 @@ data_zmconvert(
       (B->row)[rowlimit] = A.nnz;
 
       // write Aj,Ax into Bj,Bx
-      for(int i = 0; i < A.nnz; i++) {
+      for( i = 0; i < A.nnz; i++) {
         int row_ = A.row[i];
         int dest = (B->row)[row_];
         (B->col)[dest] = A.col[i];
@@ -898,7 +912,7 @@ data_zmconvert(
 
       int last;
       last = 0;
-      for(int i = 0; i <= rowlimit; i++) {
+      for( i = 0; i <= rowlimit; i++) {
         int temp  = (B->row)[i];
         (B->row)[i] = last;
         last = temp;
@@ -908,15 +922,15 @@ data_zmconvert(
 
       // sort column indices within each row
       // copy into vector of pairs (column index, value), sort by column index, then copy back
-      for (int k=0; k < rowlimit; ++k) {
+      for ( k=0; k < rowlimit; ++k) {
         int kk  = (B->row)[k];
         int len = (B->row)[k+1] - (B->row)[k];
         rowval.resize( len );
-        for( int i=0; i < len; ++i ) {
+        for( i=0; i < len; ++i ) {
           rowval[i] = std::make_pair( (B->col)[kk+i], (B->val)[kk+i] );
         }
         std::sort( rowval.begin(), rowval.end(), compare_first );
-        for( int i=0; i < len; ++i ) {
+        for( i=0; i < len; ++i ) {
           (B->col)[kk+i] = rowval[i].first;
           (B->val)[kk+i] = rowval[i].second;
         }
@@ -1013,14 +1027,16 @@ data_zmconvert(
       if (A.major == MagmaRowMajor) {
         //printf("A is row major ");
         if (B->major == MagmaRowMajor) {
-          for(int i=0; i < A.num_rows; i++ ) {
-            for(int j=0; j < A.num_cols; j++ )
+	  #pragma omp parallel private(i)
+          for( i=0; i < A.num_rows; i++ ) {
+            for( j=0; j < A.num_cols; j++ )
               B->val[ i * (A.ld) + j ] = A.val[ i * (A.ld) + j ];
           }
         }
         else {
-          for(int j=0; j < A.num_cols; j++ ) {
-            for(int i=0; i < A.num_rows; i++ )
+ 	 #pragma omp parallel private(j)
+         for( j=0; j < A.num_cols; j++ ) {
+            for( i=0; i < A.num_rows; i++ )
               B->val[ i + j * (A.ld) ] = A.val[ i * (A.ld) + j ];
           }
         }
@@ -1028,14 +1044,16 @@ data_zmconvert(
       else {
         //printf("A is column major ");
         if (B->major == MagmaRowMajor) {
-          for(int i=0; i < A.num_rows; i++ ) {
-            for(int j=0; j < A.num_cols; j++ )
+  	  #pragma omp parallel private(i)
+	  for( i=0; i < A.num_rows; i++ ) {
+            for( j=0; j < A.num_cols; j++ )
               B->val[ i * (A.ld) + j ] = A.val[ i + j * (A.ld) ];
           }
         }
         else {
-          for(int j=0; j < A.num_cols; j++ ) {
-            for(int i=0; i < A.num_rows; i++ )
+ 	  #pragma omp parallel private(j)
+          for( j=0; j < A.num_cols; j++ ) {
+            for( i=0; i < A.num_rows; i++ )
               B->val[ i + j * (A.ld) ] = A.val[ i + j * (A.ld) ];
           }
         }
@@ -1044,12 +1062,14 @@ data_zmconvert(
 
       if (A.pad_rows > 0 && A.pad_cols > 0) {
         if (B->major == MagmaRowMajor) {
-          for ( int i = A.num_rows; i < A.pad_rows; i++ ) {
+  	 #pragma omp parallel private(i)
+         for ( i = A.num_rows; i < A.pad_rows; i++ ) {
             B->val[ i*A.ld + i ] = one;
           }
         }
         else {
-          for ( int i = A.num_cols; i < A.pad_cols; i++ ) {
+          #pragma omp parallel private(i)
+          for ( i = A.num_cols; i < A.pad_cols; i++ ) {
             B->val[ i + i*A.ld ] = one;
           }
         }
@@ -1067,9 +1087,10 @@ data_zmconvert(
         //printf("A is Row major B->diagorder_type = %d\n", B->diagorder_type);
         if (B->major == MagmaRowMajor) {
           //printf("B is row major B->diagorder_type = %d ", B->diagorder_type);
-          for(int i=0; i < A.num_rows; i++ ) {
-            for(int j=0; j < i; j++ )
+          for( i=0; i < A.num_rows; i++ ) {
+            for( j=0; j < i; j++ )
               B->val[ i * (A.ld) + j ] = A.val[ i * (A.ld) + j ];
+	    
             if ( B->diagorder_type == Magma_VALUE )
               B->val[ i * (A.ld) + i ] = A.val[ i * (A.ld) + i ];
             else if ( B->diagorder_type == Magma_UNITY )
@@ -1080,14 +1101,14 @@ data_zmconvert(
         }
         else {
           //printf("B is Col major B->diagorder_type = %d ", B->diagorder_type);
-          for(int j=0; j < A.num_cols; j++ ) {
+          for( j=0; j < A.num_cols; j++ ) {
             if ( B->diagorder_type == Magma_VALUE )
               B->val[ j + j * (A.ld) ] = A.val[ j * (A.ld) + j ];
             else if ( B->diagorder_type == Magma_UNITY )
               B->val[ j + j * (A.ld) ] = one;
             else if ( B->diagorder_type == Magma_NODIAG )
               B->val[ j + j * (A.ld) ] = zero;
-            for(int i=j+1; i < A.num_rows; i++ )
+            for( i=j+1; i < A.num_rows; i++ )
               B->val[ i + j * (A.ld) ] = A.val[ i * (A.ld) + j ];
           }
         }
@@ -1096,27 +1117,27 @@ data_zmconvert(
         //printf("A is Col major B->diagorder_type = %d ", B->diagorder_type);
         if (B->major == MagmaRowMajor) {
           //printf("B is row major B->diagorder_type = %d ", B->diagorder_type);
-          for(int j=0; j < A.num_cols; j++ ) {
+          for( j=0; j < A.num_cols; j++ ) {
             if ( B->diagorder_type == Magma_VALUE )
               B->val[ j * (A.ld) + j ] = A.val[ j + j * (A.ld) ];
             else if ( B->diagorder_type == Magma_UNITY )
               B->val[ j * (A.ld) + j ] = one;
             else if ( B->diagorder_type == Magma_NODIAG )
               B->val[ j * (A.ld) + j ] = zero;
-            for(int i=j+1; i < A.num_rows; i++ )
+            for( i=j+1; i < A.num_rows; i++ )
               B->val[ i * (A.ld) + j ] = A.val[ i + j * (A.ld) ];
           }
         }
         else {
           //printf("B is Col major B->diagorder_type = %d ", B->diagorder_type);
-          for(int j=0; j < A.num_cols; j++ ) {
+          for( j=0; j < A.num_cols; j++ ) {
             if ( B->diagorder_type == Magma_VALUE )
               B->val[ j + j * (A.ld) ] = A.val[ j + j * (A.ld) ];
             else if ( B->diagorder_type == Magma_UNITY )
               B->val[ j + j * (A.ld) ] = one;
             else if ( B->diagorder_type == Magma_NODIAG )
               B->val[ j + j * (A.ld) ] = zero;
-            for(int i=j+1; i < A.num_rows; i++ )
+            for( i=j+1; i < A.num_rows; i++ )
               B->val[ i + j * (A.ld) ] = A.val[ i + j * (A.ld) ];
           }
         }
@@ -1125,12 +1146,12 @@ data_zmconvert(
 
       if (A.pad_rows > 0 && A.pad_cols > 0) {
         if (B->major == MagmaRowMajor) {
-          for ( int i = A.num_rows; i < A.pad_rows; i++ ) {
+          for ( i = A.num_rows; i < A.pad_rows; i++ ) {
             B->val[ i*A.ld + i ] = one;
           }
         }
         else {
-          for ( int i = A.num_cols; i < A.pad_cols; i++ ) {
+          for ( i = A.num_cols; i < A.pad_cols; i++ ) {
             B->val[ i + i*A.ld ] = one;
           }
         }
@@ -1148,7 +1169,7 @@ data_zmconvert(
         //printf("A is row major B->diagorder_type = %d ", B->diagorder_type);
         if (B->major == MagmaRowMajor) {
           //printf("B is Row major B->diagorder_type = %d\n", B->diagorder_type);
-          for(int i=0; i < A.num_rows; i++ ) {
+          for( i=0; i < A.num_rows; i++ ) {
             if ( i < A.num_cols ) {
               if ( B->diagorder_type == Magma_VALUE )
                 B->val[ i * (A.ld) + i ] = A.val[ i * (A.ld) + i ];
@@ -1156,14 +1177,14 @@ data_zmconvert(
                 B->val[ i * (A.ld) + i ] = one;
               else if ( B->diagorder_type == Magma_NODIAG )
                 B->val[ i * (A.ld) + i ] = zero;
-              for(int j=i+1; j < A.num_cols; j++ )
+              for( j=i+1; j < A.num_cols; j++ )
                 B->val[ i * (A.ld) + j ] = A.val[ i * (A.ld) + j ];
             }
           }
         }
         else {
           //printf("B is Col major B->diagorder_type = %d\n", B->diagorder_type);
-          for(int i=0; i < A.num_rows; i++ ) {
+          for( i=0; i < A.num_rows; i++ ) {
             if ( i < A.num_cols ) {
               if ( B->diagorder_type == Magma_VALUE )
                 B->val[ i + i * (A.ld) ] = A.val[ i * (A.ld) + i ];
@@ -1171,7 +1192,7 @@ data_zmconvert(
                 B->val[ i + i * (A.ld)] = one;
               else if ( B->diagorder_type == Magma_NODIAG )
                 B->val[ i + i * (A.ld) ] = zero;
-              for(int j=i+1; j < A.num_cols; j++ )
+              for( j=i+1; j < A.num_cols; j++ )
                 B->val[ i + j * (A.ld) ] = A.val[ i * (A.ld) + j ];
             }
           }
@@ -1181,7 +1202,7 @@ data_zmconvert(
         //printf("A is Col major B->diagorder_type = %d\n", B->diagorder_type);
         if (B->major == MagmaRowMajor) {
           //printf("B is Row major B->diagorder_type = %d\n", B->diagorder_type);
-          for(int j=0; j < A.num_cols; j++ ) {
+          for( j=0; j < A.num_cols; j++ ) {
             if ( j < A.num_rows ) {
               if ( B->diagorder_type == Magma_VALUE )
                 B->val[ j * (A.ld) + j ] = A.val[ j + j * (A.ld) ];
@@ -1189,14 +1210,14 @@ data_zmconvert(
                 B->val[ j * (A.ld) + j ] = one;
               else if ( B->diagorder_type == Magma_NODIAG )
                 B->val[ j * (A.ld) + j ] = zero;
-              for(int i=0; i < j; i++ )
+              for( i=0; i < j; i++ )
                 B->val[ i * (A.ld) + j ] = A.val[ i + j * (A.ld) ];
             }
           }
         }
         else {
           //printf("B is Col major B->diagorder_type = %d\n", B->diagorder_type);
-          for(int j=0; j < A.num_cols; j++ ) {
+          for( j=0; j < A.num_cols; j++ ) {
             if ( j < A.num_rows ) {
               if ( B->diagorder_type == Magma_VALUE )
                 B->val[ j + j * (A.ld) ] = A.val[ j + j * (A.ld) ];
@@ -1204,7 +1225,7 @@ data_zmconvert(
                 B->val[ j + j * (A.ld) ] = one;
               else if ( B->diagorder_type == Magma_NODIAG )
                 B->val[ j + j * (A.ld) ] = zero;
-              for(int i=j+1; i < A.num_rows; i++ )
+              for( i=j+1; i < A.num_rows; i++ )
                 B->val[ i + j * (A.ld) ] = A.val[ i + j * (A.ld) ];
             }
           }
@@ -1215,12 +1236,12 @@ data_zmconvert(
         if (A.pad_rows > 0 && A.pad_cols > 0) {
           //printf("\n U padded!!!\n");
           if (B->major == MagmaRowMajor) {
-            for ( int i = A.num_rows; i < A.pad_rows; i++ ) {
+            for ( i = A.num_rows; i < A.pad_rows; i++ ) {
               B->val[ i*A.ld + i ] = one;
             }
           }
           else {
-            for ( int i = A.num_cols; i < A.pad_cols; i++ ) {
+            for ( i = A.num_cols; i < A.pad_cols; i++ ) {
               B->val[ i + i*A.ld ] = one;
             }
           }
@@ -1236,7 +1257,7 @@ data_zmconvert(
       B->nnz = MIN(rowlimit, collimit);
       LACE_CALLOC( B->val, B->nnz );
 
-      for(int i=0; i < B->nnz; i++ ) {
+      for( i=0; i < B->nnz; i++ ) {
         B->val[ i ] = A.val[ i * (A.ld) + i ];
       }
 
@@ -1272,14 +1293,17 @@ data_zmconvert(
       LACE_CALLOC( B->val, (B->numblocks*B->ldblock) );
       LACE_CALLOC( B->row, (B->num_rows+1) );
       LACE_CALLOC( B->col, B->numblocks );
-
-      for( int i=0; i < B->nnz; i++) {
+      
+      #pragma omp parallel private(i)
+      for( i=0; i < B->nnz; i++) {
         B->col[i] = A.col[i];
       }
-      for( int i=0; i < B->numblocks*B->ldblock; i++) {
+      #pragma omp parallel private(i)
+      for( i=0; i < B->numblocks*B->ldblock; i++) {
         B->val[i] = A.val[i];
       }
-      for( int i=0; i < B->num_rows+1; i++) {
+      #pragma omp parallel private(i)
+      for( i=0; i < B->num_rows+1; i++) {
         B->row[i] = A.row[i];
       }
 
@@ -1302,8 +1326,8 @@ data_zmconvert(
     B->numblocks = -1;
 
     int numblocks=0;
-    for( int i=0; i < rowlimit; i++) {
-      for( int j=A.row[i]; j < A.row[i+1]; j++) {
+    for( i=0; i < rowlimit; i++) {
+      for( j=A.row[i]; j < A.row[i+1]; j++) {
         if ( A.col[j] < i) {
           numblocks++;
         }
@@ -1321,12 +1345,12 @@ data_zmconvert(
     LACE_CALLOC( B->col, B->numblocks );
 
     numblocks=0;
-    for( int i=0; i < rowlimit; i++) {
+    for( i=0; i < rowlimit; i++) {
       B->row[i]=numblocks;
-      for( int j=A.row[i]; j < A.row[i+1]; j++) {
+      for( j=A.row[i]; j < A.row[i+1]; j++) {
         // diagonal omitted by default
         if ( A.col[j] < i) {
-          for (int k=0; k< B->ldblock; k++) {
+          for ( k=0; k< B->ldblock; k++) {
             B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
           }
           B->col[numblocks] = A.col[j];
@@ -1339,7 +1363,7 @@ data_zmconvert(
           //    B->val[numblocks*B->ldblock+k] = one;
           //}
 	  //put ones on diagonal of diagonal blocks
-          for (int k=0; k<B->blocksize; k++) {
+          for ( k=0; k<B->blocksize; k++) {
             B->val[numblocks*B->ldblock+k*B->blocksize+k] = one;
           }
           B->col[numblocks] = A.col[j];
@@ -1349,7 +1373,7 @@ data_zmconvert(
         else if ( A.col[j] == i &&
             B->diagorder_type == Magma_VALUE) {
           //copy value of diagonal blocks
-          for (int k=0; k< B->ldblock; k++) {
+          for ( k=0; k< B->ldblock; k++) {
             B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
           }
           B->col[numblocks] = A.col[j];
@@ -1358,7 +1382,7 @@ data_zmconvert(
         // add option of including diagonal with zero value
         else if ( A.col[j] == i &&
             B->diagorder_type == Magma_ZERO) {
-          for (int k=0; k< B->ldblock; k++) {
+          for ( k=0; k< B->ldblock; k++) {
             B->val[numblocks*B->ldblock+k] = zero;
           }
           B->col[numblocks] = A.col[j];
@@ -1392,8 +1416,8 @@ data_zmconvert(
     B->numblocks = -1;
 
     int numblocks=0;
-    for( int i=0; i < rowlimit; i++) {
-      for( int j=A.row[i]; j < A.row[i+1]; j++) {
+    for( i=0; i < rowlimit; i++) {
+      for( j=A.row[i]; j < A.row[i+1]; j++) {
         if ( A.col[j] > i ) {
           numblocks++;
         }
@@ -1412,12 +1436,12 @@ data_zmconvert(
     LACE_CALLOC( B->col, B->numblocks );
 
     numblocks=0;
-    for( int i=0; i < rowlimit; i++) {
+    for( i=0; i < rowlimit; i++) {
       B->row[i]=numblocks;
-      for( int j=A.row[i]; j < A.row[i+1]; j++) {
+      for( j=A.row[i]; j < A.row[i+1]; j++) {
         
 	if ( A.col[j] > i) {//if col>row add entry to U
-          for (int k=0; k< B->ldblock; k++) {
+          for ( k=0; k< B->ldblock; k++) {
             B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
           }
           B->col[numblocks] = A.col[j];
@@ -1426,12 +1450,12 @@ data_zmconvert(
         else if ( A.col[j] == i &&
             B->diagorder_type == Magma_UNITY) {
           //put ones on diagonal of diagonal blocks
-          for (int k=0; k<B->blocksize; k++) {
+          for ( k=0; k<B->blocksize; k++) {
             B->val[numblocks*B->ldblock+k*B->blocksize+k] = one;
           }
           //zero out lower triangle of block
-          for (int k=1; k<B->blocksize; k++) {
-            for(int kk=0; kk<k; ++kk)B->val[numblocks*B->ldblock+k*B->blocksize+kk] = 0.0;
+          for ( k=1; k<B->blocksize; k++) {
+            for( kk=0; kk<k; ++kk)B->val[numblocks*B->ldblock+k*B->blocksize+kk] = 0.0;
           }
           B->col[numblocks] = A.col[j];
           numblocks++;
@@ -1440,7 +1464,7 @@ data_zmconvert(
         else if ( A.col[j] == i &&
             B->diagorder_type == Magma_VALUE) {
           //copy values of diagonal blocks
-          for (int k=0; k< B->ldblock; k++) {
+          for ( k=0; k< B->ldblock; k++) {
             B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
           }
           B->col[numblocks] = A.col[j];
@@ -1449,7 +1473,7 @@ data_zmconvert(
         // explicit option of including diagonal with zero value
         else if ( A.col[j] == i &&
             B->diagorder_type == Magma_ZERO) {
-          for (int k=0; k< B->ldblock; k++) {
+          for ( k=0; k< B->ldblock; k++) {
             B->val[numblocks*B->ldblock+k] = zero;
           }
           B->col[numblocks] = A.col[j];
@@ -1462,7 +1486,7 @@ data_zmconvert(
         }
         // diagonal included by default
         else if ( A.col[j] == i ) {
-          for (int k=0; k< B->ldblock; k++) {
+          for ( k=0; k< B->ldblock; k++) {
             B->val[numblocks*B->ldblock+k] = A.val[j*B->ldblock+k];
           }
           B->col[numblocks] = A.col[j];
@@ -1518,11 +1542,11 @@ data_zmconvert(
 int
 data_zcheckupperlower(
     data_d_matrix * A ) {
-
+  int i,j;
   int info = 0;
   if (A->storage_type == Magma_CSRL) {
-    for( int i=0; i < A->num_rows; i++) {
-      for( int j=A->row[i]; j < A->row[i+1]; j++) {
+    for(  i=0; i < A->num_rows; i++) {
+      for(  j=A->row[i]; j < A->row[i+1]; j++) {
         if ( A->col[j] > i ) {
           printf("%d, %d : %e \n", i, A->col[j], A->val[j]);
           info = -1;
@@ -1531,8 +1555,8 @@ data_zcheckupperlower(
     }
   }
   else if (A->storage_type == Magma_CSRU) {
-    for( int i=0; i < A->num_rows; i++) {
-      for( int j=A->row[i]; j < A->row[i+1]; j++) {
+    for(  i=0; i < A->num_rows; i++) {
+      for(  j=A->row[i]; j < A->row[i+1]; j++) {
         if ( A->col[j] < i ) {
           printf("%d, %d : %e \n", i, A->col[j], A->val[j]);
           info = -1;
@@ -1541,8 +1565,8 @@ data_zcheckupperlower(
     }
   }
   else if (A->storage_type == Magma_BCSRL) {
-    for( int i=0; i < A->num_rows; i++) {
-      for( int j=A->row[i]; j < A->row[i+1]; j++) {
+    for(  i=0; i < A->num_rows; i++) {
+      for(  j=A->row[i]; j < A->row[i+1]; j++) {
         if ( A->col[j] > i ) {
           printf("%d, %d : %e \n", i, A->col[j], A->val[j*A->ldblock]);
           info = -1;
@@ -1551,8 +1575,8 @@ data_zcheckupperlower(
     }
   }
   else if (A->storage_type == Magma_BCSRU) {
-    for( int i=0; i < A->num_rows; i++) {
-      for( int j=A->row[i]; j < A->row[i+1]; j++) {
+    for(  i=0; i < A->num_rows; i++) {
+      for(  j=A->row[i]; j < A->row[i+1]; j++) {
         if ( A->col[j] < i ) {
           printf("%d, %d : %e \n", i, A->col[j], A->val[j*A->ldblock]);
           info = -1;
@@ -1569,11 +1593,12 @@ extern "C"
 int
 data_zmcopy(
     data_d_matrix A,
-    data_d_matrix *B )
+    data_d_matrix *B,
+    bool params_only)
 {
   printf("data_zmcopy\n");
   int info = 0;
-
+  int i,j,k;
   B->val = NULL;
   B->col = NULL;
   B->row = NULL;
@@ -1610,25 +1635,30 @@ data_zmcopy(
     B->blocksize = A.blocksize;
     B->ldblock = A.ldblock;
     B->numblocks = A.nnz;
-
-    LACE_CALLOC( B->val, A.nnz );
-    LACE_CALLOC( B->row, (rowlimit+1) );
-    LACE_CALLOC( B->col, A.nnz );
-
-    for( int i=0; i < A.nnz; i++) {
-      B->val[i] = A.val[i];
-      B->col[i] = A.col[i];
+    
+    if(! params_only){
+      LACE_CALLOC( B->val, A.nnz );
+      LACE_CALLOC( B->row, (rowlimit+1) );
+      LACE_CALLOC( B->col, A.nnz );
+      
+      #pragma omp parallel private(i)
+      for( i=0; i < A.nnz; i++) {
+	B->val[i] = A.val[i];
+	B->col[i] = A.col[i];
+      }
+      
+      #pragma omp parallel private(i)
+      for( i=0; i < rowlimit+1; i++) {
+	B->row[i] = A.row[i];
+      }
     }
-    for( int i=0; i < rowlimit+1; i++) {
-      B->row[i] = A.row[i];
-    }
-
   }
 
   // BCSR
   else if ( A.storage_type == Magma_BCSR
       || A.storage_type == Magma_BCSRL
       || A.storage_type == Magma_BCSRU ) {
+    
     printf("copying BCSR\n");
     // fill in information for B
     B->storage_type = A.storage_type;
@@ -1639,27 +1669,33 @@ data_zmcopy(
     B->pad_rows = A.pad_rows;
     B->pad_cols = A.pad_cols;
     B->diameter = A.diameter;
-
     B->blocksize = A.blocksize;
     B->ldblock = A.ldblock;
     //printf("%s %d B->ldblock=%d\n", __FILE__, __LINE__, B->ldblock);
     B->numblocks = A.numblocks;
     B->nnz = A.nnz;
+    
+    if(! params_only){
 
-    LACE_CALLOC( B->val, (B->numblocks*B->ldblock) );
-    LACE_CALLOC( B->row, (rowlimit+1) );
-    LACE_CALLOC( B->col, B->numblocks );
-
-    for( int i=0; i < A.numblocks; i++) {
-      B->col[i] = A.col[i];
-      for (int k=0; k< B->ldblock; k++) {
-        B->val[i*B->ldblock+k] = A.val[i*B->ldblock+k];
+      //LACE_CALLOC( B->val, (B->numblocks*B->ldblock) );
+      LACE_CALLOC( B->val, (B->nnz*B->ldblock) );
+      //LACE_CALLOC( B->row, (rowlimit+1) );
+      LACE_CALLOC( B->row, B->num_rows+1 );
+      //LACE_CALLOC( B->col, B->numblocks );
+      LACE_CALLOC( B->col, B->nnz );
+      
+      #pragma omp parallel private(i)
+      for( i=0; i < A.numblocks; i++) {
+	B->col[i] = A.col[i];
+	for ( k=0; k< B->ldblock; k++) {
+	  B->val[i*B->ldblock+k] = A.val[i*B->ldblock+k];
+	}
+      }
+      #pragma omp parallel private(i)
+      for( i=0; i < rowlimit+1; i++) {
+        B->row[i] = A.row[i];
       }
     }
-    for( int i=0; i < rowlimit+1; i++) {
-      B->row[i] = A.row[i];
-    }
-
   }
 
   if ( info != 0 ) {
