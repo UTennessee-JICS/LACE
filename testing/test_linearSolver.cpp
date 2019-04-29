@@ -38,8 +38,9 @@ protected:
     //char default_matrix[] = "matrices/Trefethen_20.mtx";//19x19
     //char default_matrix[] = "matrices/sparsity6x6_dense.mtx";//6x6
     //char default_matrix[] = "matrices/30p30n.mtx";//211685x211685
+    //char default_matrix[] = "matrices/olafu/olafu.mtx"; // 16146 x 16146
     char default_matrix[] = "matrices/steam3.mtx";//80x80
-    (*block_size) = 5;
+    (*block_size) = 1;
 
     char* matrix_name = NULL;
 
@@ -50,7 +51,7 @@ protected:
     char* initialGuess_name = NULL;
 
     tolerance = new dataType();
-    (*tolerance) = 1.0e-3;
+    (*tolerance) = 1.0e-6;
 
     // parse command line arguments
     if (my_argc>1) {
@@ -767,7 +768,7 @@ TEST_F(LinearSolverTest, FGMRESNoPrecondition) {
 
 
 
-#if 1
+#if 0
 // =========================================================================
 // FGMRES precondition ParILU v0.3  
 // =========================================================================
@@ -1271,5 +1272,169 @@ TEST_F(LinearSolverTest, FGMRES_BCSR_PreconditionILU0) {
   data_zmfree( &L );
   data_zmfree( &U );
   data_zmfree( &Ucsr );
+}
+#endif
+
+
+
+
+
+
+
+
+
+#if 1
+// =========================================================================
+// FGMRES BCSR  precondition ILUK
+// =========================================================================
+TEST_F(LinearSolverTest, FGMRES_BCSR_PreconditionILUK) {
+  printf("%% FGMRES BCSR Blk_ILU(k=1) Preconditioner\n");
+
+  //convert input matrix to block sparse format
+  data_d_matrix A_BCSR = {Magma_BCSR};
+  data_d_matrix A_k= {Magma_BCSR};
+  
+  A_BCSR.blocksize= *block_size;
+  data_zmconvert((*A), &A_BCSR, Magma_CSR, Magma_BCSR);
+  sort_csr_rows(&A_BCSR);
+  data_rowindex(&A_BCSR, &(A_BCSR.rowidx) );
+  
+#if 0
+  printf("A_BCSR:\n");
+  data_zprint_bcsr(&A_BCSR);
+#endif
+
+  int k=1;
+  dataType iluk_start, iluk_end;
+  iluk_start = omp_get_wtime();
+  data_ILUK(&A_BCSR, &A_k, k);
+  iluk_end = omp_get_wtime();
+  dataType iluk_time =   (dataType) (iluk_end - iluk_start);
+  printf("A nnz= %d\n", A_BCSR.nnz);
+  printf("Bandwidth A    = %d\n", A_BCSR.diameter);
+  printf("Bandwidth A_new= %d\n", A_k.diameter);
+  printf("A_k nnz= %d\n", A_k.nnz);
+
+  
+  // store initial guess in solution_vector
+  data_d_matrix solution_vector = {Magma_DENSE};
+  CHECK( data_zmconvert((*initialGuess_vector), &solution_vector, Magma_DENSE, Magma_DENSE) );
+
+  data_z_gmres_param solverParam;
+  data_d_gmres_log gmresLog;
+
+  solverParam.tol_type = 0;
+  solverParam.rtol = (*LinearSolverTest::tolerance);
+  solverParam.search_max = 200;
+  solverParam.restart_max = 200;
+  solverParam.reorth = 0;
+  solverParam.precondition = 2;
+  solverParam.parilu_reduction = 1.0e-20;
+  solverParam.monitorOrthog = 1;
+  solverParam.user_csrtrsv_choice = 1;//triangular solve option
+
+  gmresLog.restarts = 0;
+
+  int maxthreads = 0;
+  int numprocs = 0;
+  #pragma omp parallel
+  {
+    maxthreads = omp_get_max_threads();
+    numprocs = omp_get_num_procs();
+  }
+
+  data_d_preconditioner_log parilu_log;
+
+  printf("PariLU_v0_3_bcsr_omp_num_threads = %d\n", parilu_log.omp_num_threads );
+  printf("maxthreads = %d numprocs = %d\n", maxthreads, numprocs );
+
+  // generate preconditioner
+  data_d_matrix L = {Magma_BCSRL};
+  data_d_matrix U = {Magma_BCSCU};//for parilu
+  data_d_matrix Ucsr = {Magma_BCSRU};//for gmres
+
+  if(solverParam.precondition != 0){//precondition
+    data_ILU0_bcsr_v1_0( &A_k, &L, &U, solverParam.parilu_reduction, &parilu_log );
+
+#if 0
+    printf("L:\n");
+    data_zprint_bcsr(&L);
+    printf("\nUbsr:\n");
+    data_zprint_bcsr(&U);
+#endif
+
+    printf("ILU(%d)_bcsr_omp_num_threads = %d\n", k, parilu_log.omp_num_threads );
+    printf("ILU(%d)_generation_time = %e\n",k,  iluk_time);
+    printf("ILU(%d)_bcsr_A_Frobenius = %e\n", k,parilu_log.A_Frobenius );
+    printf("ILU(%d)_bcsr_generation_time = %e\n", k,parilu_log.precond_generation_time );
+    printf("ILU(%d)_bcsr_initial_residual = %e\n", k,parilu_log.initial_residual );
+    printf("ILU(%d)_bcsr_initial_nonlinear_residual = %e\n", k,parilu_log.initial_nonlinear_residual );
+
+    //copy to Ucsr
+    CHECK( data_zmconvert( U, &Ucsr, Magma_BCSR, Magma_BCSR ) );
+    Ucsr.storage_type = Magma_BCSRU;
+    Ucsr.fill_mode = MagmaUpper;
+    
+#if 0
+    printf("L:\n");
+    data_zprint_bcsr(&L);
+    printf("\nUbcsr:\n");
+    data_zprint_bcsr(&Ucsr);
+#endif
+  }//end precondition
+  
+  data_fgmres_bcsr( &A_k, rhs_vector, &solution_vector, &L, &Ucsr, &solverParam, &gmresLog );
+
+#if 0
+  for (int i=0; i<A->num_rows; i++) {
+    GMRESDBG("x.val[%d] = %.16e\n", i, solution_vector.val[i]);
+   printf("x.val[%d] = %.16e\n", i, solution_vector.val[i]);
+  }
+#endif
+ 
+  data_d_matrix r={Magma_DENSE};
+  data_zvinit( &r, A->num_rows, 1, zero );
+  data_z_spmv( negone, &A_BCSR, &solution_vector, zero, &r );
+  data_zaxpy( A->num_rows, one, rhs_vector->val, 1, r.val, 1);
+
+#if 0
+  for (int i=0; i<A->num_rows; i++) {
+    GMRESDBG("r.val[%d] = %.16e\n", i, r.val[i]);
+  }
+#endif
+  
+  dataType residual = 0.0;
+  residual = data_dnrm2( A->num_rows, r.val, 1 );
+  printf("%% external check of rnorm2 = %.16e;\n\n", residual);
+
+  printf("gmres_search_directions = %d;\n", gmresLog.search_directions );
+  printf("gmres_solve_time = %e;\n", gmresLog.solve_time );
+  printf("gmres_initial_residual = %e;\n", gmresLog.initial_residual );
+  printf("gmres_final_residual = %e;\n", gmresLog.final_residual );
+
+  printf("\n\n");
+  printf("%% ################################################################################\n");
+  // printf("%% Matrix: %s\n%% \t%d -by- %d with %d non-zeros\n",
+  //   sparse_filename, A->num_rows, A->num_cols, A->nnz );
+  printf("%% Solver: FGMRES\n");
+  printf("%% \trestarts: %d\n", gmresLog.restarts );
+  printf("%% \tsearch directions: %d\n", gmresLog.search_directions );
+  printf("%% \tsolve time [s]: %e\n", gmresLog.solve_time );
+  printf("%% \tinitial residual: %e\n", gmresLog.initial_residual );
+  printf("%% \tfinal residual: %e\n", gmresLog.final_residual );
+  printf("%% ################################################################################\n");
+  printf("\n\n");
+  printf("%% Done.\n");
+  fflush(stdout);
+
+  EXPECT_LE( residual, (*LinearSolverTest::tolerance) );
+
+  data_zmfree( &solution_vector );
+  data_zmfree( &r );
+  data_zmfree( &L );
+  data_zmfree( &U );
+  data_zmfree( &Ucsr );
+  data_zmfree( &A_BCSR );
+  data_zmfree( &A_k );
 }
 #endif
