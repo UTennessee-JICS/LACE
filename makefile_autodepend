@@ -131,6 +131,7 @@ testing/test_iLU_ops_OBJS = testing/test_iLU_operations.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
 	src/parilu_v0_0.o src/parilu_v3_0.o \
 	src/ilu0_bcsr_v1_0.o \
+	src/iluk.o \
 	testing/test_cmd_line_main.o libgmock.a
 
 testing/test_iLU_OBJS = testing/test_iLU.o \
@@ -146,6 +147,7 @@ testing/test_iLU_OBJS = testing/test_iLU.o \
 	src/ilu0_bcsr_v1_0.o \
         src/cuthill_mckee.o \
         src/reorder.o \
+	src/iluk.o \
 	testing/test_cmd_line_main.o libgmock.a
 
 # Note: to see detailed output from parilu_v0_3 set debug mode:
@@ -171,6 +173,7 @@ testing/test_linearSolver_OBJS = testing/test_linearSolver.o \
 	src/givens.cpp \
 	src/orthogonality_error.o \
         src/reorder.o \
+	src/iluk.o \
   	testing/test_cmd_line_main.o libgmock.a
 
 testing/test_linearSolver_reordering_OBJS = testing/test_linearSolver_reordering.o \
@@ -190,6 +193,7 @@ testing/test_linearSolver_reordering_OBJS = testing/test_linearSolver_reordering
 	src/givens.cpp \
 	src/orthogonality_error.o \
         src/reorder.o \
+	src/iluk.o \
   	testing/test_cmd_line_main.o libgmock.a
 	
 
@@ -225,7 +229,8 @@ drivers/generate_iLU_OBJS = drivers/generate_iLU.o \
 	blas/zcsrilu0.o blas/zlunp.o blas/zspmm.o \
 	src/parilu_v0_3_prescribedSweeps.o \
         src/cuthill_mckee.cpp \
-        src/reorder.cpp
+        src/reorder.cpp \
+	src/iluk.o 
 
 drivers/generate_GE_OBJS = drivers/generate_GE.o \
 	control/constants.o control/magma_zmio.o \
@@ -254,7 +259,9 @@ drivers/solver_OBJS = drivers/solver_interface.o \
 	src/givens.cpp \
 	src/orthogonality_error.cpp \
         src/cuthill_mckee.cpp \
-        src/reorder.cpp
+        src/reorder.cpp \
+	src/iluk.o
+
 
 $(foreach i, $(DRIVERS), $(eval $(call generateTester,$(i))))
 
